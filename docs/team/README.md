@@ -29,10 +29,15 @@
 
 ## 2. სალომე: დაყენება (ერთხელ)
 
-1. დასაყენებელი: Git, [uv](https://docs.astral.sh/uv/) (`winget install astral-sh.uv`), Node.js, შემდეგ:
-   ```powershell
-   npm install -g @anthropic-ai/claude-code @openai/codex
-   ```
+1. პროგრამები. ადმინის უფლება არცერთს არ სჭირდება — ყველაფერი მომხმარებლის საქაღალდეში დგება (ლუკასთანაც ასეა):
+   - **VS Code-ის გაფართოებები:** `Claude Code` (Anthropic) და `Codex` (OpenAI). მათ CLI თავისით მოყვებათ,
+     `agent.bat` მას თვითონ პოულობს. Node.js საჭირო **არ არის**.
+   - **Git** — ჯერ შეამოწმეთ `git --version`. თუ არ არის: Git for Windows-ის ინსტალერი ადმინის გარეშე
+     მომხმარებლის საქაღალდეში დგება (`AppData\Local\Programs\Git`). ან PortableGit — უბრალოდ იხსნება.
+   - **uv** (Python-ს თავად ჩამოტვირთავს): `winget install astral-sh.uv`
+     ან `powershell -ExecutionPolicy Bypass -c "irm https://astral.sh/uv/install.ps1 | iex"`.
+
+   ბოლოს VS Code თავიდან გახსენით, რომ ახალი ბრძანებები დაინახოს.
 2. clone-ი **იმავე სტრუქტურით**, რაც ლუკასთანაა (`Desktop\apisaiti\qc-platforma`).
    მონაცემის წყაროების ნაგულისხმევი მისამართები ამ სტრუქტურას ეყრდნობა.
    ```powershell
@@ -50,7 +55,9 @@
 
 ## 3. აგენტების გაშვება
 
-სალომე — სამი ცალკე ფანჯარა, თითოეულში ერთი ბრძანება (`qc-platforma`-დან):
+სალომე — VS Code-ში `qc-platforma`-ს გახსნა → Terminal → New Terminal (სამჯერ; ან ტერმინალის „+“ ღილაკი).
+თითოეულ ტერმინალში ერთი ბრძანება. აგენტი პირდაპირ ტერმინალში მუშაობს.
+Claude-ის გვერდითა პანელი მხოლოდ ერთ ანგარიშს იყენებს, ამიტომ ორი ანგარიშისთვის ტერმინალი სჭირდება:
 
 | ფანჯარა | ბრძანება | პირველ გაშვებაზე |
 |---|---|---|

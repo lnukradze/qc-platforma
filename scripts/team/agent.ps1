@@ -10,6 +10,8 @@
 # (%USERPROFILE%\.claude-profiles\<name>); the first run needs /login there.
 # No account name = the normal Claude login of this Windows user.
 # qa runs Codex (ChatGPT login, one account).
+# No install rights needed: if claude / codex are not on PATH, the copies
+# bundled with the VS Code extensions (Claude Code, Codex) are used.
 param(
     [Parameter(Mandatory = $true)]
     [ValidateSet('lead', 'backend', 'ui', 'qa')]
@@ -51,6 +53,20 @@ if ($Account -and $Role -ne 'qa') {
     New-Item -ItemType Directory -Force $env:CLAUDE_CONFIG_DIR | Out-Null
 }
 
+# The installed command if there is one, else the newest copy inside a VS Code extension
+function Find-Agent([string]$Name, [string]$ExtensionPattern) {
+    $cmd = Get-Command $Name -ErrorAction SilentlyContinue
+    if ($cmd) { return $cmd.Source }
+    $exe = Get-ChildItem (Join-Path $env:USERPROFILE '.vscode\extensions') -Directory -Filter $ExtensionPattern -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTime -Descending |
+        ForEach-Object { Get-ChildItem $_.FullName -Recurse -Filter "$Name.exe" -ErrorAction SilentlyContinue } |
+        Select-Object -First 1
+    if ($exe) { return $exe.FullName }
+    throw "$Name not found - install its VS Code extension ($ExtensionPattern) or the $Name CLI."
+}
+if ($Role -eq 'qa') { $agent = Find-Agent 'codex' 'openai.chatgpt-*' }
+else { $agent = Find-Agent 'claude' 'anthropic.claude-code-*' }
+
 $prompt = "Session role: $Role. Read AGENTS.md and docs/team/roles/$Role.md and follow them for the whole session. " +
           "Then run git fetch, read the latest tasks (git show origin/main:docs/TASKS.md, or docs/TASKS.md if there is no origin) " +
           "and tell me in Georgian, in one or two sentences, your role and the open tasks for this role."
@@ -58,4 +74,4 @@ $prompt = "Session role: $Role. Read AGENTS.md and docs/team/roles/$Role.md and 
 Set-Location $dir
 $Host.UI.RawUI.WindowTitle = "QC agent: $Role (port $($env:QCP_PORT))"
 Write-Host "Role: $Role | folder: $dir | port: $($env:QCP_PORT) | account: $(if ($Account) { $Account } else { 'default' })"
-if ($Role -eq 'qa') { codex $prompt } else { claude $prompt }
+& $agent $prompt
