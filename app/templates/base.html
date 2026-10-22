@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ka">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}ხარისხის კონტროლი{% endblock %} · NAPR</title>
+  <link rel="stylesheet" href="/static/css/app.css?v={{ VERSION }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/">
+    <span class="brand-mark">QC</span>
+    <span><span class="brand-name">NAPR</span> <span class="brand-sub">ხარისხის კონტროლის ერთიანი პლატფორმა</span></span>
+  </a>
+  <span class="env-badge" title="ლოკალური პროტოტიპი — ცვლილებები Google ცხრილებში არ იწერება">პროტოტიპი · localhost</span>
+  <span class="spacer"></span>
+  {% if ctx %}
+  <form class="role-form" method="post" action="/role">
+    <label class="sr" for="role-sel">აქტიური როლი</label>
+    <select id="role-sel" name="role" onchange="this.form.submit()" title="აქტიური როლი">
+      {% for r in D.ROLES if r in ctx.user.role_set %}
+      <option value="{{ r }}" {% if r == ctx.role %}selected{% endif %}>{{ ROLE_SHORT[r] }}</option>
+      {% endfor %}
+    </select>
+  </form>
+  <span class="user-chip"><span class="avatar">{{ ctx.user.full_name[:1] }}</span><span class="uname">{{ ctx.user.full_name }}</span></span>
+  <form method="post" action="/logout"><button class="btn-logout" type="submit">გასვლა</button></form>
+  {% endif %}
+</header>
+{% if ctx %}
+<nav class="subnav" aria-label="მთავარი მენიუ">
+  {% for href, label, key in nav_items(ctx.role) %}
+  <a href="{{ href }}" class="{% if active == key %}active{% endif %}">{{ label }}</a>
+  {% endfor %}
+</nav>
+{% endif %}
+<main class="page">
+  {% if ok %}<div class="notice ok" role="status">✓ {{ ok }}</div>{% endif %}
+  {% if err %}<div class="notice err" role="alert">⚠ {{ err }}</div>{% endif %}
+  {% block content %}{% endblock %}
+</main>
+<footer class="foot">
+  პროტოტიპი v{{ VERSION }} · QC მონაცემი: კონტროლის ცხრილი{% if data_info %} (წამოღებულია {{ data_info|dt }}){% endif %} ·
+  Pre-QC — სადემონსტრაციო მონაცემი · ცვლილებები მხოლოდ ლოკალურ ბაზაში ინახება
+</footer>
+<script src="/static/vendor/htmx.min.js"></script>
+<script src="/static/js/app.js?v={{ VERSION }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block title %}განაწილება{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>ოქმების განაწილება</h1>
+    <div class="sub">პირველი ოქმის თარიღი · ბლოკი განუყოფელია · <b>პროცენტული დაფარვა</b> ზონებითა და მენეჯერებით · ოპერატორის რაოდენობა — მაქსიმუმი</div>
+  </div>
+</div>
+{% include "distribution/_subnav.html" %}
+
+<div class="card">
+  <div class="card-head"><h2>მონაცემთა წყარო</h2>
+    {% if source.ok %}<span class="chip c-green">ხელმისაწვდომია</span>{% else %}<span class="chip c-orange">მიუწვდომელია</span>{% endif %}</div>
+  <div class="card-body">
+    {% if source.ok %}
+    <dl class="kv">
+      <dt>GDB ამონაწერი</dt><dd class="mono">{{ source.gdb_name }}</dd>
+      <dt>ჩატვირთულია</dt><dd>{{ source.imported_at|dt }} · {{ source.rows|num }} ჩანაწერი · ბოლო ნახაზი {{ source.max_date|date }}</dd>
+      <dt>რეჟიმი</dt><dd>მხოლოდ კითხვა — ძველი პროგრამის ლოკალური ბაზა. საწარმოოში: ღამის იმპორტი GDB-დან/სააგენტოს ბაზიდან.</dd>
+      {% if backlog %}<dt>წინა განაწილების ნაშთი</dt><dd><b>{{ backlog|num }}</b> ოქმი — ამ განაწილებაზე პირველი შევა</dd>{% endif %}
+    </dl>
+    {% else %}<div class="notice err">{{ source.error }}</div>{% endif %}
+  </div>
+</div>
+
+<form id="dist-form" method="post" action="/distribution/preview" hx-post="/distribution/preview" hx-target="#preview" hx-indicator="#dist-spin">
+<div class="grid-2">
+  <div class="card">
+    <div class="card-head"><h2>პერიოდი და გამორიცხვა</h2></div>
+    <div class="card-body">
+      <div class="grid-2">
+        <div class="form-row"><label class="label" for="d-from">პირველი ოქმი — დან</label><input id="d-from" type="date" name="date_from" value="{{ form.date_from }}" required></div>
+        <div class="form-row"><label class="label" for="d-to">მდე</label><input id="d-to" type="date" name="date_to" value="{{ form.date_to }}"></div>
+      </div>
+      <div class="form-row">
+        <span class="label">არ ნაწილდება (ღია საველე წარმოება)</span>
+        {% for s in open_statuses %}<label class="check"><input type="checkbox" name="exclude_statuses" value="{{ s }}" {% if s in form.exclude_statuses %}checked{% endif %}> {{ s }}</label>{% endfor %}
+      </div>
+      <div class="form-row">
+        <label class="label" for="ez">გამოსარიცხი ზონები</label>
+        <select id="ez" name="exclude_zones" multiple size="4">{% for z, n in zones %}<option value="{{ z }}" {% if z in form.exclude_zones %}selected{% endif %}>{{ z }} — {{ n }}</option>{% endfor %}</select>
+      </div>
+      <p class="hint">მენეჯერი — ოქმის ამზომველების <b>დღევანდელი</b> გუნდით (FIELD_GROUP_272); სხვადასხვა გუნდის ამზომველებზე ოქმი ყველა მენეჯერს ეკუთვნის, პასუხისმგებელია შემდგენის მენეჯერი. წასული ამზომველის ოქმი „დაუჯგუფებელში“ გადადის.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>რამდენი გავიაროთ</h2><span class="muted small">თუ ორი წესი ეხება — უფრო დიდი</span></div>
+    <div class="card-body">
+      <div class="form-row" style="display:flex;gap:10px;align-items:center">
+        <label class="label" for="dpct" style="margin:0">ნაგულისხმევი — ყველა არეალიდან</label>
+        <input id="dpct" type="number" name="default_pct" min="0" max="100" step="5" value="{{ form.default_pct|int }}" style="width:90px"> %
+      </div>
+      <table class="data compact rules" id="rules">
+        <thead><tr><th>რას ეხება</th><th>რომელი</th><th style="width:110px">%</th><th style="width:40px"></th></tr></thead>
+        <tbody>
+        {% for r in form.rules or [] %}
+          <tr>{% include "distribution/_rule_row.html" %}</tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <template id="rule-tpl"><tr>{% with r = {} %}{% include "distribution/_rule_row.html" %}{% endwith %}</tr></template>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <button class="btn btn-secondary btn-sm" type="button" data-add-rule="zone">+ ზონა</button>
+        <button class="btn btn-secondary btn-sm" type="button" data-add-rule="sector">+ სექტორი (მაგ. ბაზალეთი)</button>
+        <button class="btn btn-secondary btn-sm" type="button" data-add-rule="manager">+ მენეჯერის ჯგუფი</button>
+      </div>
+      <p class="hint" style="margin-top:8px">მაგ.: ბაზალეთი (71.56) — 100%, დიმიტრი ბოქოლიშვილის ჯგუფი — 100%, თელავი (53) — 70%, დანარჩენი — ნაგულისხმევით.</p>
+      <datalist id="zone-list">{% for z, n in zones %}<option value="{{ z }}">{{ z }} — {{ n }}</option>{% endfor %}</datalist>
+      <datalist id="sector-list">{% for k, lbl in sectors %}<option value="{{ k }}">{{ lbl }}</option>{% endfor %}</datalist>
+      <select id="manager-src" hidden>{% for i, n in managers %}<option value="{{ i }}">{{ n }}</option>{% endfor %}</select>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h2>ოპერატორები — მაქსიმალური რაოდენობა</h2>
+    <div style="display:flex;gap:8px;align-items:center"><label class="small" for="fill-n">ყველას:</label><input id="fill-n" type="number" min="0" value="{{ form.per_operator }}" style="width:90px"><button class="btn btn-secondary btn-sm" type="button" id="fill-btn">მინიჭება</button></div>
+  </div>
+  <div class="card-body flush table-wrap">
+    <table class="data compact op-table">
+      <thead><tr><th style="width:40px"><input type="checkbox" id="op-all" checked aria-label="ყველა"></th><th>ოპერატორი</th><th>მაქსიმუმი</th></tr></thead>
+      <tbody>
+      {% for o in operators %}
+        {% set q = form.operators.get(o.id|string, form.per_operator) if form.operators else form.per_operator %}
+        <tr><td><input type="checkbox" name="op_on_{{ o.id }}" {% if not form.operators or (o.id|string) in form.operators %}checked{% endif %} aria-label="{{ o.full_name }}"></td>
+          <td>{{ o.full_name }}</td>
+          <td><input type="number" name="op_q_{{ o.id }}" min="0" step="10" value="{{ q }}" aria-label="მაქსიმუმი — {{ o.full_name }}"></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="table-foot">
+    <span class="hint">პროცენტით შერჩეული ოქმები ნაწილდება ოპერატორებზე რაოდენობის პროპორციით; რაც არ ჩაეტია, შემდეგ განაწილებაზე პირველი შევა.</span>
+    <div class="form-actions">
+      <label class="small" for="seed">seed</label><input id="seed" type="text" name="seed" placeholder="შემთხვევითი" style="width:120px" inputmode="numeric">
+      <button class="btn btn-primary" type="submit">გადახედვა (ჩაწერის გარეშე)</button>
+      <span id="dist-spin" class="htmx-indicator muted small">ითვლება…</span>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h2>შენახული წესები</h2><span class="muted small">მაგ.: „შემდეგ დღეებში — ეს პროცენტები, ეს ოპერატორები“</span></div>
+  <div class="card-body">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">
+      <div class="field" style="min-width:220px"><label for="pn">დასახელება</label><input id="pn" type="text" name="preset_name" placeholder="მაგ. მივლინება 15 — ბაზალეთი 100%"></div>
+      <div class="field"><label for="pvf">მოქმედებს — დან</label><input id="pvf" type="date" name="valid_from"></div>
+      <div class="field"><label for="pvt">მდე</label><input id="pvt" type="date" name="valid_to"></div>
+      <button class="btn btn-secondary" type="submit" formaction="/distribution/presets" hx-post="/distribution/presets" hx-target="#preview" formnovalidate>მიმდინარე პარამეტრების შენახვა</button>
+    </div>
+    {% if presets %}
+    <table class="data compact" style="margin-top:12px"><thead><tr><th>წესი</th><th>პერიოდი</th><th>ოპერატორი</th><th>პროცენტები</th><th></th></tr></thead><tbody>
+      {% for pr in presets %}<tr><td>{{ pr.name }}</td><td>{{ pr.valid_from|date or '—' }} – {{ pr.valid_to|date or '—' }}</td><td>{{ pr.params.operators|length }}</td>
+        <td class="small">ნაგულისხმევი {{ (pr.params.default_pct or 70)|int }}%{% for r in pr.params.rules or [] %} · {{ r.key }} {{ r.pct|int }}%{% endfor %}</td>
+        <td><a class="btn btn-ghost btn-sm" href="/distribution?preset={{ pr.id }}">ჩატვირთვა</a></td></tr>{% endfor %}
+    </tbody></table>
+    {% endif %}
+  </div>
+</div>
+</form>
+
+<div id="preview"></div>
+
+<div class="card">
+  <div class="card-head"><h2>განაწილების ისტორია</h2></div>
+  <div class="card-body flush table-wrap">
+    {% if runs %}
+    <table class="data compact"><thead><tr><th>#</th><th>როდის</th><th>ვინ</th><th>პერიოდი</th><th class="num">ოქმი</th><th class="num">ნაშთი</th><th class="num">ოპერატორი</th><th></th></tr></thead><tbody>
+    {% for r in runs %}<tr><td>{{ r.id }}</td><td>{{ r.created_at|dt }}</td><td>{{ r.created_by.full_name if r.created_by else '—' }}</td><td>{{ r.params.date_from|date }} – {{ r.params.date_to|date }}</td><td class="num">{{ r.item_count|num }}</td><td class="num">{{ ((r.summary or {}).get('carried_over') or 0)|num }}</td><td class="num">{{ r.params.operators|length }}</td><td><a href="/distribution/runs/{{ r.id }}">დეტალი</a></td></tr>{% endfor %}
+    </tbody></table>
+    {% else %}<div class="empty">ახალ სისტემაში განაწილება ჯერ არ გაშვებულა. ძველი განაწილებები კონტროლის ცხრილიდან გადმოვიდა.</div>{% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  const all = document.getElementById('op-all');
+  all && all.addEventListener('change', function () {
+    document.querySelectorAll('input[name^=op_on_]').forEach(function (c) { c.checked = all.checked; });
+  });
+  const btn = document.getElementById('fill-btn');
+  btn && btn.addEventListener('click', function () {
+    const v = document.getElementById('fill-n').value;
+    document.querySelectorAll('input[name^=op_q_]').forEach(function (i) { i.value = v; });
+  });
+  // პროცენტის წესები: ზონა / სექტორი / მენეჯერი
+  const tbody = document.querySelector('#rules tbody');
+  const tpl = document.getElementById('rule-tpl');
+  const mgrSrc = document.getElementById('manager-src');
+  function setKind(tr, kind) {
+    tr.querySelector('[name=rule_type]').value = kind;
+    const cell = tr.querySelector('.rule-key');
+    const cur = cell.querySelector('[name=rule_key]');
+    const val = cur ? cur.value : '';
+    let el;
+    if (kind === 'manager') {
+      el = mgrSrc.cloneNode(true); el.hidden = false; el.removeAttribute('id');
+      if (val) el.value = val;
+    } else {
+      el = document.createElement('input'); el.type = 'text'; el.value = val;
+      el.setAttribute('list', kind === 'zone' ? 'zone-list' : 'sector-list');
+      el.placeholder = kind === 'zone' ? 'მაგ. 53' : 'მაგ. 71.56';
+    }
+    el.name = 'rule_key'; el.required = true;
+    cell.innerHTML = ''; cell.appendChild(el);
+    tr.querySelector('.rule-label').textContent = {zone: 'ზონა', sector: 'სექტორი', manager: 'მენეჯერის ჯგუფი'}[kind];
+  }
+  document.querySelectorAll('#rules tbody tr').forEach(function (tr) { setKind(tr, tr.querySelector('[name=rule_type]').value || 'zone'); });
+  document.querySelectorAll('[data-add-rule]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      const tr = tpl.content.firstElementChild.cloneNode(true);
+      tbody.appendChild(tr); setKind(tr, b.dataset.addRule);
+      tr.querySelector('[name=rule_key]').focus();
+    });
+  });
+  tbody.addEventListener('click', function (e) {
+    if (e.target.closest('[data-del-rule]')) e.target.closest('tr').remove();
+  });
+})();
+</script>
+<style>.htmx-indicator{display:none}.htmx-request .htmx-indicator,.htmx-request.htmx-indicator{display:inline}</style>
+{% endblock %}

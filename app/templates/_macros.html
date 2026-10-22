@@ -1,0 +1,66 @@
+{% macro state_chip(state, view='qc', reason=None, draft=False) -%}
+  {%- set color = operator_color(state, draft) if view == 'qc' else field_color(state) -%}
+  <span class="chip c-{{ color }}" title="{{ COLOR_LABELS[color] }}">{% if draft and state == D.PENDING %}შენახული — გასაგზავნი{% else %}{{ STATE_LABELS[state] }}{% endif %}{% if state == D.CLOSED and reason %} · {{ CLOSE_REASON_LABELS[reason] }}{% endif %}</span>
+{%- endmacro %}
+
+{% macro verdict(v) -%}
+  {%- if v -%}<span class="vchip v-{{ v }}">{{ VERDICT_LABELS[v] }}</span>{%- else -%}<span class="muted">—</span>{%- endif -%}
+{%- endmacro %}
+
+{# ველის პასუხი — მკაფიო ნიშანი (მომხმარებლის მოთხოვნა, 2026-10-20) #}
+{% macro response(r, big=False) -%}
+  {%- if r -%}<span class="resp resp-{{ RESPONSE_STYLE[r] }}{% if big %} big{% endif %}"><b aria-hidden="true">{{ RESPONSE_ICONS[r] }}</b> {{ RESPONSE_LABELS[r] }}</span>{%- else -%}<span class="muted">—</span>{%- endif -%}
+{%- endmacro %}
+
+{% macro codes(item, cmap=None) -%}
+  {%- for c in item.codes -%}
+    {%- set dc = cmap.get(c.code) if cmap else None -%}
+    <span class="code sev-{{ dc.severity if dc else '' }}" title="{{ dc.name if dc else c.code }}">{{ c.code }}</span>
+  {%- endfor -%}
+{%- endmacro %}
+
+{% macro pager(page, pages, total, qs) -%}
+<div class="table-foot">
+  <span class="muted small">სულ {{ total|num }} ჩანაწერი · გვერდი {{ page }} / {{ pages }}</span>
+  {% if pages > 1 %}
+  <nav class="pager" aria-label="გვერდები">
+    {% if page > 1 %}<a href="?{{ qs(page=1) }}" title="პირველი">«</a><a href="?{{ qs(page=page-1) }}">‹</a>{% else %}<span class="dis">«</span><span class="dis">‹</span>{% endif %}
+    {% for pnum in range([1, page-2]|max, [pages, page+2]|min + 1) %}
+      {% if pnum == page %}<span class="cur">{{ pnum }}</span>{% else %}<a href="?{{ qs(page=pnum) }}">{{ pnum }}</a>{% endif %}
+    {% endfor %}
+    {% if page < pages %}<a href="?{{ qs(page=page+1) }}">›</a><a href="?{{ qs(page=pages) }}" title="ბოლო">»</a>{% else %}<span class="dis">›</span><span class="dis">»</span>{% endif %}
+  </nav>
+  {% endif %}
+</div>
+{%- endmacro %}
+
+{% macro legend(view='qc') -%}
+<div class="legend" aria-label="ფერების ლეგენდა">
+  {% if view == 'qc' %}
+  <span><i class="sw gray"></i>გასავლელი</span>
+  <span><i class="sw draft"></i>შენახული — გასაგზავნი</span>
+  <span><i class="sw lightgreen"></i>გაგზავნილია</span>
+  <span><i class="sw yellow"></i>ველმა უპასუხა</span>
+  <span><i class="sw green"></i>დასრულებული</span>
+  {% else %}
+  <span><i class="sw orange"></i>პასუხი სჭირდება</span>
+  <span><i class="sw lightgreen"></i>გაგზავნილია — QC-ს მხარეს</span>
+  <span><i class="sw blue"></i>მენეჯერთან</span>
+  <span><i class="sw green"></i>დასრულებული</span>
+  {% endif %}
+  <span><i class="presence-dot static" aria-hidden="true"></i>ახლა ხსნის სხვა</span>
+</div>
+{%- endmacro %}
+
+{% macro surveyors(item) -%}
+  {%- for p in item.surveyors -%}{{ p.display_name }}{% if not p.user_id %} <span class="tag" title="სახელი მომხმარებელს ვერ მიება">?</span>{% endif %}{% if not loop.last %}<br>{% endif %}{%- endfor -%}
+  {%- if not item.surveyors -%}{{ item.protocol_creator_name or '—' }}{%- endif -%}
+{%- endmacro %}
+
+{% macro managers(item) -%}
+  {%- for p in item.managers -%}<span {% if not p.is_primary %}class="muted" title="CC — ხედავს, პასუხისმგებელი სხვაა"{% endif %}>{{ p.display_name }}</span>{% if not loop.last %}<br>{% endif %}{%- endfor -%}
+  {%- if not item.managers -%}{{ item.field_manager.full_name if item.field_manager else '—' }}{%- endif -%}
+{%- endmacro %}
+
+{# ყვითელი მოციმციმე ნიშანი — ავსებს presence.js, როცა ოქმს სხვა ხსნის #}
+{% macro presence(item) -%}<span class="presence" data-presence="{{ item.id }}" hidden><i class="presence-dot" aria-hidden="true"></i></span>{%- endmacro %}

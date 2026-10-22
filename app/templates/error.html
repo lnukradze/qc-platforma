@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="card"><div class="card-body empty">
+  <h1 style="font-size:20px;margin-bottom:8px">{{ code }} — {{ title }}</h1>
+  <p>{{ detail }}</p>
+  <p><a class="btn btn-secondary" href="/">მთავარ გვერდზე დაბრუნება</a></p>
+</div></div>
+{% endblock %}

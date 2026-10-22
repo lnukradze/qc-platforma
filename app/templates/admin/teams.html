@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}გუნდები{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>გუნდები</h1><div class="sub">საველე გუნდი = მენეჯერი + ამზომველები (Field Group-იდან). წასულები შენახულია ისტორიული მიკუთვნებისთვის.</div></div></div>
+{% include "admin/_nav.html" %}
+<div class="grid-3">
+{% for t in teams %}
+  {% set act = t.members|selectattr('valid_to', 'none')|list %}
+  {% set gone = t.members|rejectattr('valid_to', 'none')|list %}
+  <div class="card">
+    <div class="card-head"><h2>{{ t.name }}</h2><span class="tag">{{ 'QC' if t.kind == 'qc' else 'ველი' }}{% if not t.active %} · არააქტიური{% endif %}</span></div>
+    <div class="card-body small">
+      <p style="margin:0 0 6px"><b>{{ act|length }}</b> აქტიური{% if gone %} · <span class="muted">{{ gone|length }} წასული</span>{% endif %}</p>
+      <div>{% for m in act[:40] %}<span class="tag" style="margin:0 3px 3px 0">{{ m.user.full_name }}</span>{% endfor %}{% if act|length > 40 %}<span class="muted">+{{ act|length - 40 }}</span>{% endif %}</div>
+    </div>
+  </div>
+{% endfor %}
+</div>
+{% endblock %}

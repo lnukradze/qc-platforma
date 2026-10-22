@@ -1,0 +1,1072 @@
+<!doctype html><html lang="ka"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>სწრაფი შპარგალკა — QC პლატფორმა (IT შეხვედრა)</title><style>
+@font-face { font-family: 'NSG'; font-weight: 400; src: url('../../../app/static/vendor/fonts/noto-sans-georgian/noto-sans-georgian-georgian-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'NSG'; font-weight: 600; src: url('../../../app/static/vendor/fonts/noto-sans-georgian/noto-sans-georgian-georgian-600-normal.woff2') format('woff2'); }
+@font-face { font-family: 'NSGL'; font-weight: 400; src: url('../../../app/static/vendor/fonts/noto-sans-georgian/noto-sans-georgian-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'NSGL'; font-weight: 600; src: url('../../../app/static/vendor/fonts/noto-sans-georgian/noto-sans-georgian-latin-600-normal.woff2') format('woff2'); }
+:root { --fg:#1d232b; --muted:#5b6672; --line:#d9dee4; --bg:#ffffff; --code:#f4f6f8; --accent:#1f5f99; }
+html { background: var(--bg); }
+body { font-family: 'NSGL','NSG','Sylfaen','Segoe UI',sans-serif; color: var(--fg); background: var(--bg);
+       max-width: 980px; margin: 0 auto; padding: 24px 16px 64px; font-size: 14.5px; line-height: 1.6; }
+h1 { font-size: 1.75em; border-bottom: 2px solid var(--accent); padding-bottom: .3em; }
+h1, h2, h3, h4 { line-height: 1.3; break-after: avoid; }
+h2 { font-size: 1.35em; margin-top: 1.8em; border-bottom: 1px solid var(--line); padding-bottom: .2em; }
+h3 { font-size: 1.12em; margin-top: 1.5em; }
+a { color: var(--accent); text-decoration: none; }
+blockquote { margin: 1em 0; padding: .4em 1em; border-left: 4px solid var(--accent); background: #f3f7fb; color: var(--fg); }
+code { font-family: Consolas,'Cascadia Mono',monospace; background: var(--code); padding: .1em .3em; border-radius: 3px; font-size: .92em; }
+pre { background: var(--code); padding: 10px 12px; border-radius: 4px; overflow-x: auto; font-size: 12.5px; line-height: 1.45; break-inside: avoid; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1em 0; font-size: .93em; }
+th, td { border: 1px solid var(--line); padding: 5px 8px; vertical-align: top; text-align: left; }
+th { background: #eef2f6; }
+tr { break-inside: avoid; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 2em 0; }
+.meta { color: var(--muted); font-size: .85em; }
+@media print { body { max-width: none; padding: 0; font-size: 11pt; } a { color: var(--fg); } pre { white-space: pre-wrap; } }
+@page { size: A4; margin: 16mm 14mm; }
+</style></head><body><h1>სწრაფი შპარგალკა — QC პლატფორმა (IT შეხვედრა)</h1>
+<blockquote>
+<p><strong>ვისთვის:</strong> ჩემთვის — შეხვედრაზე სწრაფად მოსაძებნად (Ctrl+F). <strong>მდგომარეობა:</strong> 2026-10-22.
+<strong>სტატუსის ნიშნები:</strong> ✅ დადასტურებული · 🗓 დაგეგმილი · 💡 რეკომენდებული · ❓ IT-ის დასადასტურებელი · ⚠️ შეუსაბამობა.
+<strong>დეტალები:</strong> <a href="01-%E1%83%A1%E1%83%A0%E1%83%A3%E1%83%9A%E1%83%98-%E1%83%A2%E1%83%94%E1%83%A5%E1%83%9C%E1%83%98%E1%83%99%E1%83%A3%E1%83%A0%E1%83%98-handoff.html">01 Handoff</a> · <a href="02-%E1%83%9E%E1%83%98%E1%83%A0%E1%83%90%E1%83%93%E1%83%98-%E1%83%A2%E1%83%94%E1%83%A5%E1%83%9C%E1%83%98%E1%83%99%E1%83%A3%E1%83%A0%E1%83%98-%E1%83%A1%E1%83%90%E1%83%AE%E1%83%94%E1%83%9A%E1%83%9B%E1%83%AB%E1%83%A6%E1%83%95%E1%83%90%E1%83%9C%E1%83%94%E1%83%9A%E1%83%9D.html">02 სახელმძღვანელო</a> · <a href="03-IT-%E1%83%A8%E1%83%94%E1%83%AE%E1%83%95%E1%83%94%E1%83%93%E1%83%A0%E1%83%98%E1%83%A1-%E1%83%99%E1%83%98%E1%83%97%E1%83%AE%E1%83%95%E1%83%94%E1%83%91%E1%83%98-%E1%83%93%E1%83%90-%E1%83%9E%E1%83%90%E1%83%A1%E1%83%A3%E1%83%AE%E1%83%94%E1%83%91%E1%83%98.html">03 კითხვები</a> · <a href="04-IT-%E1%83%98%E1%83%9C%E1%83%A4%E1%83%A0%E1%83%90%E1%83%A1%E1%83%A2%E1%83%A0%E1%83%A3%E1%83%A5%E1%83%A2%E1%83%A3%E1%83%A0%E1%83%98%E1%83%A1-%E1%83%9B%E1%83%9D%E1%83%97%E1%83%AE%E1%83%9D%E1%83%95%E1%83%9C%E1%83%94%E1%83%91%E1%83%98.html">04 მოთხოვნები</a> · <a href="05-%E1%83%9E%E1%83%A0%E1%83%94%E1%83%96%E1%83%94%E1%83%9C%E1%83%A2%E1%83%90%E1%83%AA%E1%83%98%E1%83%98%E1%83%A1%E1%83%90-%E1%83%93%E1%83%90-%E1%83%A1%E1%83%90%E1%83%A3%E1%83%91%E1%83%A0%E1%83%98%E1%83%A1-%E1%83%92%E1%83%96%E1%83%90%E1%83%9B%E1%83%99%E1%83%95%E1%83%9A%E1%83%94%E1%83%95%E1%83%98.html">05 პრეზენტაცია</a></p>
+</blockquote>
+<hr />
+<h2>1. ერთი წინადადებით</h2>
+<p><strong>ერთი ვებ-პლატფორმა ხუთის ნაცვლად</strong> (Google ცხრილი, Apps Script, განაწილების პროგრამა, სტატისტიკის პანელი, Pre-QC). წყაროებს <strong>მხოლოდ კითხულობს</strong>, სამუშაოს საკუთარ ბაზაში ინახავს <strong>სრული ისტორიით</strong>, და ყველა უფლებას <strong>სერვერზე</strong> ამოწმებს. ✅ ლოკალური პროტოტიპი რეალურ მონაცემზე მუშაობს. ❓ საწარმოოსთვის IT-ის ინფრასტრუქტურა და 💡 ჩვენი ტექნიკური სამუშაო სჭირდება.</p>
+<h2>2. მთავარი ციფრები ✅ (2026-10-22)</h2>
+<table>
+<thead>
+<tr>
+<th>რა</th>
+<th>ციფრი</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ვერსია</td>
+<td>0.2.0</td>
+</tr>
+<tr>
+<td>QC შემთხვევა</td>
+<td><strong>44 159</strong> (სისტემური 41 251 · სპორადული 2 908)</td>
+</tr>
+<tr>
+<td>ძველი ცხრილიდან</td>
+<td>44 538 მწკრივი → 44 159 + <strong>379 დუბლიკატი</strong></td>
+</tr>
+<tr>
+<td>დახურული / ღია</td>
+<td>34 502 / 9 657 (გასავლელი 1 456 · ველზე 3 774 · გადასამოწმებელი 3 030 · მენეჯერთან 1 107 · QC მენეჯერთან 290)</td>
+</tr>
+<tr>
+<td>მომხმარებელი ბაზაში</td>
+<td>605 (ამზომველი 247 · საველე მენეჯერი 14 · QC ოპერატორი 14 · QC მენეჯერი 2 · ადმინი 2 · დემო 2)</td>
+</tr>
+<tr>
+<td>ელფოსტა ბაზაში</td>
+<td><strong>0</strong> ⚠️</td>
+</tr>
+<tr>
+<td>ტესტები</td>
+<td><strong>57 passed</strong> (≈ 6 წმ)</td>
+</tr>
+<tr>
+<td>ბაზის ზომა (SQLite)</td>
+<td>≈ 94 MB + WAL 4 MB</td>
+</tr>
+<tr>
+<td>ცხრილები / ინდექსები</td>
+<td>27 / 39</td>
+</tr>
+<tr>
+<td>REGFIELDALL-ის ასლი</td>
+<td>2 331 017 ჩანაწერი, ≈ 1 GB, ბოლო GDB 2026-10-19</td>
+</tr>
+<tr>
+<td>ხარვეზის კოდი</td>
+<td>27 + QC-00</td>
+</tr>
+<tr>
+<td>ალიასი (სახელის ვარიანტი)</td>
+<td>591</td>
+</tr>
+<tr>
+<td>სტატისტიკის გვერდი</td>
+<td>2–3 წმ (SQLite)</td>
+</tr>
+<tr>
+<td>სპორადულის ფაილი (20.10)</td>
+<td>50 320 ჩანაწერი</td>
+</tr>
+<tr>
+<td>შეფასება 💡</td>
+<td>≈ 300 აქტიური / ≈ 40 ერთდროულად · VM 4 vCPU / 8 GB / 100 GB · ზრდა: ბაზა 0.5–2 GB/წ, ფოტო 1–3 GB/წ</td>
+</tr>
+</tbody>
+</table>
+<h2>3. ტექნოლოგიები ✅</h2>
+<p>Python 3.12+ (ტესტირებულია 3.14.5) · FastAPI 0.148 / Starlette 1.9 · uvicorn 0.54 · SQLAlchemy 2.1 · Jinja2 3.1 + HTMX 2.0.4 · ECharts 5.5.1 · Leaflet · openpyxl · requests + truststore · itsdangerous · pytest. <strong>გარე CDN არ გამოიყენება.</strong> ბაზა: SQLite (WAL) → 💡 PostgreSQL 16.</p>
+<h2>4. როლები ✅</h2>
+<table>
+<thead>
+<tr>
+<th>როლი</th>
+<th>ოქმები</th>
+<th>Pre-QC</th>
+<th>სტატისტიკა</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ადმინი (ლუკა, სალომე)</td>
+<td>ყველა</td>
+<td>✗</td>
+<td>ყველა + შეზღუდული; მართვა</td>
+</tr>
+<tr>
+<td>QC მენეჯერი (გიორგი ჩიგოგიძე — სისტემური, ბექა სალუქვაძე — სპორადული)</td>
+<td>ყველა</td>
+<td>✗</td>
+<td>ყველა + შეზღუდული; განაწილება</td>
+</tr>
+<tr>
+<td>QC ოპერატორი</td>
+<td>საკუთარი</td>
+<td>✗</td>
+<td>საკუთარი</td>
+</tr>
+<tr>
+<td>კოორდინატორი (დემო)</td>
+<td>გავლილი, ნახვით</td>
+<td>✗</td>
+<td>შეზღუდულის გარდა</td>
+</tr>
+<tr>
+<td>სამსახურის უფროსი (დემო)</td>
+<td>✗</td>
+<td>✗</td>
+<td>ხარვეზების (ოპერატორების გარეშე)</td>
+</tr>
+<tr>
+<td>საველე მენეჯერი</td>
+<td>მიკუთვნებული, გაგზავნილი, დადებითის გარდა</td>
+<td>✓</td>
+<td>გუნდი + ცრუ გასწორება</td>
+</tr>
+<tr>
+<td>ამზომველი</td>
+<td>საკუთარი, გაგზავნილი, დადებითის გარდა</td>
+<td>✓</td>
+<td>საკუთარი</td>
+</tr>
+</tbody>
+</table>
+<p><strong>შეზღუდული სტატისტიკა</strong> = ოპერატორის შეცდომა, QC მენეჯერის შეფასება, ძველი TYPE, „ორივე მართალია“ — მხოლოდ QC მენეჯერი და ადმინი.</p>
+<h2>5. მდგომარეობები ✅</h2>
+<p><code>pending</code> (გასავლელი) → <code>awaiting_field</code> (ველზე) → <code>awaiting_manager</code> („არ ვეთანხმები“, მენეჯერი) → <code>awaiting_qcm</code> (არ დათანხმებული, QC მენეჯერი) → <code>returned_to_manager</code> (დაბრუნებულია მენეჯერთან) → <code>awaiting_qc</code> (გადასამოწმებელი) → <code>closed</code>.</p>
+<p><strong>დახურვის მიზეზი:</strong> <code>positive</code> · <code>corrected</code> (M) · <code>acknowledged</code> · <code>qc_error</code> (ველი მართალია) · <code>both_right</code>.
+<strong>ვერდიქტი:</strong> დადებითი · უარყოფითი · რეკომენდაცია · დაზუსტება (კითხვაა, არა სტატუსი).
+<strong>D (<code>checked_at</code>)</strong> = სტატუსის პირველი გაგზავნა; არ იცვლება. <strong>დღის რაოდენობა</strong> = <code>first_sent_at</code> (დაზუსტების ჩათვლით).</p>
+<h2>6. მონაცემის წყაროები</h2>
+<table>
+<thead>
+<tr>
+<th>წყარო</th>
+<th>რა</th>
+<th>დღეს ✅</th>
+<th>საწარმოოში 💡</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>REGFIELDALL</td>
+<td>7 ველი: <code>FLD_PAPER_ID, CADCODE, MOX_CREATE_DATE, FLD_STATUS_NAME, OQMI_CREATOR, MOXAZ_CREATOR, IS_LAST</code></td>
+<td>ღამის GDB <code>Z:\REGFIELDALL</code> → Distributor-ის SQLite → <code>mode=ro</code></td>
+<td>view → API → ღამის ფაილი ❓</td>
+</tr>
+<tr>
+<td>სპორადული</td>
+<td>10 სვეტი, განმცხადებლების გარეშე</td>
+<td>xlsx მეილით → ატვირთვა → წაშლა</td>
+<td>view / SFTP ❓</td>
+</tr>
+<tr>
+<td>Field Group</td>
+<td>ამზომველი → მენეჯერი (272 + სრული)</td>
+<td>Apps Script GET</td>
+<td>ადმინი პლატფორმაში + HR შეტყობინება</td>
+</tr>
+<tr>
+<td>ძველი ცხრილი</td>
+<td>QC ისტორია</td>
+<td>Apps Script GET (QCStatRead)</td>
+<td>ერთჯერადი მიგრაცია → არქივი</td>
+</tr>
+<tr>
+<td>ოქმის დეტალები</td>
+<td>შემსრულებლები</td>
+<td>✗ (OQMI/MOXAZ-ით)</td>
+<td>API 🗓 ❓</td>
+</tr>
+<tr>
+<td>REDI</td>
+<td>ოქმი, ბარათი, ფოტო (Pre-QC)</td>
+<td>ბრაუზერის სესია + გაფართოება (<code>api.napr.gov.ge/lr/redi*</code>)</td>
+<td>API ან Validator ლოკალურად + შედეგის API ❓</td>
+</tr>
+<tr>
+<td>SLR WFS</td>
+<td>გეომეტრია (Pre-QC)</td>
+<td>HTTP Basic, <code>.env</code>; <code>wblr.napr.gov.ge/data/SLR/ows</code></td>
+<td>სერვისის ანგარიში + IP ❓</td>
+</tr>
+<tr>
+<td>Google OAuth</td>
+<td>ვინაობა</td>
+<td>კოდი მზადაა, client არ არის 🗓</td>
+<td>IT ქმნის ❓</td>
+</tr>
+<tr>
+<td>SMTP</td>
+<td>მეილი</td>
+<td>კოდი მზადაა, preview 🗓</td>
+<td>IT relay ❓</td>
+</tr>
+</tbody>
+</table>
+<p><strong>ოქროს წესი:</strong> სააგენტოს სისტემებში <strong>არაფერს ვწერთ.</strong></p>
+<h2>7. მთავარი გადაწყვეტილებები და მოკლე მიზეზი</h2>
+<table>
+<thead>
+<tr>
+<th>გადაწყვეტილება</th>
+<th>რატომ (ერთი წინადადება)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ერთი მონოლითური აპლიკაცია, SSR (Jinja2 + HTMX)</td>
+<td>ერთი პროცესი, ერთი პორტი, ბრაუზერში „ჭკვიანი“ კოდი არ არის</td>
+</tr>
+<tr>
+<td>Python / FastAPI</td>
+<td>იგივე ენა, რაც ძველ პროექტებში; ავტომატური OpenAPI</td>
+</tr>
+<tr>
+<td>SQLAlchemy ORM</td>
+<td>ერთი კოდი სხვადასხვა ბაზაზე; პარამეტრიზებული SQL</td>
+</tr>
+<tr>
+<td>PostgreSQL (საწარმოოში)</td>
+<td>ერთდროული ჩაწერა, ბექაპი/PITR, უფლებები; უფასო; Pre-QC hosted-იც მასზეა</td>
+</tr>
+<tr>
+<td>საკუთარი ასლი, ღამის სინქრონი</td>
+<td>წყაროს დღისით არ ვტვირთავთ; მისი გაჩერება ჩვენ არ გვაჩერებს</td>
+</tr>
+<tr>
+<td>Google OIDC + რეგისტრირებული ელფოსტა</td>
+<td>პაროლს არ ვინახავთ; ველში ყველას აქვს Google ანგარიში</td>
+</tr>
+<tr>
+<td>სერვერული სესია (არა JWT)</td>
+<td>გათიშვა მყისიერად მოქმედებს</td>
+</tr>
+<tr>
+<td>404 სხვისზე (არა 403)</td>
+<td>ჩანაწერის არსებობა არ მჟღავნდება</td>
+</tr>
+<tr>
+<td>append-only ისტორია</td>
+<td>დავის მტკიცებულება; ძველი ცხრილის პრობლემის გამოსწორება</td>
+</tr>
+<tr>
+<td>პროცენტული დაფარვა (≈ 70%) გათანაბრების ნაცვლად</td>
+<td>ბიზნეს-გადაწყვეტილება 2026-10-20</td>
+</tr>
+<tr>
+<td>ფოტოს ტვირთავს მხოლოდ კონტროლი</td>
+<td>ბიზნეს-წესი</td>
+</tr>
+<tr>
+<td>Pre-QC მხოლოდ ველს</td>
+<td>ბიზნეს-წესი (ადმინსაც არა)</td>
+</tr>
+</tbody>
+</table>
+<h2>8. IT-სგან — პილოტის მინიმუმი (P1)</h2>
+<ol>
+<li><strong>VM</strong> (R1) — 💡 4 vCPU / 8 GB / 100 GB;</li>
+<li><strong>OS / runtime</strong> (R2) — Linux ან Windows, Python ≥ 3.12 ან Docker; შიდა root CA;</li>
+<li><strong>PostgreSQL</strong> (R3) — ცალკე ბაზა, <code>qc_app</code> + <code>qc_migrator</code>, superuser-ის გარეშე;</li>
+<li><strong>ბექაპი</strong> (R4) — ღამის; P3-ში PITR;</li>
+<li><strong>ფაილების საცავი + ბექაპი</strong> (R5);</li>
+<li><strong>დომენი + DNS</strong> (R6), <strong>სერტიფიკატი</strong> (R7);</li>
+<li><strong>Reverse proxy</strong> (R8) — ≥ 12 MB, <code>X-Forwarded-*</code>, ლოგი query string-ის გარეშე;</li>
+<li><strong>შიდა წვდომა</strong> (R9);</li>
+<li><strong>გამავალი</strong> <code>oauth2.googleapis.com:443</code> (R11);</li>
+<li><strong>Google OAuth client</strong> — Web, redirect <code>https://&lt;დომენი&gt;/auth/google/callback</code>, scope <code>openid email profile</code> (R12);</li>
+<li><strong>საიდუმლოების შენახვა</strong> (R19);</li>
+<li><strong>git + deployment</strong> (R22);</li>
+<li><strong>NTP + Asia/Tbilisi</strong> (R24);</li>
+<li><strong>RACI</strong> (R25).</li>
+</ol>
+<p><strong>შემდეგ:</strong></p>
+<ul>
+<li>R10 — გარე წვდომა / VPN;</li>
+<li>R13 — SMTP;</li>
+<li>R14 — REGFIELDALL;</li>
+<li>R15 — სპორადული;</li>
+<li>R16–R17 — Pre-QC;</li>
+<li>R18 — HR;</li>
+<li>R20 — მონიტორინგი;</li>
+<li>R21 — staging;</li>
+<li>R23 — უსაფრთხოება / პერსონალური მონაცემი.</li>
+</ul>
+<h2>9. ჩვენი სამუშაო საწარმოომდე (G1–G18, მოკლედ)</h2>
+<table>
+<thead>
+<tr>
+<th>G</th>
+<th>რა</th>
+<th>G</th>
+<th>რა</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>PostgreSQL-ის დრაივერი + ტესტი</td>
+<td>10</td>
+<td><code>datetime.now()</code> სარტყლის გარეშე</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Alembic (<code>create_all</code>-ის ნაცვლად)</td>
+<td>11</td>
+<td>ინკრემენტული იმპორტი (<code>build_db</code> ნულიდან აწყობს)</td>
+</tr>
+<tr>
+<td>3</td>
+<td>დემო შესვლა ნაგულისხმევად ჩართულია</td>
+<td>12</td>
+<td>წყაროები ჩემს კომპიუტერზეა მიბმული</td>
+</tr>
+<tr>
+<td>4</td>
+<td>proxy-ს უკან <code>Secure</code> / IP</td>
+<td>13</td>
+<td>ფოტოები ლოკალურ დისკზე</td>
+</tr>
+<tr>
+<td>5</td>
+<td>ვერსიის შემოწმება ბაზის დონეზე</td>
+<td>14</td>
+<td>სტატისტიკა 2–3 წმ</td>
+</tr>
+<tr>
+<td>6</td>
+<td>გადახედვა მეხსიერებაშია (1 პროცესი)</td>
+<td>15</td>
+<td>0 ელფოსტა</td>
+</tr>
+<tr>
+<td>7</td>
+<td>SMTP სინქრონულად იგზავნება</td>
+<td>16</td>
+<td>ლოგირება მინიმალურია</td>
+</tr>
+<tr>
+<td>8</td>
+<td>CSRF token არ არის</td>
+<td>17</td>
+<td>git არ არის</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>/docs</code> ღიაა</td>
+<td>18</td>
+<td>გათიშვა გუნდის წევრობას არ ხურავს</td>
+</tr>
+</tbody>
+</table>
+<h2>10. შეუსაბამობები ⚠️ (რომ არ დამავიწყდეს)</h2>
+<ul>
+<li><strong>C1</strong> — კოორდინატორი: UI-ში ბარათს ხედავს, API (<code>/api/items</code>) 403-ს აბრუნებს;</li>
+<li><strong>C2</strong> — ATR-04: ძველი პანელი → მნიშვნელოვანი; პლატფორმა (10-20) → კრიტიკული;</li>
+<li><strong>C3</strong> — „მხოლოდ URL-ის შეცვლა PostgreSQL-ისთვის“ — შეუმოწმებელია;</li>
+<li><strong>C4</strong> — Pre-QC-ის კონტრაქტი: <code>/api/preqc/results</code> (ARCHITECTURE) vs <code>/api/preqc/checks</code> (Hosted);</li>
+<li><strong>C5</strong> — Pre-QC-ის ხილვადობა: პლატფორმაში ადმინს არ უჩანს, Hosted-ში ადმინი ყველაფერს ხედავს;</li>
+<li><strong>C6</strong> — ამზომველის მიბმა: სახელით (პლატფორმა) vs პირადი ნომრით (Hosted);</li>
+<li><strong>C7</strong> — 300 თანამშრომელი vs 605 ჩანაწერი (წასულებით);</li>
+<li><strong>C9</strong> — ძველი პანელი Render/Neon-ზე vs სააგენტოს სერვერის გეგმა;</li>
+<li>Pre-QC <code>app/README.md</code> ჯერ კიდევ აღწერს <code>.exe</code>-ში ჩაკერებულ AI გასაღებს, <code>.env.example</code> კი ამბობს, რომ ეს აღარ ხდება.</li>
+</ul>
+<h2>11. ტერმინების ლექსიკონი</h2>
+<table>
+<thead>
+<tr>
+<th>ტერმინი</th>
+<th>ტექნიკურად</th>
+<th>მარტივად</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>API</strong></td>
+<td>პროგრამებს შორის შეთანხმებული ინტერფეისი (ჩვენთან HTTP + JSON)</td>
+<td>„სარკმელი“ სხვა პროგრამისთვის</td>
+</tr>
+<tr>
+<td><strong>append-only</strong></td>
+<td>ჩანაწერი მხოლოდ ემატება; UPDATE/DELETE არ ხდება</td>
+<td>წიგნი, რომელშიც მხოლოდ იწერება</td>
+</tr>
+<tr>
+<td><strong>ASGI</strong></td>
+<td>Python-ის ასინქრონული ვებ-ინტერფეისის სტანდარტი</td>
+<td>როგორ ესაუბრება uvicorn FastAPI-ს</td>
+</tr>
+<tr>
+<td><strong>Alembic</strong></td>
+<td>SQLAlchemy-ის მიგრაციის ინსტრუმენტი</td>
+<td>ბაზის „რემონტის გეგმა“ ნაბიჯებად</td>
+</tr>
+<tr>
+<td><strong>audit log</strong></td>
+<td>ადმინისტრაციული მოქმედებების ჟურნალი (<code>audit_log</code>)</td>
+<td>„ვინ, რა, როდის“</td>
+</tr>
+<tr>
+<td><strong>backlog (ნაშთი)</strong></td>
+<td>შერჩეული, მაგრამ რაოდენობაში ვერ ჩატეული ოქმები (<code>distribution_backlog</code>)</td>
+<td>ხვალ პირველი შევა</td>
+</tr>
+<tr>
+<td><strong>ბლოკი</strong></td>
+<td>საკადასტრო კოდი ბოლო სეგმენტის გარეშე; განუყოფელი</td>
+<td>მეზობელი ნაკვეთები — ერთ ოპერატორს</td>
+</tr>
+<tr>
+<td><strong>CC პრინციპი</strong></td>
+<td>დაბრუნებისას: „საჭიროა მენეჯერის ჩართვა“ — თუ არა, ამზომველს, მენეჯერი ხედავს</td>
+<td>მენეჯერი „ასლში“</td>
+</tr>
+<tr>
+<td><strong>CDN</strong></td>
+<td>გარე სერვერი, საიდანაც ბიბლიოთეკები იტვირთება</td>
+<td>ჩვენ არ ვიყენებთ</td>
+</tr>
+<tr>
+<td><strong>CHECK constraint</strong></td>
+<td>ბაზის წესი სვეტის მნიშვნელობაზე</td>
+<td>„დაუშვებელს არ ჩაწერს“</td>
+</tr>
+<tr>
+<td><strong>Client ID / Secret</strong></td>
+<td>აპლიკაციის იდენტიფიკატორი / საიდუმლო Google-თან</td>
+<td>საიტის „სახელი“ და „პაროლი“ Google-თან</td>
+</tr>
+<tr>
+<td><strong>connection pool</strong></td>
+<td>ბაზასთან ღია კავშირების აუზი</td>
+<td>კავშირები მზად არის, ყოველ ჯერზე არ იხსნება</td>
+</tr>
+<tr>
+<td><strong>cookie</strong></td>
+<td>ბრაუზერში შენახული მცირე მონაცემი, რომელიც ყოველ მოთხოვნას ახლავს</td>
+<td>„სამაჯური“ ნომრით</td>
+</tr>
+<tr>
+<td><strong>CSRF</strong></td>
+<td>სხვა საიტიდან გაყალბებული მოთხოვნა</td>
+<td>სხვისი საიტი „შენი ხელით“ აჭერს ღილაკს</td>
+</tr>
+<tr>
+<td><strong>CSP</strong></td>
+<td>Content-Security-Policy თავსართი</td>
+<td>ბრაუზერს ეუბნება, რისი ჩატვირთვაა ნებადართული</td>
+</tr>
+<tr>
+<td><strong>cutover</strong></td>
+<td>ძველიდან ახალზე ოფიციალური გადასვლის მომენტი</td>
+<td>„გადასვლის დღე“</td>
+</tr>
+<tr>
+<td><strong>D</strong></td>
+<td><code>checked_at</code> — სტატუსის პირველი გაგზავნა</td>
+<td>შემოწმების დღე, რომელიც აღარ იცვლება</td>
+</tr>
+<tr>
+<td><strong>დაზუსტება</strong></td>
+<td>ვერდიქტი-კითხვა; D-ს არ ქმნის, დადებითად არ ითვლება</td>
+<td>„კითხვა ველს“</td>
+</tr>
+<tr>
+<td><strong>დაუჯგუფებელი</strong></td>
+<td>არცერთი ამზომველი FIELD_GROUP_272-ში არ არის</td>
+<td>მენეჯერს ხელით უწერენ</td>
+</tr>
+<tr>
+<td><strong>DMZ</strong></td>
+<td>ქსელის ზონა, რომელიც გარედან ჩანს და შიდასგან გამოყოფილია</td>
+<td>„ვესტიბიული“</td>
+</tr>
+<tr>
+<td><strong>DNS</strong></td>
+<td>სახელი → IP</td>
+<td>„ცნობარი“</td>
+</tr>
+<tr>
+<td><strong>Docker</strong></td>
+<td>კონტეინერი: აპლიკაცია + runtime ერთ image-ში</td>
+<td>მზა „ყუთი“</td>
+</tr>
+<tr>
+<td><strong>FK (foreign key)</strong></td>
+<td>სვეტი, რომელიც სხვა ცხრილის PK-ზე მიუთითებს</td>
+<td>„ბმული“, რომელიც არარსებულზე ვერ მიუთითებს</td>
+</tr>
+<tr>
+<td><strong>FastAPI</strong></td>
+<td>Python-ის ვებ-ჩარჩო</td>
+<td>საიტის „ტვინის“ ჩარჩო</td>
+</tr>
+<tr>
+<td><strong>Field Group / FIELD_GROUP_272 / FIELD_GROUP_ALL</strong></td>
+<td>Google ცხრილი: ამზომველი → მენეჯერი; 272 = დღევანდელი, ALL = წასულებით</td>
+<td>ვინ ვისი გუნდიდანაა</td>
+</tr>
+<tr>
+<td><strong>GDB / GDAL</strong></td>
+<td>Esri File Geodatabase / მისი წამკითხველი ბიბლიოთეკა</td>
+<td>ღამის ექსპორტის ფორმატი</td>
+</tr>
+<tr>
+<td><strong>health check</strong></td>
+<td><code>/api/health</code> — მუშაობს თუ არა სერვისი</td>
+<td>„პულსი“</td>
+</tr>
+<tr>
+<td><strong>HTMX</strong></td>
+<td>HTML ატრიბუტებით მოთხოვნები, ნაწილობრივი განახლება</td>
+<td>გვერდი ცოცხლად ახლდება</td>
+</tr>
+<tr>
+<td><strong>HTTP / HTTPS</strong></td>
+<td>მოთხოვნა-პასუხის პროტოკოლი / TLS-ით დაშიფრული</td>
+<td>წერილები / დალუქული კონვერტი</td>
+</tr>
+<tr>
+<td><strong>IDOR</strong></td>
+<td>სხვისი ობიექტის მოთხოვნა ID-ის შეცვლით</td>
+<td>„4513-ის აკრეფა“ — ჩვენთან 404</td>
+</tr>
+<tr>
+<td><strong>idempotency</strong></td>
+<td>განმეორებითი შესრულება შედეგს არ ცვლის</td>
+<td>ორჯერ ჩატვირთვა — დუბლიკატი არ ჩნდება</td>
+</tr>
+<tr>
+<td><strong>index</strong></td>
+<td>სწრაფი ძებნის სტრუქტურა (B-tree)</td>
+<td>წიგნის საძიებელი</td>
+</tr>
+<tr>
+<td><strong>Jinja2</strong></td>
+<td>HTML შაბლონების ძრავა (autoescape)</td>
+<td>გვერდების „ასაწყობი“</td>
+</tr>
+<tr>
+<td><strong>JSON</strong></td>
+<td>ტექსტური მონაცემის ფორმატი</td>
+<td>„ანკეტა“ პროგრამებისთვის</td>
+</tr>
+<tr>
+<td><strong>JWT</strong></td>
+<td>ხელმოწერილი token (ID token ასეთია)</td>
+<td>დალუქული „ცნობა“</td>
+</tr>
+<tr>
+<td><strong>LAN / localhost</strong></td>
+<td>ლოკალური ქსელი / <code>127.0.0.1</code> — ეს კომპიუტერი</td>
+<td>სართული / ჩემი ოთახი</td>
+</tr>
+<tr>
+<td><strong>load test</strong></td>
+<td>დატვირთვის ტესტი (k6, locust)</td>
+<td>„რამდენ ხალხს გაუძლებს“ — ჯერ არ ჩატარებულა</td>
+</tr>
+<tr>
+<td><strong>M</strong></td>
+<td><code>corrected_confirmed</code> — QC-მ გასწორება დაადასტურა</td>
+<td>„გასწორდა“ ✓</td>
+</tr>
+<tr>
+<td><strong>migration</strong></td>
+<td>სქემის ვერსიირებული ცვლილება / ან მონაცემის გადატანა</td>
+<td>„რემონტი“ / „გადასვლა“</td>
+</tr>
+<tr>
+<td><strong>MVCC</strong></td>
+<td>PostgreSQL-ის ერთდროულობა სნეპშოტებით</td>
+<td>მკითხველები მწერლებს არ ბლოკავენ</td>
+</tr>
+<tr>
+<td><strong>NTP</strong></td>
+<td>დროის სინქრონი</td>
+<td>საათი ზუსტია</td>
+</tr>
+<tr>
+<td><strong>OAuth 2.0 / OIDC</strong></td>
+<td>ავტორიზაციის ჩარჩო / მასზე დაშენებული ავთენტიფიკაცია (ID token)</td>
+<td>„Google-ით შესვლა“</td>
+</tr>
+<tr>
+<td><strong>OpenAPI</strong></td>
+<td>API-ს მანქანური აღწერა (<code>/docs</code>)</td>
+<td>API-ს „ინსტრუქცია“</td>
+</tr>
+<tr>
+<td><strong>OQMI_CREATOR / MOXAZ_CREATOR</strong></td>
+<td>ოქმის შემდგენი / აზომვის შემდგენი (REGFIELDALL)</td>
+<td>ვინ შეადგინა / ვინ აზომა</td>
+</tr>
+<tr>
+<td><strong>ORM</strong></td>
+<td>ობიექტ-რელაციური მიმამაგრებელი (SQLAlchemy)</td>
+<td>ბაზის „თარჯიმანი“</td>
+</tr>
+<tr>
+<td><strong>PITR</strong></td>
+<td>point-in-time recovery: base backup + WAL</td>
+<td>„ვიდეოჩანაწერი“ — ნებისმიერ წუთზე დაბრუნება</td>
+</tr>
+<tr>
+<td><strong>PKCE / state / nonce</strong></td>
+<td>OAuth-ის დამცავი შემთხვევითი მნიშვნელობები</td>
+<td>კოდის მოპარვის / გაყალბების / გამეორების წინააღმდეგ</td>
+</tr>
+<tr>
+<td><strong>PK (primary key)</strong></td>
+<td>მწკრივის ცალსახა იდენტიფიკატორი</td>
+<td>ჩანაწერის „პირადი ნომერი“</td>
+</tr>
+<tr>
+<td><strong>port</strong></td>
+<td>სერვისის „კარი“ (443, 5432…)</td>
+<td>ბინის ნომერი</td>
+</tr>
+<tr>
+<td><strong>PostgreSQL</strong></td>
+<td>ღია კოდის სერვერული რელაციური ბაზა</td>
+<td>ბანკის სეიფი</td>
+</tr>
+<tr>
+<td><strong>presence</strong></td>
+<td>„ახლა ხსნის“ — ping 20 წმ, აქტიური 60 წმ</td>
+<td>ყვითელი მოციმციმე ნიშანი</td>
+</tr>
+<tr>
+<td><strong>proxy (reverse)</strong></td>
+<td>კლიენტის მოთხოვნას იღებს და შიდა სერვერს გადასცემს; TLS</td>
+<td>შენობის „მიმღები“</td>
+</tr>
+<tr>
+<td><strong>RBAC</strong></td>
+<td>როლებზე დაფუძნებული წვდომა</td>
+<td>„ბეჯი“</td>
+</tr>
+<tr>
+<td><strong>Redirect URI</strong></td>
+<td>სად აბრუნებს Google მომხმარებელს</td>
+<td>ერთადერთი დაშვებული „დაბრუნების მისამართი“</td>
+</tr>
+<tr>
+<td><strong>REDI</strong></td>
+<td>ოქმების/რეგისტრაციის ვებ-სისტემა (<code>api.napr.gov.ge/lr/redi</code>)</td>
+<td>იქ, სადაც ოქმი „ცხოვრობს“</td>
+</tr>
+<tr>
+<td><strong>REGFIELDALL</strong></td>
+<td>საველე ოქმების სრული ამონაწერი (ღამის GDB)</td>
+<td>ყველა აზომვის სია</td>
+</tr>
+<tr>
+<td><strong>REST</strong></td>
+<td>HTTP-ზე დაფუძნებული API-ს სტილი</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>RPO / RTO</strong></td>
+<td>დასაშვები დანაკარგი / აღდგენის დრო</td>
+<td>„რამდენი სამუშაო დაიკარგოს?“ / „რამდენ ხანს ვიყოთ უსისტემოდ?“</td>
+</tr>
+<tr>
+<td><strong>scope</strong></td>
+<td>(1) <code>app/scope.py</code> — ხილვადობის ფილტრი; (2) OAuth-ში — მოთხოვნილი წვდომა</td>
+<td>(1) „რა გიჩანს“; (2) „რას ვითხოვთ Google-ისგან“</td>
+</tr>
+<tr>
+<td><strong>session</strong></td>
+<td>სერვერზე შენახული შესვლის ჩანაწერი (<code>sessions</code>)</td>
+<td>„მიმღების წიგნი“</td>
+</tr>
+<tr>
+<td><strong>SFTP / SMB</strong></td>
+<td>ფაილის გადაცემა SSH-ით / Windows-ის ქსელური საქაღალდე</td>
+<td>„დაცული თარო“ / „Z: დისკი“</td>
+</tr>
+<tr>
+<td><strong>SLR</strong></td>
+<td>სისტემური რეგისტრაციის GIS სერვისი (WFS)</td>
+<td>რუკის მონაცემი</td>
+</tr>
+<tr>
+<td><strong>SMTP / SPF / DKIM</strong></td>
+<td>მეილის გაგზავნის პროტოკოლი / გამგზავნის დამადასტურებელი DNS ჩანაწერები</td>
+<td>„ფოსტა“ / „სპამში რომ არ მოხვდეს“</td>
+</tr>
+<tr>
+<td><strong>SQL</strong></td>
+<td>რელაციური ბაზის შეკითხვების ენა</td>
+<td>ბაზასთან „ლაპარაკის“ ენა</td>
+</tr>
+<tr>
+<td><strong>SQLite</strong></td>
+<td>ჩაშენებული, ფაილზე დაფუძნებული ბაზა</td>
+<td>პირადი რვეული</td>
+</tr>
+<tr>
+<td><strong>SSR</strong></td>
+<td>სერვერზე აწყობილი HTML</td>
+<td>მზა გვერდი მოდის</td>
+</tr>
+<tr>
+<td><strong>staging</strong></td>
+<td>სატესტო გარემო</td>
+<td>„სარეპეტიციო დარბაზი“</td>
+</tr>
+<tr>
+<td><strong>state machine</strong></td>
+<td>სასრული მდგომარეობები + დაშვებული გადასვლები</td>
+<td>ოქმის „მარშრუტის რუკა“</td>
+</tr>
+<tr>
+<td><strong>TLS / სერტიფიკატი</strong></td>
+<td>დაშიფვრის პროტოკოლი / სერვერის ვინაობის დამადასტურებელი</td>
+<td>კონვერტის „ლუქი“ / „პირადობა“</td>
+</tr>
+<tr>
+<td><strong>transaction / ACID</strong></td>
+<td>„ყველაფერი ან არაფერი“ + იზოლაცია + მდგრადობა</td>
+<td>ნახევრად შენახული არ არსებობს</td>
+</tr>
+<tr>
+<td><strong>UNIQUE</strong></td>
+<td>მნიშვნელობა (ან კომბინაცია) არ მეორდება</td>
+<td>ერთი ოქმი ორჯერ ვერ განაწილდება</td>
+</tr>
+<tr>
+<td><strong>upsert</strong></td>
+<td><code>INSERT … ON CONFLICT DO UPDATE</code></td>
+<td>„არის — განაახლე; არ არის — დაამატე“</td>
+</tr>
+<tr>
+<td><strong>uvicorn / worker</strong></td>
+<td>ASGI სერვერი / აპლიკაციის ერთი პროცესი</td>
+<td>„მიმტანი“ / მიმტანების რაოდენობა</td>
+</tr>
+<tr>
+<td><strong>version (ოპტიმისტური ბლოკირება)</strong></td>
+<td><code>qc_items.version</code>, ცვლილება მხოლოდ იმავე ვერსიაზე</td>
+<td>„მრიცხველი“ — სხვამ დაგასწრო?</td>
+</tr>
+<tr>
+<td><strong>view</strong></td>
+<td>შენახული SELECT, ვირტუალური ცხრილი</td>
+<td>„ფანჯარა“ სხვის არქივში</td>
+</tr>
+<tr>
+<td><strong>VM</strong></td>
+<td>ვირტუალური მანქანა</td>
+<td>„ვირტუალური კომპიუტერი“</td>
+</tr>
+<tr>
+<td><strong>VPN</strong></td>
+<td>დაშიფრული გვირაბი შიდა ქსელში</td>
+<td>„გვირაბი“ ოფისამდე</td>
+</tr>
+<tr>
+<td><strong>WAL</strong></td>
+<td>write-ahead log</td>
+<td>ჯერ „ჟურნალში“, მერე „წიგნში“</td>
+</tr>
+<tr>
+<td><strong>WFS / WMS</strong></td>
+<td>გეო-ობიექტების სერვისი / რუკის სურათის სერვისი</td>
+<td>რუკის „API“ / რუკის „სურათი“</td>
+</tr>
+<tr>
+<td><strong>არ დათანხმებული</strong></td>
+<td>ძველი „დავა“: „არ ვეთანხმები“, მენეჯერის დადასტურებით → QC მენეჯერი</td>
+<td>ველი არ ეთანხმება კონტროლს</td>
+</tr>
+</tbody>
+</table>
+<h2>12. მოკლე პასუხები ხშირ კითხვებზე (30)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>კითხვა</th>
+<th>პასუხი</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>რა არის?</td>
+<td>ერთი ვებ-პლატფორმა QC-ისთვის, ხუთი ინსტრუმენტის ნაცვლად</td>
+</tr>
+<tr>
+<td>2</td>
+<td>მზადაა?</td>
+<td>ფუნქციონალი — კი, რეალურ მონაცემზე; საწარმოო გარემო — არა</td>
+</tr>
+<tr>
+<td>3</td>
+<td>რატომ არა ცხრილები?</td>
+<td>ნელია, ისტორია არ აქვს, წესებს ვერ იცავს, ხილვადობას როლით ვერ მართავს</td>
+</tr>
+<tr>
+<td>4</td>
+<td>სერვერი?</td>
+<td>ერთი VM საკმარისია</td>
+</tr>
+<tr>
+<td>5</td>
+<td>რესურსი?</td>
+<td>💡 4 vCPU / 8 GB / 100 GB — შეფასებაა</td>
+</tr>
+<tr>
+<td>6</td>
+<td>OS?</td>
+<td>ნებისმიერი — თქვენი სტანდარტი; Linux + Docker უმარტივესია</td>
+</tr>
+<tr>
+<td>7</td>
+<td>ბაზა?</td>
+<td>PostgreSQL; SQL Server-იც შესაძლებელია, ტესტირებით</td>
+</tr>
+<tr>
+<td>8</td>
+<td>რატომ არა თქვენი ბაზა?</td>
+<td>თქვენსას მხოლოდ ვკითხულობთ; ჩვენს სამუშაოს ცალკე ადგილი სჭირდება (თქვენს სერვერზეც შეიძლება)</td>
+</tr>
+<tr>
+<td>9</td>
+<td>დისკი?</td>
+<td>ბაზა 94 MB; ზრდა რამდენიმე GB/წ</td>
+</tr>
+<tr>
+<td>10</td>
+<td>100 მომხმარებელი?</td>
+<td>ჩვეულებრივი დატვირთვაა, ტესტს ჩავატარებთ</td>
+</tr>
+<tr>
+<td>11</td>
+<td>ინტერნეტი?</td>
+<td>მხოლოდ Google-ის შესვლა; ყველაფერი დანარჩენი შიგნითაა</td>
+</tr>
+<tr>
+<td>12</td>
+<td>გარედან?</td>
+<td>საჯარო HTTPS ან VPN — თქვენი პოლიტიკით</td>
+</tr>
+<tr>
+<td>13</td>
+<td>პორტები?</td>
+<td>შემომავალი 443; შიგნით 8200, 5432; გამავალი Google 443, SMTP</td>
+</tr>
+<tr>
+<td>14</td>
+<td>ბექაპი?</td>
+<td>ღამის → PITR; ფოტოებიც; აღდგენის ტესტი</td>
+</tr>
+<tr>
+<td>15</td>
+<td>შესვლა?</td>
+<td>Google, მხოლოდ დარეგისტრირებული ელფოსტით; scope <code>openid email profile</code></td>
+</tr>
+<tr>
+<td>16</td>
+<td>პაროლები?</td>
+<td>არ ვინახავთ; საიდუმლოებები სერვერზე, კოდში არა</td>
+</tr>
+<tr>
+<td>17</td>
+<td>სხვისი ოქმი?</td>
+<td>სერვერზე იფილტრება; სხვისი → 404; ტესტებით</td>
+</tr>
+<tr>
+<td>18</td>
+<td>აუდიტი?</td>
+<td><code>qc_events</code> (ოქმის ისტორია, append-only) + <code>audit_log</code> (ადმინი, შესვლა)</td>
+</tr>
+<tr>
+<td>19</td>
+<td>თანამშრომელი წავიდა?</td>
+<td><code>active = false</code> → მყისიერად; HR-ის შეტყობინება გვჭირდება</td>
+</tr>
+<tr>
+<td>20</td>
+<td>გუნდი შეიცვალა?</td>
+<td>ახალი ოქმები ახალ მენეჯერთან; ძველი რჩება; QC მენეჯერს ხელით შეცვლა შეუძლია</td>
+</tr>
+<tr>
+<td>21</td>
+<td>რა მონაცემი გჭირდებათ?</td>
+<td>REGFIELDALL-ის 7 ველი, სპორადულის 10 სვეტი; პირადი ნომრები არა</td>
+</tr>
+<tr>
+<td>22</td>
+<td>როგორ?</td>
+<td>view → API → ფაილი</td>
+</tr>
+<tr>
+<td>23</td>
+<td>სინქრონი?</td>
+<td>ღამით, upsert, ჟურნალი, არაფერს ვშლით</td>
+</tr>
+<tr>
+<td>24</td>
+<td>თქვენი სისტემა რომ გაჩერდეს?</td>
+<td>QC მუშაობს; მხოლოდ ახალი განაწილება ფერხდება</td>
+</tr>
+<tr>
+<td>25</td>
+<td>წერთ ჩვენთან?</td>
+<td>არასოდეს</td>
+</tr>
+<tr>
+<td>26</td>
+<td>ციფრები ზუსტია?</td>
+<td>ერთი ფორმულა ყველასთვის; ძველ შემაჯამებელს დაემთხვა</td>
+</tr>
+<tr>
+<td>27</td>
+<td>ძველი მონაცემი?</td>
+<td>44 538 → 44 159 (+379 დუბლიკატი); ისტორია ვერ აღდგება</td>
+</tr>
+<tr>
+<td>28</td>
+<td>განახლება?</td>
+<td>სესია ბაზაშია; მორიგეობითი რესტარტი; მიგრაცია სატესტოზე</td>
+</tr>
+<tr>
+<td>29</td>
+<td>ვინ უვლის?</td>
+<td>აპლიკაციას ჩვენ (2 ადმინი), ინფრასტრუქტურას — თქვენთან ვთავაზობთ</td>
+</tr>
+<tr>
+<td>30</td>
+<td>Pre-QC?</td>
+<td>დემოა; სერვერზე ოფიციალური წვდომა სჭირდება (API / ექსპორტი)</td>
+</tr>
+</tbody>
+</table>
+<h2>13. სად რა არის კოდში</h2>
+<table>
+<thead>
+<tr>
+<th>რა</th>
+<th>ფაილი</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>პარამეტრები (<code>QCP_*</code>)</td>
+<td><code>app/config.py</code></td>
+</tr>
+<tr>
+<td>ბაზასთან კავშირი</td>
+<td><code>app/db.py</code></td>
+</tr>
+<tr>
+<td>ცხრილები</td>
+<td><code>app/models.py</code></td>
+</tr>
+<tr>
+<td>როლები, მდგომარეობები, წარწერები</td>
+<td><code>app/domain.py</code></td>
+</tr>
+<tr>
+<td>სამუშაო პროცესი</td>
+<td><code>app/workflow.py</code></td>
+</tr>
+<tr>
+<td>ხილვადობა</td>
+<td><code>app/scope.py</code></td>
+</tr>
+<tr>
+<td>სესია, CSRF, აუდიტი</td>
+<td><code>app/security.py</code></td>
+</tr>
+<tr>
+<td>Google-ით შესვლა</td>
+<td><code>app/routes/google_auth.py</code></td>
+</tr>
+<tr>
+<td>დემო შესვლა, PIN</td>
+<td><code>app/routes/auth.py</code></td>
+</tr>
+<tr>
+<td>JSON API</td>
+<td><code>app/routes/api.py</code></td>
+</tr>
+<tr>
+<td>განაწილება</td>
+<td><code>app/services/distribution/</code> (<code>source.py</code>, <code>algo.py</code>, <code>service.py</code>)</td>
+</tr>
+<tr>
+<td>ვინ ვისი გუნდიდანაა</td>
+<td><code>app/services/directory.py</code>, <code>app/services/seed.py</code> (<code>manager_map</code>)</td>
+</tr>
+<tr>
+<td>სპორადული</td>
+<td><code>app/services/sporadic.py</code></td>
+</tr>
+<tr>
+<td>ძველი ცხრილის გადმოტანა</td>
+<td><code>app/services/legacy_import.py</code>, <code>scripts/fetch_sheets.py</code>, <code>scripts/build_db.py</code></td>
+</tr>
+<tr>
+<td>სტატისტიკა</td>
+<td><code>app/services/stats.py</code></td>
+</tr>
+<tr>
+<td>მეილი</td>
+<td><code>app/services/notify.py</code></td>
+</tr>
+<tr>
+<td>უსაფრთხოების თავსართები</td>
+<td><code>app/main.py</code></td>
+</tr>
+<tr>
+<td>ტესტები</td>
+<td><code>tests/</code></td>
+</tr>
+</tbody>
+</table>
+<h2>14. არასოდეს თქვა ❌ → თქვი ✅</h2>
+<ul>
+<li>❌ „მზადაა საწარმოოსთვის“ → ✅ „ფუნქციონალი მზადაა; საწარმოოსთვის ინფრასტრუქტურა და ჩვენი ტექნიკური სამუშაო სჭირდება“;</li>
+<li>❌ „PostgreSQL-ზე მუშაობს“ → ✅ „PostgreSQL-ზე გადასვლა და ტესტირება ჩვენი სამუშაოა პილოტამდე“;</li>
+<li>❌ „300-ს გაუძლებს“ → ✅ „ჩვეულებრივი დატვირთვაა; ტესტით დავადასტურებთ“;</li>
+<li>❌ „მეილი იგზავნება“ → ✅ „მზადდება; SMTP-ის შემდეგ გაიგზავნება“;</li>
+<li>❌ „Pre-QC მუშაობს პლატფორმაში“ → ✅ „დემოა; ინტეგრაციის გზა უნდა ავირჩიოთ“;</li>
+<li>❌ რიცხვის გამოგონება → ✅ „ეს შეფასებაა / ამას გავზომავთ / გავარკვევ“.</li>
+</ul>
+<p>🔐 <strong>ეკრანზე და წერილში არასოდეს:</strong> token-ები, პაროლები, <code>config.json</code>, <code>.env</code>, <code>data\</code>, პირადი ნომრები, სპორადულის ორიგინალი ფაილი.</p>
+<p class="meta">გენერირებულია 06-სწრაფი-შპარგალკა.md-იდან — სწორდება მხოლოდ .md ფაილი.</p></body></html>

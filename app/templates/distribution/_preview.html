@@ -1,0 +1,76 @@
+{% if err %}
+<div class="notice err">⚠ {{ err }}</div>
+{% elif pv %}
+{% set c = pv.counts %}
+<div class="card" style="border-color:#9fc9d1">
+  <div class="card-head" style="background:#f1fafb"><h2>გადახედვა — ჯერ არაფერი ჩაწერილა</h2><span class="muted small">{{ pv.seconds }} წმ · seed {{ pv.seed }}</span></div>
+  <div class="card-body">
+    <div class="funnel">
+      <div class="f"><div class="small muted">დიაპაზონის კოდები</div><div class="n">{{ c.pool|num }}</div>{% if c.backlog %}<div class="small muted">+ ნაშთი {{ c.backlog|num }}</div>{% endif %}</div>
+      <span class="arrow">→</span>
+      <div class="f minus"><div class="small muted">ღია საველე წარმოება</div><div class="n">−{{ c.open_status_total|num }}</div></div>
+      <div class="f minus"><div class="small muted">უკვე კონტროლშია</div><div class="n">−{{ c.existing|num }}</div></div>
+      <div class="f minus" title="შემსრულებელი Field Group-ში არ არის (მაგ. რეგისტრატორი, ოფისი)"><div class="small muted">Field Group-ში არ არის</div><div class="n">−{{ c.not_field|num }}</div></div>
+      <div class="f minus warnbox" title="ამზომველი წასულია — QC მენეჯერმა მენეჯერი ხელით უნდა მიუწეროს"><div class="small muted">დაუჯგუფებელი</div><div class="n">−{{ c.unsorted|num }}</div>{% if c.unsorted %}<div class="small"><a href="/distribution/unsorted?date_from={{ pv.params.date_from }}&date_to={{ pv.params.date_to }}" target="_blank">მინიჭება →</a></div>{% endif %}</div>
+      {% if c.excluded_zone %}<div class="f minus"><div class="small muted">გამორიცხული ზონა</div><div class="n">−{{ c.excluded_zone|num }}</div></div>{% endif %}
+      <span class="arrow">→</span>
+      <div class="f"><div class="small muted">ვარგისი</div><div class="n">{{ c.candidates|num }}</div><div class="small muted">{{ c.blocks|num }} ბლოკი</div></div>
+      <span class="arrow">→</span>
+      <div class="f"><div class="small muted">შეირჩა %-ით</div><div class="n">{{ c.selected|num }}</div><div class="small muted">ნაგულისხმევი {{ pv.rules.default|int }}%</div></div>
+      <span class="arrow">→</span>
+      <div class="f final"><div class="small muted">განაწილდება (მაქს. {{ c.capacity|num }})</div><div class="n">{{ c.assigned|num }}</div><div class="small muted">{{ c.assigned_blocks|num }} ბლოკი</div></div>
+    </div>
+    {% if c.overflow %}<div class="notice demo" style="margin-top:12px">⚠ {{ c.overflow|num }} შერჩეული ოქმი ოპერატორების რაოდენობაში ვერ ჩაეტია — დადასტურების შემდეგ <b>შემდეგ განაწილებაზე პირველი</b> შევა.</div>{% endif %}
+    {% if pv.unsorted_top %}<p class="hint" style="margin-top:10px">დაუჯგუფებელი (წასული ამზომველები): {% for n, k in pv.unsorted_top %}{{ n }} ({{ k }}){% if not loop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
+    {% if pv.not_field_top %}<p class="hint">Field Group-ში არ არიან (ხშირი შემდგენები): {% for n, k in pv.not_field_top %}{{ n }} ({{ k }}){% if not loop.last %}, {% endif %}{% endfor %} — თუ რომელიმე საველე თანამშრომელია, Field Group-ში უნდა დაემატოს.</p>{% endif %}
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-head"><h2>ოპერატორები</h2></div>
+    <div class="card-body flush table-wrap">
+      <table class="data compact"><thead><tr><th>ოპერატორი</th><th class="num">მაქსიმუმი</th><th class="num">ოქმი</th><th class="num">ბლოკი</th><th style="width:30%">შევსება</th></tr></thead><tbody>
+      {% for o in pv.operators %}<tr><td>{{ o.operator }}</td><td class="num">{{ o.quota|num }}</td><td class="num">{{ o.protocols|num }}</td><td class="num">{{ o.blocks|num }}</td><td><div class="bar"><span style="width:{{ [o.fill, 100]|min }}%"></span></div><span class="small muted">{{ o.fill }}%</span></td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>მენეჯერების დაფარვა</h2><span class="muted small">ვარგისი → შეირჩა → განაწილდება</span></div>
+    <div class="card-body flush table-wrap" style="max-height:420px;overflow:auto">
+      <table class="data compact"><thead><tr><th>მენეჯერი</th><th class="num">ვარგისი</th><th class="num">შეირჩა</th><th class="num">%</th><th class="num">განაწილდება</th></tr></thead><tbody>
+      {% for m in pv.managers %}<tr><td>{{ m.name }}</td><td class="num">{{ m.eligible|num }}</td><td class="num">{{ m.selected|num }}</td><td class="num">{{ m.actual }}%{% if m.rule is not none %} <span class="tag" title="მენეჯერის წესი">წესი {{ m.rule|int }}%</span>{% endif %}</td><td class="num"><b>{{ m.assigned|num }}</b></td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h2>ზონების დაფარვა</h2><span class="muted small">ბლოკი განუყოფელია — პროცენტი მიახლოებითია</span></div>
+  <div class="card-body flush table-wrap" style="max-height:360px;overflow:auto">
+    <table class="data compact"><thead><tr><th>ზონა</th><th class="num">ვარგისი</th><th class="num">შეირჩა</th><th class="num">%</th><th class="num">განაწილდება</th></tr></thead><tbody>
+    {% for z in pv.zones %}<tr><td>{{ z.key }} {{ zone_names.get(z.key, '') }}</td><td class="num">{{ z.eligible|num }}</td><td class="num">{{ z.selected|num }}</td><td class="num">{{ z.actual }}%{% if z.rule is not none %} <span class="tag" title="ზონის წესი">წესი {{ z.rule|int }}%</span>{% endif %}</td><td class="num"><b>{{ z.assigned|num }}</b></td></tr>{% endfor %}
+    </tbody></table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h2>ჩანაწერები</h2><span class="muted small">ნაჩვენებია პირველი {{ [pv.rows|length, 150]|min }} / {{ pv.rows|length|num }}</span></div>
+  <div class="card-body flush table-wrap" style="max-height:420px;overflow:auto">
+    <table class="data compact"><thead><tr><th>ნახაზის შეტანა</th><th>საკადასტრო</th><th>ოქმი</th><th>ამზომველები</th><th>მენეჯერი</th><th class="num">%</th><th>ოპერატორი</th></tr></thead><tbody>
+    {% for r in pv.rows[:150] %}<tr><td class="nowrap">{{ r.disp_dt|dt }}</td><td class="cad">{{ r.cadcode }}</td><td class="mono">{{ r.protocol }}{% if r.backlog %} <span class="tag" title="წინა განაწილების ნაშთი">ნაშთი</span>{% endif %}</td><td>{% for n, _ in r.surveyors %}{{ n }}{% if not loop.last %}, {% endif %}{% endfor %}</td><td>{{ r.manager }}{% if r.manager_ids|length > 1 %} <span class="tag" title="ამზომველები სხვადასხვა გუნდიდან — ოქმი ყველა მენეჯერს ეკუთვნის">+{{ r.manager_ids|length - 1 }}</span>{% endif %}</td><td class="num">{{ r.pct|int }}</td><td>{{ r.operator }}</td></tr>{% endfor %}
+    </tbody></table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <form method="post" action="/distribution/confirm" style="display:inline">
+      <input type="hidden" name="token" value="{{ pv.token }}">
+      <button class="btn btn-primary" type="submit" data-confirm="დავადასტუროთ განაწილება? {{ c.assigned }} ოქმი ოპერატორებს მიეწერებათ (მხოლოდ ლოკალურ ბაზაში){% if c.overflow %}; {{ c.overflow }} შემდეგ განაწილებას გადაეცემა{% endif %}.">✓ დადასტურება და განაწილება</button>
+    </form>
+    <a class="btn btn-secondary" href="/distribution/export/{{ pv.token }}">Excel-ად ჩამოტვირთვა</a>
+    <span class="hint">დადასტურებამდე ბაზაში არაფერი იწერება. ერთი ოქმის ორჯერ განაწილებას ბაზის შეზღუდვა კრძალავს.</span>
+  </div>
+</div>
+{% endif %}

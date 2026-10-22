@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "_macros.html" import verdict, codes, pager, surveyors, response %}
+{% block title %}არ დათანხმებულები{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>არ დათანხმებულები — QC მენეჯერის გადაწყვეტილება</h1>
+    <div class="sub">ველი არ ეთანხმება კონტროლის გადაწყვეტილებას და საველე მენეჯერმა „არ ვეთანხმები“ დაადასტურა. გადაწყვიტეთ: ხარვეზი რჩება (დეტალური ახსნით), ველი მართალია (ოპერატორის შეცდომა) ან ორივე მართალია.</div>
+  </div>
+  <span class="chip c-blue">{{ total|num }} გადასაწყვეტი</span>
+</div>
+<div class="wtabs">
+  <a class="wtab {% if p.kind not in (D.SYSTEMATIC, D.SPORADIC) %}active{% endif %}" href="/qc/disagreements?kind=all">ყველა <span class="cnt">{{ ((by_kind.get(D.SYSTEMATIC) or 0) + (by_kind.get(D.SPORADIC) or 0))|num }}</span></a>
+  <a class="wtab {% if p.kind == D.SYSTEMATIC %}active{% endif %}" href="/qc/disagreements?kind={{ D.SYSTEMATIC }}">სისტემური <span class="cnt">{{ (by_kind.get(D.SYSTEMATIC) or 0)|num }}</span></a>
+  <a class="wtab {% if p.kind == D.SPORADIC %}active{% endif %}" href="/qc/disagreements?kind={{ D.SPORADIC }}">სპორადული <span class="cnt">{{ (by_kind.get(D.SPORADIC) or 0)|num }}</span></a>
+</div>
+<div class="card"><div class="card-body">
+  <form class="filters" method="get" action="/qc/disagreements">
+    <input type="hidden" name="kind" value="{{ p.kind or 'all' }}">
+    <div class="field"><label for="f-p">ოქმის#</label><input id="f-p" type="text" name="protocol" value="{{ p.protocol or '' }}"></div>
+    <div class="field"><label for="f-c">საკ. კოდი</label><input id="f-c" type="text" name="cad" value="{{ p.cad or '' }}"></div>
+    <div class="field"><label for="f-o">ოპერატორი</label><select id="f-o" name="operator"><option value="">— ყველა —</option>{% for i, n in operators %}<option value="{{ i }}" {% if p.operator == i|string %}selected{% endif %}>{{ n }}</option>{% endfor %}</select></div>
+    <div class="filters-actions"><a class="btn btn-ghost" href="/qc/disagreements">გასუფთავება</a><button class="btn btn-primary">ძებნა</button></div>
+  </form>
+</div></div>
+{% for i in rows %}
+<div class="card">
+  <div class="card-head">
+    <h2 class="mono"><a href="/items/{{ i.id }}?back=/qc/disagreements">ოქმი {{ i.protocol_number }} · {{ i.cadcode }}</a>{% if i.kind == D.SPORADIC %} <span class="tag kind-sporadic">სპორ.</span>{% endif %}</h2>
+    <span class="small muted">ოპერატორი: <b>{{ i.operator.full_name if i.operator else '—' }}</b> · მენეჯერი: <b>{{ i.field_manager.full_name if i.field_manager else '—' }}</b>{% if i.dispute_count > 1 %} · <span class="tag">{{ i.dispute_count }}-ე ჯერ</span>{% endif %}{% if i.is_legacy %} · <span class="tag legacy">ძველი ცხრილიდან</span>{% endif %}</span>
+  </div>
+  <div class="card-body">
+    <div class="grid-3">
+      <div><div class="label">QC — {{ verdict(i.verdict) }} {{ codes(i) }}</div><div class="quote" style="margin-top:6px">{{ i.qc_comment or '—' }}</div></div>
+      <div><div class="label">ველის პასუხი — {{ response(i.field_response) }}</div><div class="quote field" style="margin-top:6px">{{ i.field_comment or '—' }}</div></div>
+      <div><div class="label">მენეჯერის დადასტურება / წინა ახსნა</div><div class="quote qcm" style="margin-top:6px">{{ i.manager_visa_comment or i.qcm_explanation or '—' }}</div></div>
+    </div>
+    <div class="form-actions" style="margin-top:12px"><a class="btn btn-primary btn-sm" href="/items/{{ i.id }}?back=/qc/disagreements">გადაწყვეტილების მიღება →</a><span class="muted small">ამზომველი: {{ surveyors(i) }}</span></div>
+  </div>
+</div>
+{% else %}
+<div class="card"><div class="empty">გადასაწყვეტი არ დათანხმებული არ არის.</div></div>
+{% endfor %}
+<div class="card">{{ pager(page, pages, total, qs) }}</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+        <div class="form-row">
+          <span class="label">ოქმის ამზომველები <span class="muted small">— ყველა ხედავს შემთხვევას და შეუძლია პასუხი; მოხსენით, ვინც არ მონაწილეობდა</span></span>
+          <input type="hidden" name="surveyors_present" value="1">
+          <div class="people-box">
+            {% for p in item.surveyors if p.user_id %}
+            <label class="pchip"><input type="checkbox" name="surveyors" value="{{ p.user_id }}" checked> {{ p.display_name }}{% if p.is_primary %} <span class="muted small">(შემდგენი)</span>{% endif %}</label>
+            {% endfor %}
+            {% for p in item.surveyors if not p.user_id %}<span class="pchip off" title="სახელი მომხმარებელს ვერ მიება — ადმინი ასწორებს">{{ p.display_name }} ?</span>{% endfor %}
+          </div>
+          <select name="surveyors" aria-label="ამზომველის დამატება" style="max-width:360px;margin-top:6px">
+            <option value="">+ ამზომველის დამატება…</option>
+            {% for i, n in surveyor_options %}<option value="{{ i }}">{{ n }}</option>{% endfor %}
+          </select>
+        </div>

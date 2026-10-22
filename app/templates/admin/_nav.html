@@ -1,0 +1,11 @@
+{% set ap = request.url.path %}
+<div class="wtabs">
+  <a class="wtab {% if ap == '/admin' or ap.startswith('/admin/users') %}active{% endif %}" href="/admin">მომხმარებლები და როლები</a>
+  <a class="wtab {% if ap.startswith('/admin/teams') %}active{% endif %}" href="/admin/teams">გუნდები</a>
+  <a class="wtab {% if ap.startswith('/admin/codes') %}active{% endif %}" href="/admin/codes">ხარვეზის კოდები</a>
+  <a class="wtab {% if ap.startswith('/admin/settings') %}active{% endif %}" href="/admin/settings">პარამეტრები</a>
+  <a class="wtab {% if ap.startswith('/admin/import') %}active{% endif %}" href="/admin/import">მონაცემების გადმოტანა</a>
+  <a class="wtab {% if ap.startswith('/admin/emails') %}active{% endif %}" href="/admin/emails">მეილები</a>
+  <a class="wtab {% if ap.startswith('/admin/audit') %}active{% endif %}" href="/admin/audit">აუდიტის ჟურნალი</a>
+  <a class="wtab" href="/docs" target="_blank">API (IT-სთვის) ↗</a>
+</div>

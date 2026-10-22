@@ -1,0 +1,128 @@
+# -*- coding: utf-8 -*-
+"""
+JSON API — სამომავლო ინტეგრაციებისთვის (სააგენტოს სხვა სისტემები, მობილური, Pre-QC).
+
+ყველა endpoint იგივე ხილვადობის ფილტრს გადის, რასაც გვერდები.
+სრული აღწერა: /docs (OpenAPI).
+"""
+import datetime as dt
+
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy import delete, select
+from sqlalchemy.orm import selectinload
+
+from .. import domain as D
+from .. import scope
+from ..db import get_db
+from ..models import ItemPerson, Presence, QcEvent, QcItem
+from ..security import current, same_origin
+
+PRESENCE_SECONDS = 60          # რამდენ ხანს ითვლება „ახლა ხსნის" ბოლო სიგნალის შემდეგ
+
+router = APIRouter(prefix="/api", tags=["API"])
+
+
+@router.get("/health")
+def health(db=Depends(get_db)):
+    ok = db.scalar(select(QcItem.id).limit(1)) is not None
+    return {"status": "ok" if ok else "empty"}
+
+
+@router.get("/me")
+def me(ctx=Depends(current)):
+    return {"id": ctx.user.id, "name": ctx.user.full_name, "role": ctx.role,
+            "roles": sorted(ctx.user.role_set)}
+
+
+def _item_json(i: QcItem, detail=False):
+    d = {"id": i.id, "protocol": i.protocol_number, "cadcode": i.cadcode, "kind": i.kind,
+         "zone": i.zone, "state": i.state, "state_label": D.STATE_LABELS.get(i.state),
+         "verdict": i.verdict, "codes": i.code_list,
+         "checked_at": i.checked_at.isoformat() if i.checked_at else None,
+         "operator": i.operator.full_name if i.operator else None,
+         "field_manager": i.field_manager.full_name if i.field_manager else None,
+         "surveyors": i.surveyor_names,
+         "managers": [p.display_name for p in i.managers]}
+    if detail:
+        d.update({"qc_comment": i.qc_comment, "field_response": i.field_response,
+                  "field_comment": i.field_comment, "close_reason": i.close_reason,
+                  "version": i.version})
+    return d
+
+
+@router.get("/items")
+def items(request: Request, state: str | None = None, limit: int = 50, offset: int = 0,
+          ctx=Depends(current), db=Depends(get_db)):
+    if ctx.role == D.COORDINATOR:
+        raise HTTPException(403, "კოორდინატორს მხოლოდ სტატისტიკა უჩანს.")
+    q = scope.items_query(ctx).options(selectinload(QcItem.codes), selectinload(QcItem.operator),
+                                       selectinload(QcItem.field_manager),
+                                       selectinload(QcItem.people).selectinload(ItemPerson.user))
+    if state in D.STATES:
+        q = q.where(QcItem.state == state)
+    rows = db.scalars(q.order_by(QcItem.id.desc()).limit(min(limit, 200)).offset(offset)).all()
+    return {"items": [_item_json(i) for i in rows], "limit": limit, "offset": offset}
+
+
+@router.get("/items/{item_id}")
+def item(item_id: int, ctx=Depends(current), db=Depends(get_db)):
+    i = db.get(QcItem, item_id)
+    if i is None or not scope.can_view(ctx, i):
+        raise HTTPException(404, "ვერ მოიძებნა")
+    events = db.scalars(select(QcEvent).join(QcItem).where(QcEvent.item_id == i.id,
+                                                            scope.event_filter(ctx))
+                        .order_by(QcEvent.id)).all()
+    d = _item_json(i, detail=True)
+    d["history"] = [{"at": e.at.isoformat(), "action": e.action, "from": e.from_state,
+                     "to": e.to_state, "role": e.actor_role, "comment": e.comment,
+                     "approx": e.approx} for e in events]
+    return d
+
+
+# ── ვინ ხსნის ოქმს ახლა (ყვითელი მოციმციმე ნიშანი) ─────────────────────
+def _others(db, ids, me_id):
+    since = dt.datetime.now() - dt.timedelta(seconds=PRESENCE_SECONDS)
+    out = {}
+    for pr in db.scalars(select(Presence).where(Presence.item_id.in_(ids), Presence.last_seen >= since,
+                                                Presence.user_id != me_id)
+                         .options(selectinload(Presence.user))):
+        out.setdefault(pr.item_id, []).append({"name": pr.user.full_name,
+                                               "role": D.ROLE_SHORT.get(pr.role, "")})
+    return out
+
+
+@router.post("/presence/{item_id}")
+def presence_ping(item_id: int, request: Request, ctx=Depends(current), db=Depends(get_db)):
+    """ოქმის გვერდი ყოველ ~20 წამში აგზავნის — „ამ ოქმს ვხსნი"."""
+    same_origin(request)
+    item = db.get(QcItem, item_id)
+    if item is None or not scope.can_view(ctx, item):
+        raise HTTPException(404, "ვერ მოიძებნა")
+    now = dt.datetime.now()
+    pr = db.get(Presence, (item_id, ctx.user.id))
+    if pr is None:
+        db.add(Presence(item_id=item_id, user_id=ctx.user.id, role=ctx.role, last_seen=now))
+    else:
+        pr.last_seen, pr.role = now, ctx.role
+    db.execute(delete(Presence).where(Presence.last_seen < now - dt.timedelta(minutes=10)))
+    db.commit()
+    return {"others": _others(db, [item_id], ctx.user.id).get(item_id, [])}
+
+
+@router.post("/presence/{item_id}/leave")
+def presence_leave(item_id: int, request: Request, ctx=Depends(current), db=Depends(get_db)):
+    same_origin(request)
+    db.execute(delete(Presence).where(Presence.item_id == item_id, Presence.user_id == ctx.user.id))
+    db.commit()
+    return {"ok": True}
+
+
+@router.get("/presence")
+def presence(ids: str = "", ctx=Depends(current), db=Depends(get_db)):
+    """სიისთვის: რომელ ოქმებს ხსნის ახლა სხვა (მხოლოდ ჩემთვის ხილული ოქმები)."""
+    wanted = [int(x) for x in ids.split(",") if x.strip().isdigit()][:300]
+    if not wanted:
+        return {}
+    visible = [i for (i,) in db.execute(scope.items_query(ctx).with_only_columns(QcItem.id)
+                                        .where(QcItem.id.in_(wanted)))]
+    return _others(db, visible, ctx.user.id)

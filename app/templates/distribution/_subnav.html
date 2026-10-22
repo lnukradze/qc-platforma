@@ -1,0 +1,3 @@
+<div class="wtabs" role="tablist" aria-label="განაწილების ნაწილები">
+  {% for href, label, key in subnav %}<a class="wtab {% if sub == key %}active{% endif %}" href="{{ href }}">{{ label }}</a>{% endfor %}
+</div>

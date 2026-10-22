@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}მონაცემების გადმოტანა{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>მონაცემების გადმოტანა</h1><div class="sub">ძველი კონტროლის ცხრილი → ერთიანი ბაზა · შეჯერების ანგარიში</div></div></div>
+{% include "admin/_nav.html" %}
+{% for run in runs[:1] %}{% set r = run.report %}
+<div class="notice info">წყარო: კონტროლის ცხრილი (ოპერატორების ჩანართები + „სპორადული“), წამოღებულია მხოლოდ კითხვით {{ r.fetched_at|dt }}. სარკე-ჩანართები („ყველა-მონაცემი“, „SQL“) განზრახ არ იკითხება — თორემ ყველაფერი გაორმაგდებოდა.</div>
+<div class="kpis">
+  <div class="kpi accent-info"><div class="k">წყაროს მწკრივები</div><div class="v">{{ r.source_rows|num }}</div></div>
+  <div class="kpi accent-pos"><div class="k">უნიკალური ოქმი + კოდი</div><div class="v">{{ r.unique_items|num }}</div></div>
+  <div class="kpi accent-warn"><div class="k">დუბლიკატი (მოცილდა)</div><div class="v">{{ r.duplicates|num }}</div><div class="s">რჩება ყველაზე სრული ჩანაწერი</div></div>
+  <div class="kpi accent-pos"><div class="k">ამზომველი მიება</div><div class="v">{{ r.planner_links.linked|num }}</div><div class="s">{{ r.planner_links.unlinked|num }} — ვერ მიება · {{ r.aliases_loaded }} ალიასი Reference-იდან</div></div>
+</div>
+<div class="grid-2">
+  <div class="card"><div class="card-head"><h2>ჩანართების მიხედვით</h2></div><div class="card-body flush">
+    <table class="data compact"><thead><tr><th>ჩანართი</th><th class="num">მწკრივი</th><th class="num">ჩანაწერი</th></tr></thead><tbody>
+    {% for t, v in r.per_tab.items() %}<tr><td>{{ t }}</td><td class="num">{{ v.rows|num }}</td><td class="num">{{ v.records|num }}</td></tr>{% endfor %}
+    </tbody></table></div></div>
+  <div>
+    <div class="card"><div class="card-head"><h2>გადაყვანის შედეგი</h2></div><div class="card-body">
+      <dl class="kv">
+        {% for s, n in r.states.items() %}<dt>{{ STATE_LABELS.get(s, s) }}</dt><dd>{{ n|num }}</dd>{% endfor %}
+      </dl>
+      <p class="hint">წესები: დადებითი → დახურული; M=TRUE → დახურული („გასწორდა“/„გათვალისწინებულია“); J „არ ვეთანხმები“ → QC მენეჯერის გადასაწყვეტი; J „შესწორდა/გავითვალისწინებთ“ → QC-ის გადასამოწმებელი; O შევსებული → მენეჯერთან დაბრუნებული; სხვა → ველზე. ეს წესები დასადასტურებელია.</p>
+    </div></div>
+    <div class="card"><div class="card-head"><h2>მიუბმელი ამზომველები</h2></div><div class="card-body small">
+      {% for name, n in r.unmatched_planners %}<span class="tag" style="margin:0 4px 4px 0">{{ name }} · {{ n }}</span>{% else %}<span class="muted">ყველა სახელი მიება.</span>{% endfor %}
+    </div></div>
+  </div>
+</div>
+<div class="card"><div class="card-head"><h2>დუბლიკატების ნიმუში</h2><span class="muted small">{{ r.duplicates }} სულ</span></div><div class="card-body flush table-wrap" style="max-height:360px;overflow:auto">
+  <table class="data compact"><thead><tr><th>ოქმი</th><th>საკ. კოდი</th><th>დარჩა</th><th>გამოტოვდა</th></tr></thead><tbody>
+  {% for d in r.duplicate_samples %}<tr><td class="mono">{{ d.protocol }}</td><td class="cad">{{ d.cadcode }}</td><td>{{ d.kept }}</td><td>{{ d.dropped|join(', ') }}</td></tr>{% endfor %}
+  </tbody></table></div></div>
+{% else %}
+<div class="card"><div class="empty">გადმოტანა ჯერ არ გაშვებულა: <code>scripts\build_db.py</code></div></div>
+{% endfor %}
+{% endblock %}

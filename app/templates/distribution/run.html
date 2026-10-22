@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}განაწილება #{{ run.id }}{% endblock %}
+{% block content %}
+{% set s = run.summary or {} %}
+<div class="page-head">
+  <div>
+    <div class="small"><a href="/distribution">← განაწილება</a></div>
+    <h1>განაწილება #{{ run.id }}</h1>
+    <div class="sub">{{ run.created_at|dt }} · {{ run.created_by.full_name if run.created_by else '—' }} · {{ run.item_count|num }} ოქმი · seed {{ run.seed }}</div>
+  </div>
+  <a class="btn btn-primary" href="/qc?tab=todo">გასავლელების ნახვა →</a>
+</div>
+{% include "distribution/_subnav.html" %}
+<div class="grid-2">
+  <div class="card"><div class="card-head"><h2>პარამეტრები</h2></div><div class="card-body">
+    <dl class="kv">
+      <dt>პერიოდი</dt><dd>{{ run.params.date_from|date }} – {{ run.params.date_to|date }}</dd>
+      <dt>ნაგულისხმევი</dt><dd>{{ (run.params.default_pct or 70)|int }}%</dd>
+      <dt>საკუთარი პროცენტები</dt><dd>{% for r in run.params.rules or [] %}{{ {'zone': 'ზონა', 'sector': 'სექტორი', 'manager': 'მენეჯერი'}.get(r.type, r.type) }} {{ r.key }} — {{ r.pct|int }}%{% if not loop.last %}<br>{% endif %}{% else %}—{% endfor %}</dd>
+      <dt>წყარო</dt><dd class="mono small">{{ run.source_info.gdb_name if run.source_info else '—' }}</dd>
+      {% if s.carried_over %}<dt>ნაშთი</dt><dd>{{ s.carried_over }} ოქმი ვერ ჩაეტია — შემდეგ განაწილებაზე პირველი შევა</dd>{% endif %}
+      {% if s.skipped %}<dt>გამოტოვებული</dt><dd>{{ s.skipped }} (ამასობაში სხვამ უკვე განაწილა)</dd>{% endif %}
+    </dl></div></div>
+  <div class="card"><div class="card-head"><h2>ოპერატორები</h2></div><div class="card-body flush">
+    <table class="data compact"><thead><tr><th>ოპერატორი</th><th class="num">მაქსიმუმი</th><th class="num">ოქმი</th><th class="num">ბლოკი</th></tr></thead><tbody>
+    {% for o in s.operators or [] %}<tr><td>{{ o.operator }}</td><td class="num">{{ o.quota|num }}</td><td class="num">{{ o.protocols|num }}</td><td class="num">{{ o.blocks|num }}</td></tr>{% endfor %}
+    </tbody></table></div></div>
+</div>
+{% if s.managers %}
+<div class="card"><div class="card-head"><h2>მენეჯერების დაფარვა</h2></div><div class="card-body flush table-wrap">
+  <table class="data compact"><thead><tr><th>მენეჯერი</th><th class="num">ვარგისი</th><th class="num">შეირჩა</th><th class="num">%</th><th class="num">განაწილდა</th></tr></thead><tbody>
+  {% for m in s.managers %}<tr><td>{{ m.name }}</td><td class="num">{{ m.eligible|num }}</td><td class="num">{{ m.selected|num }}</td><td class="num">{{ m.actual }}%</td><td class="num"><b>{{ m.assigned|num }}</b></td></tr>{% endfor %}
+  </tbody></table></div></div>
+{% endif %}
+{% endblock %}

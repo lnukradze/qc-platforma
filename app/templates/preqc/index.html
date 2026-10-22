@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pager %}
+{% block title %}Pre-QC ხარვეზები{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Pre-QC ხარვეზები</h1>
+    <div class="sub">პროგრამის ავტომატური წინასწარი შემოწმება — ხარვეზი ჩანს მანამ, სანამ ოქმი კონტროლში მივა</div>
+  </div>
+</div>
+<div class="notice demo"><b>სადემონსტრაციო მონაცემი.</b>&nbsp;ოქმები, ამზომველები და ხარვეზები გამოგონილია (სადემონსტრაციო გუნდი). IT-სგან რესურსების დაზუსტების შემდეგ აქ Pre-QC Validator-ის რეალური შედეგები გამოჩნდება. კონტროლის ოპერატორს ეს განყოფილება არ უჩანს.</div>
+
+<div class="card">
+  <div class="card-head"><h2>ავტომატური შემოწმების გრაფიკი</h2><span class="muted small">წესი: მივლინების მე-3 დღიდან — ყოველ დღეს მოწმდება {{ lag }} დღის წინანდელი ოქმები</span></div>
+  <div class="card-body">
+    {% if current %}
+    <p style="margin:0 0 8px"><b>მიმდინარე მივლინება {{ current.n }}</b> ({{ current.start|date }} – {{ current.end|date }}) · დღეს მე-{{ cur_day }} დღეა.
+      {% if cur_day > lag %}დღეს მოწმდება მე-{{ cur_day - lag }} დღის ოქმები.{% else %}Pre-QC დაიწყება {{ (current.start)|date }}-დან მე-{{ lag + 1 }} დღეს.{% endif %}</p>
+    <div class="steps">{% for s in sched_cur %}<div class="step {{ s.status }} {% if s.after_end %}after{% endif %}"><b>{{ s.date.strftime('%d.%m') }}</b>{% if s.checks_day %}დღე {{ s.checks_day }}-ის ოქმები{% else %}<span class="muted">—</span>{% endif %}</div>{% endfor %}</div>
+    {% endif %}
+    {% if demo_mission %}
+    <p style="margin:14px 0 8px"><b>სადემონსტრაციო მონაცემის მივლინება {{ demo_mission.n }}</b> ({{ demo_mission.start|date }} – {{ demo_mission.end|date }})</p>
+    <div class="steps">{% for s in sched_demo %}<div class="step {{ s.status }} {% if s.after_end %}after{% endif %}"><b>{{ s.date.strftime('%d.%m') }}</b>{% if s.checks_day %}{{ s.target_date.strftime('%d.%m') }}-ის ოქმები · {{ by_day.get(s.target_date, 0) }}{% else %}<span class="muted">—</span>{% endif %}</div>{% endfor %}</div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="kpis">
+  <div class="kpi accent-info"><div class="k">შემოწმებული ოქმი</div><div class="v">{{ n|num }}</div><div class="s">საშუალო ქულა {{ avg or '—' }}</div></div>
+  <div class="kpi accent-pos"><div class="k">მზადაა</div><div class="v">{{ status.get('pass', 0)|num }}</div><div class="s">ქულა ≥ 90, კრიტიკულის გარეშე</div></div>
+  <div class="kpi accent-rec"><div class="k">რეკომენდაციით</div><div class="v">{{ status.get('warn', 0)|num }}</div><div class="s">ქულა 70–89</div></div>
+  <div class="kpi accent-warn"><div class="k">ხელით გადასამოწმებელი</div><div class="v">{{ status.get('review', 0)|num }}</div><div class="s">მონაცემი ვერ დადასტურდა</div></div>
+  <div class="kpi accent-neg"><div class="k">გასასწორებელი</div><div class="v">{{ status.get('fail', 0)|num }}</div><div class="s">კრიტიკული ხარვეზი</div></div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-head"><h2>ყველაზე ხშირი (ოფიციალური კოდით)</h2></div>
+    <div class="card-body flush">
+      <table class="data compact"><thead><tr><th>კოდი</th><th class="num">ოქმი</th><th></th></tr></thead><tbody>
+      {% set mx = codes[0][1] if codes else 1 %}
+      {% for code, k in codes %}<tr class="clickable" data-href="/preqc?code={{ code }}"><td><span class="code">{{ code }}</span></td><td class="num">{{ k }}</td><td style="width:50%"><div class="bar"><span style="width:{{ 100 * k / mx }}%"></span></div></td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+  </div>
+  {% if ctx.role != D.SURVEYOR %}
+  <div class="card">
+    <div class="card-head"><h2>ამზომველების მიხედვით</h2></div>
+    <div class="card-body flush">
+      <table class="data compact"><thead><tr><th>ამზომველი</th><th class="num">მზადაა</th><th class="num">რეკომ.</th><th class="num">გადასამოწ.</th><th class="num">გასასწორ.</th></tr></thead><tbody>
+      {% for sid, c in per_surv.items() %}<tr class="clickable" data-href="/preqc?surveyor={{ sid }}"><td>{{ names.get(sid, '—') }}</td><td class="num">{{ c.get('pass', 0) }}</td><td class="num">{{ c.get('warn', 0) }}</td><td class="num">{{ c.get('review', 0) }}</td><td class="num"><b class="v-negative">{{ c.get('fail', 0) }}</b></td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="card-head"><h2>შემოწმებული ოქმები</h2>
+    <form method="get" action="/preqc" style="display:flex;gap:8px;align-items:center">
+      <select name="status" onchange="this.form.submit()" aria-label="სტატუსი"><option value="">ყველა სტატუსი</option>{% for k, l in labels.items() %}<option value="{{ k }}" {% if p.status == k %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+      {% if p.code or p.surveyor or p.day %}<a class="btn btn-ghost btn-sm" href="/preqc">ფილტრის მოხსნა</a>{% endif %}
+    </form>
+  </div>
+  <div class="card-body flush table-wrap">
+    <table class="data cards">
+      <thead><tr><th>ოქმი</th><th>ამზომველი</th><th>ოქმის დღე</th><th>შემოწმდა</th><th class="num">ქულა</th><th>სტატუსი</th><th>ხარვეზები</th></tr></thead>
+      <tbody>
+      {% for c in rows %}
+      <tr class="clickable" data-href="/preqc/{{ c.id }}">
+        <td data-label="ოქმი" class="mono"><a href="/preqc/{{ c.id }}">{{ c.protocol_number }}</a> <span class="tag demo">დემო</span></td>
+        <td data-label="ამზომველი">{{ c.surveyor.full_name if c.surveyor else '—' }}</td>
+        <td data-label="ოქმის დღე">{{ c.protocol_date|date }}</td>
+        <td data-label="შემოწმდა">{{ c.checked_on|date }}</td>
+        <td data-label="ქულა" class="num"><b class="st-{{ c.status }}">{{ c.score }}</b></td>
+        <td data-label="სტატუსი"><span class="st-{{ c.status }}" style="font-weight:600">{{ labels[c.status] }}</span></td>
+        <td data-label="ხარვეზები">{% for f in c.findings %}<span class="code" title="{{ f.message }}">{{ f.official_code }}</span>{% else %}<span class="muted">—</span>{% endfor %}</td>
+      </tr>
+      {% else %}<tr><td colspan="7" class="empty">{% if ctx.role in (D.FIELD_MANAGER, D.SURVEYOR) %}თქვენთვის Pre-QC მონაცემი ჯერ არ არის. სადემონსტრაციოდ შედით „საველე მენეჯერი (დემო)“-ს ან „ამზომველი ა (დემო)“-ს სახელით.{% else %}ჩანაწერი არ არის.{% endif %}</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {{ pager(page, pages, total, qs) }}
+</div>
+{% endblock %}

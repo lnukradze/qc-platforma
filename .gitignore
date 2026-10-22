@@ -1,0 +1,16 @@
+# 🔐 მონაცემი (სახელები, ოქმები, ფოტოები) — არასოდეს ვერსიირდება
+data/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+*.db
+*.db-wal
+*.db-shm
+# 🔐 შემთხვევით რომ არ მოხვდეს: ცხრილები და ბაზები data\-ს გარეთ
+*.xlsx
+*.sqlite
+# AI აგენტები — თითოეულის პირადი პარამეტრები
+.claude/settings.local.json
+CLAUDE.local.md

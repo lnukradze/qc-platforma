@@ -1,0 +1,4 @@
+<td><input type="hidden" name="rule_type" value="{{ r.type or 'zone' }}"><span class="rule-label small"></span></td>
+<td class="rule-key"><input type="text" name="rule_key" value="{{ r.key or '' }}" required></td>
+<td><input type="number" name="rule_pct" min="0" max="100" step="5" value="{{ (r.pct or 100)|int }}" style="width:80px" required> %</td>
+<td><button type="button" class="btn btn-ghost btn-sm" data-del-rule title="წაშლა" aria-label="წესის წაშლა">×</button></td>

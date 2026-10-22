@@ -1,0 +1,2195 @@
+<!doctype html><html lang="ka"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>სრული ტექნიკური Handoff — NAPR ხარისხის კონტროლის ერთიანი პლატფორმა</title><style>
+@font-face { font-family: 'NSG'; font-weight: 400; src: url('../../../app/static/vendor/fonts/noto-sans-georgian/noto-sans-georgian-georgian-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'NSG'; font-weight: 600; src: url('../../../app/static/vendor/fonts/noto-sans-georgian/noto-sans-georgian-georgian-600-normal.woff2') format('woff2'); }
+@font-face { font-family: 'NSGL'; font-weight: 400; src: url('../../../app/static/vendor/fonts/noto-sans-georgian/noto-sans-georgian-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'NSGL'; font-weight: 600; src: url('../../../app/static/vendor/fonts/noto-sans-georgian/noto-sans-georgian-latin-600-normal.woff2') format('woff2'); }
+:root { --fg:#1d232b; --muted:#5b6672; --line:#d9dee4; --bg:#ffffff; --code:#f4f6f8; --accent:#1f5f99; }
+html { background: var(--bg); }
+body { font-family: 'NSGL','NSG','Sylfaen','Segoe UI',sans-serif; color: var(--fg); background: var(--bg);
+       max-width: 980px; margin: 0 auto; padding: 24px 16px 64px; font-size: 14.5px; line-height: 1.6; }
+h1 { font-size: 1.75em; border-bottom: 2px solid var(--accent); padding-bottom: .3em; }
+h1, h2, h3, h4 { line-height: 1.3; break-after: avoid; }
+h2 { font-size: 1.35em; margin-top: 1.8em; border-bottom: 1px solid var(--line); padding-bottom: .2em; }
+h3 { font-size: 1.12em; margin-top: 1.5em; }
+a { color: var(--accent); text-decoration: none; }
+blockquote { margin: 1em 0; padding: .4em 1em; border-left: 4px solid var(--accent); background: #f3f7fb; color: var(--fg); }
+code { font-family: Consolas,'Cascadia Mono',monospace; background: var(--code); padding: .1em .3em; border-radius: 3px; font-size: .92em; }
+pre { background: var(--code); padding: 10px 12px; border-radius: 4px; overflow-x: auto; font-size: 12.5px; line-height: 1.45; break-inside: avoid; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1em 0; font-size: .93em; }
+th, td { border: 1px solid var(--line); padding: 5px 8px; vertical-align: top; text-align: left; }
+th { background: #eef2f6; }
+tr { break-inside: avoid; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 2em 0; }
+.meta { color: var(--muted); font-size: .85em; }
+@media print { body { max-width: none; padding: 0; font-size: 11pt; } a { color: var(--fg); } pre { white-space: pre-wrap; } }
+@page { size: A4; margin: 16mm 14mm; }
+</style></head><body><h1>სრული ტექნიკური Handoff — NAPR ხარისხის კონტროლის ერთიანი პლატფორმა</h1>
+<blockquote>
+<p><strong>ვისთვის:</strong> ლუკა ნუკრაძე და სალომე დავითაშვილი (პროექტის ავტორები) — პირადი საცნობარო დოკუმენტი IT-სთან შეხვედრისთვის.
+<strong>მდგომარეობა:</strong> 2026-10-22. პლატფორმის ვერსია: <code>0.2.0</code> (<code>app/__init__.py</code>).
+<strong>საფუძველი:</strong> კოდის, ბაზის, კონფიგურაციისა და ტესტების აუდიტი, რომელიც ამ დოკუმენტის მომზადებისას ჩატარდა (ბაზები მხოლოდ კითხვის რეჟიმში გაიხსნა, კოდი არ შეცვლილა).
+<strong>დანარჩენი დოკუმენტები:</strong> <a href="README.html">სარჩევი</a>.</p>
+</blockquote>
+<hr />
+<h2>0. როგორ წავიკითხოთ ეს დოკუმენტი</h2>
+<h3>0.1 სტატუსის ნიშნები</h3>
+<p>ყოველ მტკიცებას აწერია, რამდენად დადასტურებულია. ეს ნიშნები ექვსივე დოკუმენტში ერთნაირია.</p>
+<table>
+<thead>
+<tr>
+<th>ნიშანი</th>
+<th>მნიშვნელობა</th>
+<th>ინგლისური ეკვივალენტი</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>✅ <strong>დადასტურებული</strong></td>
+<td>კოდში, ბაზაში, ტესტში ან ფაილში შემოწმებულია</td>
+<td>VERIFIED</td>
+</tr>
+<tr>
+<td>🗓 <strong>დაგეგმილი</strong></td>
+<td>შეთანხმებულია ან კოდში მზადაა ჩასართავად, მაგრამ ჯერ არ მუშაობს</td>
+<td>PLANNED</td>
+</tr>
+<tr>
+<td>💡 <strong>რეკომენდებული</strong></td>
+<td>ჩვენი ტექნიკური წინადადებაა, ჯერ არავის დაუმტკიცებია</td>
+<td>RECOMMENDED</td>
+</tr>
+<tr>
+<td>❓ <strong>IT-ის დასადასტურებელი</strong></td>
+<td>დამოკიდებულია IT-ის ინფრასტრუქტურაზე ან გადაწყვეტილებაზე</td>
+<td>NEEDS IT CONFIRMATION</td>
+</tr>
+<tr>
+<td>⚠️ <strong>შეუსაბამობა</strong></td>
+<td>ორი წყარო ერთმანეთს ეწინააღმდეგება ან დოკუმენტი და კოდი არ ემთხვევა</td>
+<td>CONFLICT</td>
+</tr>
+</tbody>
+</table>
+<h3>0.2 ორი დონის ახსნა</h3>
+<p>რთულ ადგილებს ორი ახსნა აქვს:</p>
+<ul>
+<li><strong>ტექნიკურად</strong> — IT-ის ენით, ზუსტი ტერმინებით;</li>
+<li><strong>მარტივად რომ ავხსნათ</strong> — იგივე, ყოველდღიური ენით.</li>
+</ul>
+<p>ეს დოკუმენტი <strong>რა არის და როგორ მუშაობს</strong>-ზეა. ცნებების ღრმა ახსნა (სერვერი, SQL, API, OAuth და ა.შ.) ცალკეა: <a href="02-%E1%83%9E%E1%83%98%E1%83%A0%E1%83%90%E1%83%93%E1%83%98-%E1%83%A2%E1%83%94%E1%83%A5%E1%83%9C%E1%83%98%E1%83%99%E1%83%A3%E1%83%A0%E1%83%98-%E1%83%A1%E1%83%90%E1%83%AE%E1%83%94%E1%83%9A%E1%83%9B%E1%83%AB%E1%83%A6%E1%83%95%E1%83%90%E1%83%9C%E1%83%94%E1%83%9A%E1%83%9D.html">02 — პირადი ტექნიკური სახელმძღვანელო</a>.</p>
+<h3>0.3 რას არ შეიცავს</h3>
+<ul>
+<li>პაროლებს, token-ებს, Google ცხრილების იდენტიფიკატორებს, Apps Script-ის მისამართებს;</li>
+<li>პირად ნომრებს, ტელეფონებს, ამზომველების სახელებს;</li>
+<li>რეალურ QC კომენტარებს.</li>
+</ul>
+<p>ეს მონაცემი არსებულ პროექტებში ინახება და იქვე უნდა დარჩეს.</p>
+<hr />
+<h2>1. მოკლე შეჯამება</h2>
+<p><strong>ტექნიკურად:</strong> ვაშენებთ როლებზე დაფუძნებულ (RBAC) ვებ-აპლიკაციას — FastAPI (Python), სერვერზე აწყობილი HTML გვერდები (Jinja2 + HTMX) და რელაციური ბაზა (SQLAlchemy 2; პროტოტიპში SQLite, საწარმოოში PostgreSQL). აპლიკაცია ერთ სისტემაში აერთიანებს ოქმების განაწილებას, QC შემოწმებას, ველის პასუხების სამუშაო პროცესს (state machine სრული ისტორიით), სტატისტიკას და Pre-QC-ის შედეგებს. სააგენტოს წყარო სისტემებს მხოლოდ კითხულობს.</p>
+<p><strong>მარტივად რომ ავხსნათ:</strong> დღეს ხარისხის კონტროლი ხუთ სხვადასხვა ხელსაწყოზეა გაბნეული: Google ცხრილი, მისი სკრიპტები, განაწილების პროგრამა ერთ კომპიუტერზე, სტატისტიკის საიტი და Pre-QC პროგრამა. ვაკეთებთ ერთ საიტს, სადაც ყველა თანამშრომელი შედის საკუთარი ანგარიშით და ხედავს მხოლოდ იმას, რაც მის საქმეს ეხება. ოქმი იქვე ნაწილდება, მოწმდება, ველზე მიდის, ბრუნდება და იხურება, სტატისტიკა კი თავისით ითვლება.</p>
+<h3>1.1 ერთი წინადადებით — რა მდგომარეობაშია</h3>
+<p>✅ <strong>ლოკალური პროტოტიპი სრულად მუშაობს რეალურ მონაცემზე:</strong> 44 159 QC შემთხვევა, 605 მომხმარებელი, 7 როლი, სრული სამუშაო პროცესი, განაწილება, სტატისტიკა. 57 ავტომატური ტესტი გადის.</p>
+<p>❓ <strong>საწარმოოში გაშვებისთვის IT-ისგან გვჭირდება:</strong></p>
+<ul>
+<li>სერვერი და PostgreSQL;</li>
+<li>დომენი და HTTPS;</li>
+<li>Google OAuth;</li>
+<li>SMTP;</li>
+<li>წყარო სისტემებზე სერვერიდან წვდომა.</li>
+</ul>
+<p>💡 <strong>ჩვენი მხრიდანაც დარჩენილია ტექნიკური სამუშაო</strong> (იხ. §8.3): PostgreSQL-ის დრაივერი და ტესტირება, მიგრაციები, ფონური ამოცანები, რამდენიმე უსაფრთხოების გამკაცრება.</p>
+<h3>1.2 მთავარი ციფრები (აუდიტი, 2026-10-22)</h3>
+<table>
+<thead>
+<tr>
+<th>რა</th>
+<th>რაოდენობა</th>
+<th>სტატუსი</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>QC შემთხვევა (ოქმი + საკადასტრო კოდი)</td>
+<td>44 159 (სისტემური 41 251, სპორადული 2 908)</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>ძველი ცხრილის მწკრივი → შემთხვევა</td>
+<td>44 538 → 44 159 (379 დუბლიკატი)</td>
+<td>✅ (<code>docs/ARCHITECTURE.md</code> §9; ბაზაში 44 159 ემთხვევა)</td>
+</tr>
+<tr>
+<td>მომხმარებელი ბაზაში</td>
+<td>605 (აქტიური როლები: ამზომველი 247, საველე მენეჯერი 14, QC ოპერატორი 14, QC მენეჯერი 2, ადმინი 2, კოორდინატორი 1 და სამსახურის უფროსი 1 — ორივე დემო)</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>დარეგისტრირებული ელფოსტა</td>
+<td><strong>0</strong> — Google-ით შესვლა ჯერ ვერავის შეეძლება</td>
+<td>✅ (მნიშვნელოვანი ხარვეზი)</td>
+</tr>
+<tr>
+<td>ავტომატური ტესტი</td>
+<td>57 გავიდა (≈ 6 წამი)</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>ბაზის ზომა (SQLite)</td>
+<td>≈ 94 MB + WAL ≈ 4 MB</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>განაწილების წყარო (REGFIELDALL-ის ლოკალური ასლი)</td>
+<td>2 331 017 ჩანაწერი, ≈ 1 GB; ბოლო GDB — 2026-10-19</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>ხარვეზის კოდი</td>
+<td>27 + QC-00 (დროებითი) = 28 ჩანაწერი</td>
+<td>✅</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>2. რა პრობლემას ვწყვეტთ</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>დღევანდელი პრობლემა</th>
+<th>რატომ არის პრობლემა</th>
+<th>როგორ წყვეტს პლატფორმა</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>QC ერთ დიდ Google ცხრილშია: ოპერატორების ჩანართები, სპორადული, სარკისებრი ჩანართები</td>
+<td>ცხრილი 30 000-ზე მეტი მწკრივისაა. Apps Script-ს წაკითხვას ~85 წამი სჭირდება და ხანდახან ვარდება (<code>NAPR_Distributor/README.md</code>)</td>
+<td>✅ ერთი ბაზა ინდექსებით. ჩანაწერი პირდაპირ იძებნება, მთელი ცხრილი არ იკითხება</td>
+</tr>
+<tr>
+<td>2</td>
+<td>სტატუსი უჯრაში ზედ იწერება</td>
+<td>ისტორია იკარგება: ვინ, როდის, რა შეცვალა — უცნობია</td>
+<td>✅ ყოველი ცვლილება <code>qc_events</code>-ში იწერება და არასოდეს იშლება</td>
+</tr>
+<tr>
+<td>3</td>
+<td>წესებს ადამიანები იცავენ</td>
+<td>მაგალითად, „არ ვეთანხმები“ მენეჯერის დადასტურების გარეშე გადადის, ან ერთ კოდზე ორი პასუხი მოდის</td>
+<td>✅ წესები კოდშია: <code>app/workflow.py</code> ამოწმებს, ვის რისი უფლება აქვს და რომელ მდგომარეობაში</td>
+</tr>
+<tr>
+<td>4</td>
+<td>ხილვადობას ცხრილის გაზიარება მართავს</td>
+<td>ან ყველა ყველაფერს ხედავს, ან სკრიპტებით „სარკეები“ იქმნება</td>
+<td>✅ სერვერი ყოველ მოთხოვნაზე ფილტრავს: <code>app/scope.py</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>განაწილების პროგრამა ერთ კომპიუტერზეა (QGIS-ის Python, <code>Z:\</code> დისკი)</td>
+<td>იმ კომპიუტერის გარეშე განაწილება ვერ ხდება. ჩაწერა ცხრილში სკრიპტით ხდება, ნაწილობრივი ჩავარდნით</td>
+<td>✅ განაწილება საიტზეა: ჯერ გადახედვა, მერე ერთი ტრანზაქციით დადასტურება</td>
+</tr>
+<tr>
+<td>6</td>
+<td>სტატისტიკა Excel → JSON → საიტის ჯაჭვით ითვლება და ხელით ახლდება</td>
+<td>ციფრები ყოველთვის დაგვიანებულია და სხვადასხვა ადგილას სხვადასხვაა</td>
+<td>✅ სტატისტიკა იმავე ბაზიდან, ერთი ფუნქციით ითვლება ყველა როლისთვის (<code>app/services/stats.py</code>)</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Pre-QC ცალკე პროგრამაა, შედეგები ცალკე ინახება</td>
+<td>ველს ერთ ადგილას არ უჩანს Pre-QC-იც და QC-იც</td>
+<td>🗓 Pre-QC შედეგები პლატფორმაში ჩანს. ახლა დემოა, რეალური ინტეგრაცია დაგეგმილია</td>
+</tr>
+<tr>
+<td>8</td>
+<td>სპორადულის სია ყოველდღე მეილით მოდის xlsx-ად, განმცხადებლების პირადი მონაცემებით</td>
+<td>ზედმეტი პირადი მონაცემი ვრცელდება</td>
+<td>✅ ფაილიდან მხოლოდ საჭირო სვეტები იკითხება, ატვირთული ასლი მაშინვე იშლება. 💡 საწარმოოში — view ან SFTP</td>
+</tr>
+</tbody>
+</table>
+<p><strong>მარტივად რომ ავხსნათ:</strong> დღეს სამუშაო ცხრილში „იწერება“, მაგრამ სისტემა არ „იცის“, რა ხდება. ახალი პლატფორმა იცის, ვინ ვინ არის, რომელ ეტაპზეა ოქმი, ვის ეკუთვნის შემდეგი ნაბიჯი, და არასწორ ნაბიჯს არ უშვებს.</p>
+<hr />
+<h2>3. არსებული სისტემები — თითოეული ცალ-ცალკე</h2>
+<p>⚠️ <strong>მთავარი აღმოჩენა:</strong> არსებულ პროექტებს <strong>ერთი არქიტექტურა და ერთი ბაზა არ აქვთ.</strong> თითოეული სხვა ტექნოლოგიითაა აწყობილი, სხვა ადგილას ინახავს მონაცემს და წყაროებსაც სხვადასხვა გზით კითხულობს. ქვემოთ თითოეულია აღწერილი.</p>
+<h3>3.1 კონტროლის Google ცხრილი და Apps Script</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>რა არის</strong></td>
+<td>დღევანდელი სამუშაო ინსტრუმენტი. თითო QC ოპერატორს თავისი ჩანართი აქვს, არის „სპორადული“ ჩანართი და დამხმარე ჩანართები („შემაჯამებელი“, „არდათანხმებულები“, „_კოდების ცნობარი“ და ა.შ.)</td>
+</tr>
+<tr>
+<td><strong>ტექნოლოგია</strong></td>
+<td>Google Sheets + Google Apps Script (JavaScript-ის მსგავსი ენა, Google-ის სერვერზე მუშაობს)</td>
+</tr>
+<tr>
+<td><strong>სკრიპტები</strong></td>
+<td><code>qc-dashboard-main/apps_script/</code>: <code>QCSyncTrigger.gs</code> (სინქრონის ტრიგერი), <code>QCAutoCode.gs</code> და <code>rules.generated.gs</code> (ავტომატური კოდირება), <code>QCStatRead.gs</code> (მხოლოდ კითხვა), <code>QCFillDates.gs</code>, <code>QCRestoreNames.gs</code>, <code>FixJValidation.gs</code>; <code>NAPR_Distributor/docs/</code>: <code>ControlWebApp.gs</code> (ჩაწერა განაწილებისას), <code>AppsScript.gs</code> (Field Group-ის წაკითხვა)</td>
+</tr>
+<tr>
+<td><strong>როგორ უკავშირდებიან სხვები</strong></td>
+<td>„Web App“ მისამართით და საერთო token-ით. სკრიპტი მფლობელის სახელით სრულდება და JSON-ს აბრუნებს ✅</td>
+</tr>
+<tr>
+<td><strong>შეზღუდვები</strong></td>
+<td>Apps Script-ს 6-წუთიანი შესრულების ლიმიტი აქვს (ჩვეულებრივ ანგარიშზე); დიდ ცხრილზე წაკითხვა ნელია; ერთდროული ჩაწერა <code>LockService</code>-ით იცავს თავს; ისტორია არ ინახება</td>
+</tr>
+</tbody>
+</table>
+<p><strong>მარტივად რომ ავხსნათ:</strong> ცხრილი არის „რვეული“, სადაც ყველა წერს. სკრიპტები პატარა დამხმარე პროგრამებია, რომლებიც ამ რვეულს კითხულობენ ან ავსებენ. „Web App“ ისეთი ფანჯარაა, საიდანაც სხვა პროგრამას რვეულიდან ინფორმაციის აღება შეუძლია, თუ სწორ კოდს (token-ს) იცის.</p>
+<p><strong>ჩვენი Excel-ის მაგალითის სტრუქტურა</strong> ✅ (<code>ექსელის მაგალითი ხხარისხის კონტროლის ერთი შიტი.xlsx</code> — ერთი ოპერატორის ჩანართი, 2 199 მწკრივი, 23 სვეტი):</p>
+<table>
+<thead>
+<tr>
+<th>სვეტი</th>
+<th>სათაური</th>
+<th>ახალ ბაზაში</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>ოქმის N</td>
+<td><code>qc_items.protocol_number</code></td>
+</tr>
+<tr>
+<td>B</td>
+<td>CADCODE</td>
+<td><code>qc_items.cadcode</code></td>
+</tr>
+<tr>
+<td>C</td>
+<td>QC სპეციალისტი</td>
+<td><code>qc_items.operator_id</code></td>
+</tr>
+<tr>
+<td>D</td>
+<td>დამატების თარიღი</td>
+<td><code>qc_items.checked_at</code> (D — სტატუსის პირველი მინიჭება)</td>
+</tr>
+<tr>
+<td>E</td>
+<td>შემოწმების სტატუსი</td>
+<td><code>qc_items.verdict</code> (მაგალითში: უარყოფითი 838, დადებითი 797, რეკომენდაცია 563, „პროცესშია“ 1)</td>
+</tr>
+<tr>
+<td>F, G</td>
+<td>ამგეგმავი, ამგეგმავი (2)</td>
+<td><code>item_people</code> (<code>kind = surveyor</code>)</td>
+</tr>
+<tr>
+<td>H</td>
+<td>ხარვეზის კოდი</td>
+<td><code>qc_item_codes</code></td>
+</tr>
+<tr>
+<td>I</td>
+<td>QC კომენტარი</td>
+<td><code>qc_items.qc_comment</code></td>
+</tr>
+<tr>
+<td>J</td>
+<td>საველე მენეჯერის სტატუსი</td>
+<td><code>qc_items.field_response</code></td>
+</tr>
+<tr>
+<td>K</td>
+<td>საველე მენეჯერის კომენტარი</td>
+<td><code>qc_items.field_comment</code></td>
+</tr>
+<tr>
+<td>L</td>
+<td>უკუკავშირის თარიღი</td>
+<td><code>qc_items.field_responded_at</code></td>
+</tr>
+<tr>
+<td>M</td>
+<td>გასწორდა</td>
+<td><code>qc_items.corrected_confirmed</code></td>
+</tr>
+<tr>
+<td>N</td>
+<td>ხარვეზია</td>
+<td>მოძველებულია, არ გამოიყენება (<code>legacy_import.py</code>)</td>
+</tr>
+<tr>
+<td>O</td>
+<td>უკან დაბრუნებული ხარვეზის კომენტარი</td>
+<td><code>qc_items.returned_comment</code></td>
+</tr>
+<tr>
+<td>P, Q</td>
+<td>კონტროლი sync, სინქრონის დრო</td>
+<td>მხოლოდ გადმოტანისას: „ვისთანაა ოქმი“ წესისთვის</td>
+</tr>
+<tr>
+<td>R, S</td>
+<td>საველე sync, სინქრონის დრო</td>
+<td>იგივე</td>
+</tr>
+<tr>
+<td>T</td>
+<td>მენეჯერი</td>
+<td><code>qc_items.field_manager_id</code> (ახლა Field Group-იდან ითვლება, არა ამ სვეტიდან)</td>
+</tr>
+<tr>
+<td>U</td>
+<td>ნახაზის შეტანის თარიღი</td>
+<td><code>qc_items.drawing_date</code></td>
+</tr>
+<tr>
+<td>V</td>
+<td>TYPE</td>
+<td><code>qc_reviews</code> (<code>source = legacy</code>) — შეზღუდული სტატისტიკა</td>
+</tr>
+<tr>
+<td>W</td>
+<td>anot</td>
+<td><code>qc_items.legacy_extra</code> (ნედლად)</td>
+</tr>
+</tbody>
+</table>
+<h3>3.2 NAPR_Distributor — ოქმების განაწილების პროგრამა</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>რა არის</strong></td>
+<td>დესკტოპ-პროგრამა (v2.0.0). თარიღის დიაპაზონის ოქმებს ბლოკებად, შემთხვევითობით ანაწილებს QC ოპერატორებზე და შედეგს კონტროლის ცხრილში წერს</td>
+</tr>
+<tr>
+<td><strong>ტექნოლოგია</strong></td>
+<td>Python, PyQt6 ინტერფეისი, GDAL (GDB-ის წასაკითხად), pandas, openpyxl. გაშვება QGIS 4.x-ის Python-ით ✅</td>
+</tr>
+<tr>
+<td><strong>მონაცემის წყარო</strong></td>
+<td>ქსელური საქაღალდე <code>Z:\REGFIELDALL</code>, სადაც ღამის ექსპორტები <code>REGFIELDALL_&lt;თარიღი&gt;_01-00_&lt;N&gt;.gdb</code> სახელით დევს. ფენა <code>NAPR_VEXP_FLD_GPARCELS_4GDB</code>. პროგრამა ბოლო GDB-ს თავად პოულობს და გეომეტრიის გარეშე, მხოლოდ საჭირო ველებს ლოკალურ SQLite-ში (<code>napr_data.sqlite</code>) ტვირთავს ✅</td>
+</tr>
+<tr>
+<td><strong>ლოკალური ბაზა</strong></td>
+<td><code>napr_data.sqlite</code> ≈ 1 GB; ცხრილი <code>parcels</code> (ველები: <code>objectid, cadcode, fld_paper_id, app_id, regnumber, is_last, fld_status_name, moxaz_creator, mox_create_date, oqmi_creator, moxazulobis_avtori</code>) და <code>import_meta</code>. ბოლო იმპორტი: <code>REGFIELDALL_2026-10-19_01-00_93.gdb</code>, 2 331 017 ჩანაწერი ✅</td>
+</tr>
+<tr>
+<td><strong>Field Group</strong></td>
+<td>ამზომველი → მენეჯერი Google ცხრილიდან (ჩანართები FIELD_GROUP_272 — დღევანდელი, და სრული — წასულების ჩათვლით), Apps Script-ით ✅</td>
+</tr>
+<tr>
+<td><strong>ჩაწერა</strong></td>
+<td>კონტროლის ცხრილში <code>ControlWebApp.gs</code>-ით, პაროლის დადასტურებით. ჩავარდნისას „რა მოასწრო“ მოწმდება ✅</td>
+</tr>
+<tr>
+<td><strong>ალგორითმი</strong></td>
+<td>კანდიდატი = კოდი, რომლის <strong>პირველი</strong> ოქმი (უადრესი <code>MOX_CREATE_DATE</code>) დიაპაზონშია; „სისტემური სერვისის“ ოქმები იგნორირდება; ღია საველე სტატუსი გამოირიცხება; ბლოკი = კოდი ბოლო სეგმენტის გარეშე (განუყოფელია); მენეჯერების „წყლის შევსებით“ გათანაბრება (<code>balance.py</code>) ✅</td>
+</tr>
+<tr>
+<td><strong>შეზღუდვები</strong></td>
+<td>ერთ კომპიუტერზეა მიბმული (<code>Z:</code> დისკი, QGIS); ისტორია არ აქვს; შედეგი Google ცხრილშია</td>
+</tr>
+</tbody>
+</table>
+<p><strong>მარტივად რომ ავხსნათ:</strong> სააგენტო ყოველ ღამე საველე ოქმების სრულ ამონაწერს ქსელურ საქაღალდეში დებს. განაწილების პროგრამა ამ ამონაწერს კითხულობს, ირჩევს იმ ნაკვეთებს, რომლებიც პირველად აიზომა არჩეულ პერიოდში, ჯგუფებად (ბლოკებად) ყოფს და ოპერატორებს შემთხვევით უნაწილებს. შედეგს Google ცხრილში წერს.</p>
+<p>⚠️ <strong>შეუსაბამობა — განაწილების წესი შეიცვალა:</strong> ძველი პროგრამა მენეჯერებს „წყლის შევსებით“ ათანაბრებს (ვისაც ნაკლები აქვს შემოწმებული, მეტი ხვდება). ახალ პლატფორმაში ეს <strong>პროცენტულმა დაფარვამ</strong> ჩაანაცვლა (ნაგულისხმევი ~70% + ზონის/სექტორის/მენეჯერის წესები). გადაწყვეტილება მიღებულია 2026-10-20-ს (<code>docs/ARCHITECTURE.md</code> §8.1). შედეგად, ერთსა და იმავე დიაპაზონზე ძველი და ახალი განაწილება ერთნაირ შედეგს <strong>არ</strong> მოგვცემს, და ეს მოსალოდნელია.</p>
+<h3>3.3 QC Dashboard — სტატისტიკის პანელი</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>რა არის</strong></td>
+<td>ხელმძღვანელობის სტატისტიკის საიტი: KPI-ები, გრაფიკები, მენეჯერებისა და ამზომველების ჭრილი</td>
+</tr>
+<tr>
+<td><strong>ტექნოლოგია</strong></td>
+<td>Python Flask backend, ECharts frontend; მომხმარებლები username/პაროლით (scrypt hash) ✅</td>
+</tr>
+<tr>
+<td><strong>მონაცემის ჯაჭვი</strong></td>
+<td><code>QC სამუშაო.xlsx</code> → <code>build_dashboard.py</code> → <code>qc_data.json</code> → <code>app.py</code> → ბრაუზერი. Field Group — <code>sync_staff.py</code>-ით ✅</td>
+</tr>
+<tr>
+<td><strong>სად მუშაობს</strong></td>
+<td>ლოკალურად (<code>127.0.0.1:5000</code>). <code>DEPLOY.md</code> აღწერს განთავსებას GitHub (private) + Render (უფასო გეგმა) + Neon PostgreSQL-ზე (Frankfurt) ✅ დოკუმენტში. ❓ ამჟამად ნამდვილად მუშაობს თუ არა გარე ღრუბელში — ამ აუდიტით ვერ დადასტურდა</td>
+</tr>
+<tr>
+<td><strong>სინქრონი</strong></td>
+<td>Apps Script ტრიგერი (ორშ–პარ 9:00, 13:00, 19:00) ✅ დოკუმენტში</td>
+</tr>
+<tr>
+<td><strong>შეზღუდვები</strong></td>
+<td>მონაცემი ფაილიდან იტვირთება და ხელით ახლდება; Render-ის უფასო გეგმა 15 წუთის უმოქმედობის შემდეგ „იძინებს“ (გაღვიძებას ~50 წამი სჭირდება)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>მარტივად რომ ავხსნათ:</strong> ეს საიტი თვითონ არაფერს ითვლის „ცოცხლად“. ჯერ Excel-იდან მზა ციფრების ფაილი მზადდება, საიტი კი მხოლოდ ამ ფაილს აჩვენებს. ფაილი რომ განახლდეს, ვიღაცამ უნდა გაუშვას.</p>
+<p>⚠️ <strong>IT-სთვის მნიშვნელოვანი:</strong> <code>DEPLOY.md</code>-ის მიხედვით, სტატისტიკის პანელის ასლი და მისი მონაცემი (ამზომველების სახელები, QC შედეგები) შეიძლება სააგენტოს გარეთ, უცხოურ ღრუბლოვან სერვისზე იყოს განთავსებული. IT ამაზე შეიძლება იკითხოს. პასუხი: ახალი პლატფორმა <strong>სააგენტოს სერვერზე</strong> იგეგმება (<code>docs/OPEN_QUESTIONS.md</code> #5), ხოლო ძველი პანელის ბედი ცალკე უნდა გადაწყდეს ❓.</p>
+<h3>3.4 Pre-QC Validator — ავტომატური წინასწარი შემოწმება</h3>
+<p>ეს პროექტი სამი ნაწილისგან შედგება:</p>
+<table>
+<thead>
+<tr>
+<th>ნაწილი</th>
+<th>რას აკეთებს</th>
+<th>ტექნოლოგია</th>
+<th>წყარო</th>
+<th>სტატუსი</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ლოკალური ვალიდატორი</strong> (<code>app/</code>)</td>
+<td>REDI ოქმის გვერდს აანალიზებს: დოკუმენტის წესები, GIS-შემოწმებები, ფოტოს შემოწმებები, Quality Score (0–100) და სტატუსი <code>pass / warn / review / fail</code></td>
+<td>FastAPI, <code>127.0.0.1:8000</code>; შეიძლება <code>.exe</code>-დ აიწყოს (PyInstaller)</td>
+<td>ოქმის შენახული HTML ან ბრაუზერის გაფართოებიდან მიღებული მონაცემი</td>
+<td>✅ მუშაობს ლოკალურად</td>
+</tr>
+<tr>
+<td><strong>ბრაუზერის გაფართოება</strong> (<code>app/extension/</code>)</td>
+<td>REDI-ის გვერდზე (<code>https://api.napr.gov.ge/lr/redi*</code>) ჩაშენდება და მონაცემს ლოკალურ ვალიდატორს (<code>http://127.0.0.1:8000</code>) უგზავნის</td>
+<td>Chrome Manifest V3</td>
+<td>თანამშრომლის <strong>საკუთარი REDI სესია</strong> ბრაუზერში</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><strong>Hosted</strong> (<code>hosted/</code>)</td>
+<td>შედეგებს ცენტრალურად ინახავს და აჩვენებს; Google-ით შესვლა; ჩაწერა <code>POST /api/preqc/checks</code> API გასაღებით</td>
+<td>FastAPI + PostgreSQL + Alembic მიგრაციები</td>
+<td>ლოკალური ვალიდატორის მზა შედეგები</td>
+<td>🗓 მზადაა, <strong>განზრახ არ არის განთავსებული</strong> (<code>hosted/README.md</code>)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>დამატებითი წყაროები, რომლებსაც ვალიდატორი იყენებს</strong> ✅:</p>
+<ul>
+<li><strong>SLR WFS</strong> — <code>https://wblr.napr.gov.ge/data/SLR/ows</code>, ფენა <code>SLR:GFLD_PARCELS</code>, პროექცია <code>EPSG:32638</code>. ავთენტიფიკაცია: HTTP Basic, მომხმარებელი და პაროლი გარემოს ცვლადებიდან (<code>WFS_USERNAME</code>, <code>WFS_PASSWORD</code>) (<code>app/wfs.py</code>);</li>
+<li><strong>LR_BUILDINGS WMS</strong> — არჩევითი, მისამართი გარემოს ცვლადშია (<code>LR_WMS_URL</code>);</li>
+<li><strong>REDI-ს ფოტოები</strong> — <code>https://bs.napr.gov.ge/GetBlob?...</code> (<code>app/photo_checks.py</code>);</li>
+<li><strong>REDI-ს საკადასტრო ბარათები</strong> — <code>DYNAMIC.ABSTRACT.PAGE</code>, <code>REGCARD</code> (<code>app/redi_cards.py</code>);</li>
+<li><strong>Anthropic API</strong> — არჩევითი AI-რეკომენდაცია შენიშვნის ტექსტზე. ნაგულისხმევად გამორთულია (<code>SEMANTIC_AI=off</code>).</li>
+</ul>
+<p><strong>მარტივად რომ ავხსნათ:</strong> Pre-QC-ს „თვალები“ თანამშრომლის ბრაუზერშია. როცა ამზომველი ან მენეჯერი REDI-ში ოქმს ხსნის, გაფართოება ამ გვერდს „კითხულობს“ და იმავე კომპიუტერზე გაშვებულ ვალიდატორს აწვდის. ვალიდატორი რუკის სერვისსაც (WFS) ეკითხება, ნაკვეთი სწორად არის თუ არა დახატული. ყველაფერი მუშაობს იმიტომ, რომ ადამიანი REDI-ში უკვე შესულია და შიდა ქსელშია.</p>
+<p>⚠️ <strong>IT-სთვის კრიტიკული:</strong> Pre-QC დღეს <strong>თანამშრომლის სესიითა და კომპიუტერით</strong> მუშაობს. სერვერს ასეთი სესია არ აქვს. ამიტომ, თუ Pre-QC სერვერზე ავტომატურად უნდა ეშვებოდეს, საჭიროა:</p>
+<ul>
+<li>ოქმის მონაცემის API;</li>
+<li>ან ოქმის HTML/TXT ექსპორტი;</li>
+<li>WFS-ზე სერვისის ანგარიში (ადამიანის პირადი ანგარიშის ნაცვლად).</li>
+</ul>
+<p>ეს ღია კითხვაა ❓ (<code>docs/OPEN_QUESTIONS.md</code> #8). ზოგადი პრინციპი იმის შესახებ, რატომ არ მუშაობს სერვერზე ის, რაც დეველოპერის კომპიუტერზე მუშაობს, ახსნილია <a href="02-%E1%83%9E%E1%83%98%E1%83%A0%E1%83%90%E1%83%93%E1%83%98-%E1%83%A2%E1%83%94%E1%83%A5%E1%83%9C%E1%83%98%E1%83%99%E1%83%A3%E1%83%A0%E1%83%98-%E1%83%A1%E1%83%90%E1%83%AE%E1%83%94%E1%83%9A%E1%83%9B%E1%83%AB%E1%83%A6%E1%83%95%E1%83%90%E1%83%9C%E1%83%94%E1%83%9A%E1%83%9D.html">სახელმძღვანელოს §C.9-ში</a>.</p>
+<h3>3.5 შედარება ერთ ცხრილში</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>კონტროლის ცხრილი</th>
+<th>Distributor</th>
+<th>Dashboard</th>
+<th>Pre-QC (ლოკალური)</th>
+<th>Pre-QC Hosted</th>
+<th><strong>ახალი პლატფორმა</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ტიპი</td>
+<td>Google Sheets</td>
+<td>დესკტოპი (PyQt6)</td>
+<td>ვებ (Flask)</td>
+<td>ვებ, ლოკალური (FastAPI)</td>
+<td>ვებ (FastAPI)</td>
+<td>ვებ (FastAPI)</td>
+</tr>
+<tr>
+<td>ბაზა</td>
+<td>ცხრილი თავად</td>
+<td>SQLite (≈1 GB ასლი)</td>
+<td>JSON ფაილი (+ არჩევით PostgreSQL)</td>
+<td>JSONL ფაილი</td>
+<td>PostgreSQL</td>
+<td>SQLite → 🗓 PostgreSQL</td>
+</tr>
+<tr>
+<td>შესვლა</td>
+<td>Google-ის გაზიარება</td>
+<td>არა (ჩაწერაზე პაროლი)</td>
+<td>username/პაროლი</td>
+<td>არა (localhost)</td>
+<td>Google OIDC</td>
+<td>🗓 Google OIDC (ახლა დემო)</td>
+</tr>
+<tr>
+<td>წყარო</td>
+<td>ადამიანები წერენ</td>
+<td><code>Z:\REGFIELDALL</code> GDB + Apps Script</td>
+<td>Excel + Apps Script</td>
+<td>REDI გვერდი + WFS</td>
+<td>ლოკალური ვალიდატორი</td>
+<td>Distributor-ის SQLite (<code>mode=ro</code>) + Apps Script (GET) + xlsx</td>
+</tr>
+<tr>
+<td>წერს წყაროში?</td>
+<td>—</td>
+<td><strong>დიახ</strong> (კონტროლის ცხრილში)</td>
+<td>არა</td>
+<td>არა</td>
+<td>არა</td>
+<td><strong>არა</strong> ✅</td>
+</tr>
+<tr>
+<td>ისტორია</td>
+<td>არა</td>
+<td>არა</td>
+<td>არა</td>
+<td>შედეგების ფაილი</td>
+<td>append-only</td>
+<td>✅ append-only (<code>qc_events</code>)</td>
+</tr>
+<tr>
+<td>სად მუშაობს</td>
+<td>Google</td>
+<td>ერთი PC</td>
+<td>PC (+ შესაძლოა Render)</td>
+<td>PC</td>
+<td>არსად (ჯერ)</td>
+<td>PC (localhost / LAN დემო)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>4. ახალი პლატფორმა — დღევანდელი იმპლემენტაცია</h2>
+<p>ბილიკი: <code>C:\Users\LNUKRADZE\Desktop\apisaiti\qc-platforma</code>. ყველა მტკიცება ამ თავში ✅ <strong>დადასტურებულია კოდით</strong>, თუ სხვა რამ არ წერია.</p>
+<h3>4.1 ტექნოლოგიები და ვერსიები</h3>
+<table>
+<thead>
+<tr>
+<th>ფენა</th>
+<th>რა</th>
+<th>დაყენებული ვერსია (<code>.venv</code>)</th>
+<th>რატომ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ენა</td>
+<td>Python</td>
+<td>3.14.5 (მოთხოვნა: ≥ 3.12)</td>
+<td>იგივე ენაა, რაც Distributor-სა და Pre-QC-ში. ერთი გუნდი ერთ ენაზე</td>
+</tr>
+<tr>
+<td>ვებ-ჩარჩო</td>
+<td>FastAPI / Starlette</td>
+<td>0.148.0 / 1.9.0</td>
+<td>სწრაფია, ავტომატურ API დოკუმენტაციას (<code>/docs</code>) ქმნის, Pre-QC-შიც იგივეა</td>
+</tr>
+<tr>
+<td>აპლიკაციის სერვერი</td>
+<td>uvicorn</td>
+<td>0.54.0</td>
+<td>FastAPI-ის სტანდარტული ASGI სერვერი</td>
+</tr>
+<tr>
+<td>ORM (ბაზასთან ურთიერთობა)</td>
+<td>SQLAlchemy</td>
+<td>2.1.5</td>
+<td>ერთი კოდი SQLite-სა და PostgreSQL-ზე</td>
+</tr>
+<tr>
+<td>შაბლონები</td>
+<td>Jinja2</td>
+<td>3.1.6</td>
+<td>HTML სერვერზე იწყობა — build-ის ეტაპი არ სჭირდება</td>
+</tr>
+<tr>
+<td>ინტერაქტიულობა</td>
+<td>HTMX</td>
+<td>2.0.4 (<code>app/static/vendor/htmx.min.js</code>)</td>
+<td>გვერდის ნაწილები განახლდება JavaScript-ის ჩარჩოს გარეშე</td>
+</tr>
+<tr>
+<td>გრაფიკები / რუკა</td>
+<td>ECharts / Leaflet</td>
+<td>5.5.1 / ლოკალური ასლი</td>
+<td>ყველაფერი <code>app/static/vendor/</code>-შია — გარე CDN არ გამოიყენება</td>
+</tr>
+<tr>
+<td>Excel</td>
+<td>openpyxl</td>
+<td>3.1.5</td>
+<td>ექსპორტი, სპორადულის ფაილი, ძველი ცხრილი</td>
+</tr>
+<tr>
+<td>HTTP კლიენტი</td>
+<td>requests + truststore</td>
+<td>—</td>
+<td>Google OAuth; კორპორატიული სერტიფიკატი Windows-ის საცავიდან</td>
+</tr>
+<tr>
+<td>სესიის ხელმოწერა</td>
+<td>itsdangerous</td>
+<td>—</td>
+<td>cookie-ს გაყალბებისგან დაცვა</td>
+</tr>
+<tr>
+<td>ტესტები</td>
+<td>pytest + httpx</td>
+<td>—</td>
+<td>57 ტესტი</td>
+</tr>
+</tbody>
+</table>
+<p><strong>მარტივად რომ ავხსნათ:</strong> Python არის ენა, რომლითაც საიტის „ტვინი“ წერია. FastAPI ამ ტვინს ვებ-მოთხოვნების მიღებას ასწავლის. SQLAlchemy ბაზასთან სალაპარაკო „თარჯიმანია“. Jinja2 HTML გვერდებს აწყობს. HTMX გვერდს ცოცხლად ანახლებს, ხელახალი ჩატვირთვის გარეშე. ყველა ბიბლიოთეკა პროექტშივეა, ამიტომ საიტს გარე ინტერნეტი არ სჭირდება ფაილების ჩამოსატვირთად.</p>
+<h3>4.2 კოდის რუკა</h3>
+<pre><code>app/
+  main.py          აპლიკაციის აწყობა: მარშრუტები, უსაფრთხოების თავსართები, შეცდომის გვერდები
+  config.py        ყველა პარამეტრი გარემოს ცვლადებიდან (QCP_*)
+  db.py            ბაზასთან კავშირი (engine, სესია); SQLite-ზე WAL რეჟიმი
+  models.py        27 ცხრილის აღწერა (SQLAlchemy)
+  domain.py        ლექსიკონი: როლები, ვერდიქტები, მდგომარეობები, ფერები, წარწერები
+  workflow.py      სამუშაო პროცესი (state machine): ვის რა შეუძლია, რა ხდება შემდეგ
+  scope.py         ხილვადობა: ვინ რომელ ჩანაწერს ხედავს (ყოველ მოთხოვნაზე)
+  security.py      სესია, როლის შეცვლა, CSRF შემოწმება, აუდიტი
+  templating.py    Jinja2-ის გარემო
+  routes/          გვერდები და API: auth, google_auth, pages, qc, field, items,
+                   distribution, stats, preqc, admin, api
+  services/        directory (ვინ ვისი გუნდიდანაა), distribution/ (algo, source, service),
+                   sporadic, legacy_import, stats, notify (მეილი), codes (ავტომატური კოდირება),
+                   taxonomy, people, seed, preqc_demo
+  templates/       HTML შაბლონები
+  static/          CSS, JS, ვენდორის ბიბლიოთეკები, ზონების GeoJSON, სახელმძღვანელოს PDF
+  seed/            ხარვეზის კოდების კატალოგი, მივლინებები
+scripts/           fetch_sheets (Google ცხრილები → data/raw), build_db (data/raw → ბაზა),
+                   run_local, serve_lan, setup_data, smoke_* (შემოწმებები)
+tests/             57 ტესტი დროებით ბაზაზე
+data/              🔐 ლოკალური მონაცემი (git-ში არ შედის): platform.db, raw/, uploads/, .session_secret
+docs/              ARCHITECTURE, IT_REQUEST, DEMO, OPEN_QUESTIONS, handoff/ (ეს დოკუმენტები)
+</code></pre>
+<h3>4.3 როგორ მუშაობს ერთი მოთხოვნა</h3>
+<p><strong>ტექნიკურად:</strong></p>
+<ol>
+<li>ბრაუზერი აგზავნის HTTP მოთხოვნას, მაგალითად <code>POST /items/4512/action</code>, cookie-თი <code>qcp_session</code>.</li>
+<li>uvicorn მოთხოვნას FastAPI-ს გადასცემს. <code>security.current()</code> cookie-დან ხელმოწერილ <code>sid</code>-ს კითხულობს (<code>itsdangerous</code>), <code>sessions</code> ცხრილში პოულობს სესიას, ამოწმებს ვადას (12 სთ), გაუქმებას და მომხმარებლის აქტიურობას.</li>
+<li><code>same_origin()</code> ამოწმებს <code>Origin</code>/<code>Referer</code> თავსართს (CSRF).</li>
+<li><code>items._load()</code> ჩანაწერს ტვირთავს და <code>scope.can_view()</code>-ით ამოწმებს, აქვს თუ არა ამ როლს მისი ნახვის უფლება. თუ არა — <strong>404</strong>.</li>
+<li><code>workflow.apply()</code> ამოწმებს:
+<ul>
+<li>არის თუ არა მოქმედება <code>available_actions()</code>-ში ამ როლისთვის და ამ მდგომარეობისთვის;</li>
+<li>ემთხვევა თუ არა ფორმის <code>version</code> ჩანაწერის <code>version</code>-ს;</li>
+<li>სავალდებულო ველებს.
+შემდეგ ცვლის მდგომარეობას და წერს <code>QcEvent</code>-ს.</li>
+</ul>
+</li>
+<li>თუ მონიშნულია ✉, <code>notify.queue()</code> ქმნის მეილს.</li>
+<li><code>db.commit()</code> — ყველაფერი ერთ ტრანზაქციაში ინახება. შეცდომისას <code>rollback</code>.</li>
+<li>პასუხი: გადამისამართება (303) შეტყობინებით.</li>
+</ol>
+<p><strong>მარტივად რომ ავხსნათ:</strong> ღილაკზე დაჭერისას სერვერი რიგრიგობით ამოწმებს:</p>
+<ul>
+<li>ვინ ხარ;</li>
+<li>ამ საიტიდან მოხვედი თუ არა;</li>
+<li>შეგიძლია თუ არა ამ ოქმის ნახვა;</li>
+<li>შეგიძლია თუ არა ეს მოქმედება ამ ეტაპზე;</li>
+<li>ხომ არ შეცვალა ოქმი ვინმემ ამასობაში.</li>
+</ul>
+<p>ყველა შემოწმება რომ გაივლის, ცვლილება და მისი ისტორიის ჩანაწერი ერთად ინახება. ან ორივე ინახება, ან არცერთი.</p>
+<h3>4.4 მონაცემთა მოდელი</h3>
+<p>27 ცხრილი (<code>app/models.py</code>). რაოდენობები — <code>data/platform.db</code>, 2026-10-22.</p>
+<table>
+<thead>
+<tr>
+<th>ჯგუფი</th>
+<th>ცხრილი</th>
+<th>დანიშნულება</th>
+<th>მწკრივი</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ვინაობა</td>
+<td><code>users</code></td>
+<td>თანამშრომელი: სახელი, <code>email</code> (unique — Google-ით შესვლისთვის), <code>personal_id</code> 🔐 (ნიღბით ჩანს), <code>active</code></td>
+<td>605</td>
+</tr>
+<tr>
+<td></td>
+<td><code>user_roles</code></td>
+<td>მომხმარებელი ↔ როლი (რამდენიმე როლი შეიძლება)</td>
+<td>608</td>
+</tr>
+<tr>
+<td></td>
+<td><code>teams</code>, <code>team_members</code></td>
+<td>საველე გუნდები; წევრობა <code>valid_from</code>/<code>valid_to</code> თარიღებით</td>
+<td>23 / 595</td>
+</tr>
+<tr>
+<td></td>
+<td><code>person_aliases</code></td>
+<td>სახელის ვარიანტი → მომხმარებელი (ძველი ცხრილისთვის)</td>
+<td>591</td>
+</tr>
+<tr>
+<td>QC ბირთვი</td>
+<td><code>qc_items</code></td>
+<td><strong>შემთხვევა = ოქმი + საკადასტრო კოდი</strong>. unique: <code>(protocol_number, cadcode)</code></td>
+<td>44 159</td>
+</tr>
+<tr>
+<td></td>
+<td><code>item_people</code></td>
+<td>ოქმის ამზომველები და მიკუთვნებული მენეჯერები (<code>kind</code>, <code>is_primary</code>)</td>
+<td>128 690</td>
+</tr>
+<tr>
+<td></td>
+<td><code>qc_item_codes</code></td>
+<td>ხარვეზის კოდები შემთხვევაზე (<code>source</code>: auto/manual/legacy)</td>
+<td>45 765</td>
+</tr>
+<tr>
+<td></td>
+<td><code>qc_events</code></td>
+<td><strong>ისტორია</strong> — მხოლოდ ემატება</td>
+<td>44 159</td>
+</tr>
+<tr>
+<td></td>
+<td><code>verdict_requests</code></td>
+<td>ოპერატორის მოთხოვნა სტატუსის შესაცვლელად</td>
+<td>0</td>
+</tr>
+<tr>
+<td></td>
+<td><code>qc_reviews</code></td>
+<td>QC მენეჯერის შეფასება (ძველი TYPE-ის ჩათვლით)</td>
+<td>75</td>
+</tr>
+<tr>
+<td></td>
+<td><code>attachments</code></td>
+<td>ფოტო / PDF (ფაილი დისკზე, <code>data/uploads/</code>)</td>
+<td>0</td>
+</tr>
+<tr>
+<td></td>
+<td><code>presence</code></td>
+<td>ვინ ხსნის ოქმს ახლა</td>
+<td>დროებითი</td>
+</tr>
+<tr>
+<td>განაწილება</td>
+<td><code>distribution_runs</code>, <code>distribution_presets</code>, <code>distribution_backlog</code></td>
+<td>ისტორია, შენახული წესები, ნაშთი</td>
+<td>0 / 0 / 0</td>
+</tr>
+<tr>
+<td></td>
+<td><code>manager_overrides</code></td>
+<td>QC მენეჯერმა ხელით მიუწერა მენეჯერი</td>
+<td>0</td>
+</tr>
+<tr>
+<td></td>
+<td><code>sporadic_imports</code></td>
+<td>სპორადულის ატვირთვები</td>
+<td>0</td>
+</tr>
+<tr>
+<td>ცნობარები</td>
+<td><code>defect_codes</code>, <code>missions</code>, <code>settings</code></td>
+<td>კოდები, მივლინებები, პარამეტრები</td>
+<td>28 / 18 / 4</td>
+</tr>
+<tr>
+<td>Pre-QC</td>
+<td><code>preqc_checks</code>, <code>preqc_findings</code></td>
+<td>ახლა სადემონსტრაციო</td>
+<td>216 / 275</td>
+</tr>
+<tr>
+<td>სისტემური</td>
+<td><code>sessions</code>, <code>audit_log</code>, <code>import_runs</code>, <code>emails</code></td>
+<td>სესიები, აუდიტი, იმპორტი, მეილები</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>შენიშვნა ციფრებზე:</strong></p>
+<ul>
+<li><code>qc_events</code> = 44 159, რადგან ძველი ცხრილიდან თითო შემთხვევას ერთი <code>legacy_import</code> ჩანაწერი აქვს. ძველი ისტორია აღდგენადი არ არის (§4.9).</li>
+<li>განაწილების ცხრილები ცარიელია, რადგან ბაზა ბოლოს ნულიდან აიწყო (<code>build_db.py</code>), და მას შემდეგ განაწილება არ დადასტურებულა.</li>
+</ul>
+<p><strong>კავშირები (გამარტივებული):</strong></p>
+<pre><code>users ─┬─&lt; user_roles
+       ├─&lt; team_members &gt;── teams (manager_id → users)
+       ├─&lt; person_aliases
+       └─&lt; sessions, audit_log
+
+qc_items ─┬─&lt; item_people &gt;── users       (ამზომველი / მენეჯერი)
+          ├─&lt; qc_item_codes &gt;── defect_codes (ლოგიკური კავშირი კოდით)
+          ├─&lt; qc_events                    (ისტორია, actor_id → users)
+          ├─&lt; attachments                  (event_id → qc_events)
+          ├─&lt; verdict_requests
+          ├── qc_reviews (1:1)
+          ├── operator_id, field_manager_id, protocol_creator_id → users
+          └── distribution_run_id → distribution_runs
+</code></pre>
+<p><code>─&lt;</code> ნიშნავს „ერთს ბევრი აქვს“: ერთ შემთხვევას ბევრი ისტორიის ჩანაწერი აქვს.</p>
+<p><strong>მარტივად რომ ავხსნათ:</strong> ბაზაში ცალკე „ყუთებია“: ადამიანები, გუნდები, ოქმები, ოქმის ისტორია, კოდები. ყუთები ერთმანეთს ნომრებით უკავშირდება. ოქმის ბარათზე წერია არა „გიორგი“, არამედ „მომხმარებელი №17“. ამიტომ სახელის გასწორება ერთ ადგილას ყველგან აისახება.</p>
+<h4><code>qc_items</code>-ის მთავარი დროები</h4>
+<table>
+<thead>
+<tr>
+<th>ველი</th>
+<th>ძველ ცხრილში</th>
+<th>მნიშვნელობა</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>checked_at</code></td>
+<td>D</td>
+<td>სტატუსის <strong>პირველი გაგზავნა</strong>. სტატისტიკის პერიოდი ამით ითვლება და შემდეგ არ იცვლება. შენახვა D-ს არ ქმნის; დაზუსტებაზე D საბოლოო სტატუსის მინიჭებისას ჩნდება</td>
+</tr>
+<tr>
+<td><code>first_sent_at</code></td>
+<td>—</td>
+<td>პირველი გაგზავნა ნებისმიერი ვერდიქტით, დაზუსტების კითხვის ჩათვლით. ოპერატორის „დღის რაოდენობა“</td>
+</tr>
+<tr>
+<td><code>draft_saved_at</code></td>
+<td>—</td>
+<td>შენახულია, ჯერ არ გაგზავნილა (ცისფერი ფერი)</td>
+</tr>
+<tr>
+<td><code>original_verdict</code></td>
+<td>—</td>
+<td>პირველი გაგზავნილი სტატუსი (QC შეცდომების ანალიზისთვის)</td>
+</tr>
+<tr>
+<td><code>field_responded_at</code></td>
+<td>L</td>
+<td>ველის პასუხის დრო</td>
+</tr>
+<tr>
+<td><code>confirmed_at</code> / <code>corrected_confirmed</code></td>
+<td>M</td>
+<td>QC-მ გასწორება დაადასტურა</td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td>—</td>
+<td>ერთდროული ცვლილებისგან დაცვა (§4.13)</td>
+</tr>
+</tbody>
+</table>
+<h3>4.5 როლები და უფლებები</h3>
+<p>7 როლი (<code>app/domain.py</code>, <code>app/scope.py</code>):</p>
+<table>
+<thead>
+<tr>
+<th>როლი</th>
+<th>ვინ (2026-10-20)</th>
+<th>ოქმები</th>
+<th>Pre-QC</th>
+<th>სტატისტიკა</th>
+<th>მართვა</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ადმინისტრატორი</td>
+<td>ლუკა ნუკრაძე, სალომე დავითაშვილი</td>
+<td>ყველა</td>
+<td>✗</td>
+<td>ყველა + შეზღუდული</td>
+<td>მომხმარებლები, როლები, კოდები, პარამეტრები, მეილები, აუდიტი, განაწილება</td>
+</tr>
+<tr>
+<td>QC მენეჯერი</td>
+<td>გიორგი ჩიგოგიძე (სისტემური), ბექა სალუქვაძე (სპორადული)</td>
+<td>ყველა</td>
+<td>✗</td>
+<td>ყველა + შეზღუდული</td>
+<td>განაწილება, „არ დათანხმებულები“, სტატუსის მოთხოვნები, შეფასება</td>
+</tr>
+<tr>
+<td>QC ოპერატორი</td>
+<td>14</td>
+<td>მხოლოდ მასზე დანიშნული</td>
+<td>✗</td>
+<td>საკუთარი</td>
+<td>—</td>
+</tr>
+<tr>
+<td>კოორდინატორი</td>
+<td>დემო (ჯერ არ არის განსაზღვრული)</td>
+<td>კონტროლის გავლილი — მხოლოდ ნახვით</td>
+<td>✗</td>
+<td>ყველა, შეზღუდულის გარდა</td>
+<td>—</td>
+</tr>
+<tr>
+<td>სამსახურის უფროსი</td>
+<td>დემო</td>
+<td>ბარათი არ უჩანს</td>
+<td>✗</td>
+<td>ხარვეზების; ოპერატორებისა და QC შეცდომების გარეშე</td>
+<td>—</td>
+</tr>
+<tr>
+<td>საველე მენეჯერი</td>
+<td>14</td>
+<td>მიკუთვნებული, <strong>გაგზავნილი</strong>, დადებითის გარდა</td>
+<td>✓ თავისი გუნდი</td>
+<td>თავისი გუნდი + ცრუ გასწორება</td>
+<td>—</td>
+</tr>
+<tr>
+<td>ამზომველი</td>
+<td>247</td>
+<td>სადაც ამზომველი ან შემდგენია — გაგზავნილი, დადებითის გარდა</td>
+<td>✓ საკუთარი</td>
+<td>საკუთარი</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>წესები, რომლებიც სერვერზე სრულდება:</strong></p>
+<ul>
+<li>ველს გაუგზავნელი არაფერი უჩანს, დადებითიც არ მიდის ველზე (<code>scope.field_visible()</code>);</li>
+<li>ველს QC-ის შიდა ისტორია არ უჩანს: დანიშვნა, სამუშაო ვერსია, გადანაწილება, სტატუსის მოთხოვნა, შეფასება (<code>scope.QC_INTERNAL_EVENTS</code>);</li>
+<li>სხვისი ჩანაწერი → <strong>404</strong> და არა 403, რომ ჩანაწერის არსებობაც არ გამჟღავნდეს;</li>
+<li>ვისაც რამდენიმე როლი აქვს, ზედა ზოლში ცვლის. აქტიური როლი სესიაში ინახება, და ყოველი შემოწმება აქტიურ როლზე ხდება.</li>
+</ul>
+<p><strong>მარტივად რომ ავხსნათ:</strong> ღილაკის დამალვა საკმარისი არ არის, რადგან ცნობისმოყვარე ადამიანს მისამართის ხელით აკრეფა შეუძლია. ამიტომ სერვერი ყოველ ჯერზე თავად ამოწმებს, ვინ ითხოვს და რას. თუ ოქმი შენი არ არის, სერვერი პასუხობს „ასეთი არ არსებობს“.</p>
+<h3>4.6 სამუშაო პროცესი (state machine)</h3>
+<p><strong>ტექნიკურად:</strong> <code>qc_items.state</code> შვიდიდან ერთ-ერთ მნიშვნელობას იღებს (<code>CheckConstraint ck_item_state</code>). გადასვლებს <code>workflow.apply()</code> მართავს, ხოლო დაშვებულ მოქმედებებს <code>available_actions()</code> ითვლის — როლის, საკუთრებისა და მდგომარეობის მიხედვით.</p>
+<pre><code>                 შენახვა (draft)
+                ┌────────────┐
+                ▼            │
+           [pending] ────────┘
+               │ გაგზავნა
+     ┌─────────┼──────────────────────────┐
+     │ დადებითი│ უარყოფითი / რეკომენდაცია │ დაზუსტება (კითხვა)
+     ▼         ▼                          ▼
+ [closed]  [awaiting_field] ◄─────────────┘
+               │ ველის პასუხი
+     ┌─────────┴──────────────┐
+     │ შესწორდა / გავითვალ.   │ არ ვეთანხმები
+     ▼                        ▼
+ [awaiting_qc]          [awaiting_manager]
+     │                    │ დადასტურება     │ ამზომველს დაბრუნება
+     │                    ▼                 └──► [awaiting_field]
+     │               [awaiting_qcm]
+     │                 │ ხარვეზი რჩება ──► [awaiting_field] ან [returned_to_manager]
+     │                 │ ველი მართალია ──► [closed] (qc_error)
+     │                 │ ორივე მართალია ─► [closed] (both_right)
+     │
+     ├─ დადასტურება (M) ─────────────► [closed] (corrected / acknowledged)
+     └─ არ გასწორდა ─► [awaiting_field] ან [returned_to_manager]
+
+ [returned_to_manager] ── მენეჯერის პასუხი ──► [awaiting_qc] ან [awaiting_qcm]
+</code></pre>
+<p>მდგომარეობები:</p>
+<table>
+<thead>
+<tr>
+<th>კოდი</th>
+<th>ქართულად</th>
+<th>ვისთანაა „ბურთი“</th>
+<th>ახლა ბაზაში</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pending</code></td>
+<td>გასავლელი</td>
+<td>QC ოპერატორთან</td>
+<td>1 456</td>
+</tr>
+<tr>
+<td><code>awaiting_field</code></td>
+<td>ველზე</td>
+<td>ამზომველებთან (მენეჯერი CC-შია)</td>
+<td>3 774</td>
+</tr>
+<tr>
+<td><code>awaiting_manager</code></td>
+<td>„არ ვეთანხმები“ — მენეჯერის დადასტურება</td>
+<td>პასუხისმგებელ საველე მენეჯერთან</td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>awaiting_qcm</code></td>
+<td>არ დათანხმებული</td>
+<td>QC მენეჯერთან</td>
+<td>290</td>
+</tr>
+<tr>
+<td><code>returned_to_manager</code></td>
+<td>დაბრუნებულია მენეჯერთან</td>
+<td>მხოლოდ საველე მენეჯერთან</td>
+<td>1 107</td>
+</tr>
+<tr>
+<td><code>awaiting_qc</code></td>
+<td>პასუხი მოვიდა — გადასამოწმებელი</td>
+<td>QC ოპერატორთან</td>
+<td>3 030</td>
+</tr>
+<tr>
+<td><code>closed</code></td>
+<td>დახურული</td>
+<td>—</td>
+<td>34 502</td>
+</tr>
+</tbody>
+</table>
+<p><strong>ძირითადი წესები</strong> (✅ კოდში; ბიზნეს-წესად შეთანხმებულია 2026-10-19/20):</p>
+<ul>
+<li>უარყოფითზე, რეკომენდაციასა და დაზუსტებაზე კომენტარი სავალდებულოა. კოდები კომენტარიდან ავტომატურად ისმება <code>rules.gs</code>-ის წესებით (<code>services/codes.classify</code>);</li>
+<li><strong>დაზუსტება კითხვაა და არა სტატუსი:</strong> D არ იქმნება, დადებითად არ ითვლება, მაგრამ დღის რაოდენობაში შედის;</li>
+<li>გაგზავნის შემდეგ სტატუსს QC მენეჯერი პირდაპირ ცვლის, ოპერატორი კი მხოლოდ მოთხოვნით (<code>verdict_requests</code>). კომენტარი, კოდები, ამზომველები და ფოტო თავისუფლად იცვლება;</li>
+<li>„არ ვეთანხმები“ QC მენეჯერთან <strong>მხოლოდ</strong> პასუხისმგებელი (შემდგენის) მენეჯერის დადასტურებით გადადის;</li>
+<li>„ველი მართალია“ და „ორივე მართალია“ ვერ შეინახება, თუ „დადებითი“ არ არის მონიშნული;</li>
+<li><strong>CC პრინციპი:</strong> დაბრუნებისას მონიშვნა „საჭიროა საველე მენეჯერის ჩართვა“. მოუნიშნავი → ამზომველებს უბრუნდება, მენეჯერი ხედავს; მონიშნული → პასუხობს მხოლოდ მენეჯერი;</li>
+<li>„შესწორდა“, რომელიც არ გასწორდა → <code>false_fix_count + 1</code> („ცრუ გასწორება“, ცალკე აღრიცხვა);</li>
+<li>თავდაპირველი ვერდიქტი არ იცვლება. უარყოფითი გასწორების შემდეგაც უარყოფითია; გამონაკლისია QC მენეჯერის „ველი მართალია“ / „ორივე მართალია“ და დადასტურებული სტატუსის შეცვლა;</li>
+<li>ფოტოს ტვირთავს <strong>მხოლოდ კონტროლი</strong> (<code>D.QC_ROLES</code>): JPEG/PNG/WEBP/GIF/PDF, ≤ 10 MB, შემთხვევითი სახელით.</li>
+</ul>
+<p><strong>მარტივად რომ ავხსნათ:</strong> ოქმი „მოგზაურობს“ ადამიანებს შორის. ყოველ მომენტში ზუსტად ცნობილია, ვისთანაა და რისი გაკეთება შეუძლია მას. ფურცელზე დახატული მარშრუტია, და სისტემა არ გაძლევს უფლებას, ამ მარშრუტიდან გადაუხვიო.</p>
+<h3>4.7 სისტემური განაწილება</h3>
+<p>ფაილები: <code>services/distribution/source.py</code> (წყარო), <code>algo.py</code> (ალგორითმი), <code>service.py</code> (გადახედვა/დადასტურება); გვერდი <code>/distribution</code> — მხოლოდ QC მენეჯერი და ადმინი.</p>
+<p><strong>ნაბიჯები:</strong></p>
+<ol>
+<li><strong>წყარო:</strong> NAPR_Distributor-ის <code>napr_data.sqlite</code>, გახსნილი <strong>მხოლოდ კითხვით</strong> (<code>?mode=ro</code>, <code>source.connect()</code>).</li>
+<li><strong>კანდიდატი:</strong> კოდი შედის, თუ მისი <strong>პირველი</strong> ოქმი დიაპაზონშია; „სისტემური სერვისი“ იგნორირდება (<code>source.query_candidates()</code>, SQL CTE-ით). პირველ რიგში შედის წინა განაწილების <strong>ნაშთი</strong> (<code>distribution_backlog</code>).</li>
+<li><strong>გამორიცხვა:</strong>
+<ul>
+<li>ღია საველე სტატუსი;</li>
+<li>უკვე კონტროლშია (<code>qc_items.protocol_number</code>);</li>
+<li>გამორიცხული ზონები.</li>
+</ul>
+</li>
+<li><strong>ამზომველები და მენეჯერები</strong> (<code>services/directory.FieldDirectory</code>):
+<ul>
+<li>OQMI_CREATOR და MOXAZ_CREATOR შედარდება Field Group-ს; ვინც იქ არ არის (მაგ. რეგისტრატორი), ამზომველად არ ითვლება;</li>
+<li>მენეჯერი FIELD_GROUP_272-ით (დღევანდელი) დგინდება; ყველა მიკუთვნებული მენეჯერი ინახება, პასუხისმგებელი შემდგენის მენეჯერია;</li>
+<li>თუ არცერთი ამზომველი 272-ში არ არის, ოქმი „დაუჯგუფებელშია“ და QC მენეჯერი ხელით უწერს მენეჯერს (<code>manager_overrides</code>).</li>
+</ul>
+</li>
+<li><strong>ბლოკი</strong> = საკადასტრო კოდი ბოლო სეგმენტის გარეშე (<code>algo.block_key</code>); ბლოკი განუყოფელია.</li>
+<li><strong>პროცენტული დაფარვა</strong> (<code>algo.select_by_coverage</code>):
+<ul>
+<li>ნაგულისხმევი 70% + ზონის, სექტორის ან მენეჯერის წესი; რამდენიმე წესიდან უფრო დიდი მოქმედებს;</li>
+<li>შერჩევა ფენებად ხდება (პროცენტი × ზონა × მენეჯერი), ბლოკები შემთხვევით ირჩევა (<code>seed</code> ინახება, ამიტომ შედეგი გამეორებადია).</li>
+</ul>
+</li>
+<li><strong>ოპერატორის რაოდენობა — მაქსიმუმი</strong> (<code>algo.fit_capacity</code>). რიგი: ნაშთი → უფრო მაღალი პროცენტი → უფრო ძველი ოქმი. რაც არ ჩაეტია, ნაშთში რჩება.</li>
+<li><strong>ოპერატორებზე</strong> (<code>algo.assign_to_operators</code>): დიდი ბლოკი ჯერ, ყველაზე ნაკლებად დატვირთულს.</li>
+<li><strong>გადახედვა → დადასტურება:</strong>
+<ul>
+<li>გადახედვა ბაზაში არაფერს წერს; შედეგი სერვერის მეხსიერებაში 30 წუთით ინახება (<code>_PREVIEWS</code>);</li>
+<li>დადასტურება ერთ ტრანზაქციაში ქმნის შემთხვევებს, ადამიანებს და „დაინიშნა“ ჩანაწერებს;</li>
+<li><code>uq_item_protocol_cad</code> ერთი ოქმის ორჯერ განაწილებას ფიზიკურად კრძალავს.</li>
+</ul>
+</li>
+</ol>
+<p><strong>რეალური მაგალითი</strong> (დოკუმენტირებული 2026-10-20, <code>docs/ARCHITECTURE.md</code> §8.1; ამ აუდიტით თავიდან არ გაშვებულა): დიაპაზონი 24.09–18.10.2026, 14 ოპერატორი × 200, ბაზალეთი / ერთი მენეჯერის ჯგუფი 100%.</p>
+<table>
+<thead>
+<tr>
+<th>ეტაპი</th>
+<th>კოდი</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>დიაპაზონში</td>
+<td>5 840</td>
+</tr>
+<tr>
+<td>ღია სტატუსი</td>
+<td>−360</td>
+</tr>
+<tr>
+<td>Field Group-ში არ არის</td>
+<td>−238</td>
+</tr>
+<tr>
+<td>დაუჯგუფებელი</td>
+<td>−210</td>
+</tr>
+<tr>
+<td>ვარგისი</td>
+<td>5 030</td>
+</tr>
+<tr>
+<td>შეირჩა პროცენტით</td>
+<td>3 715</td>
+</tr>
+<tr>
+<td>განაწილდა (14 × 200 = 2 800 მაქსიმუმი)</td>
+<td>2 800</td>
+</tr>
+<tr>
+<td>ნაშთი შემდეგისთვის</td>
+<td>915</td>
+</tr>
+</tbody>
+</table>
+<p><strong>მარტივად რომ ავხსნათ:</strong> სისტემა იღებს ყველა ახლად აზომილ ნაკვეთს, აგდებს იმას, რაც ჯერ არ არის მზად ან უკვე შემოწმდა, და საჭირო ნაწილს (მაგ. 70%) ირჩევს ისე, რომ ყველა ზონა და ყველა მენეჯერი თანაბრად იყოს წარმოდგენილი. მეზობელი ნაკვეთები (ბლოკი) ერთ ოპერატორს ხვდება. რაც დღეს ვერ ჩაეტია, ხვალ პირველი შევა.</p>
+<h3>4.8 სპორადული განაწილება</h3>
+<p><code>services/sporadic.py</code>; გვერდი <code>/distribution/sporadic</code>.</p>
+<ul>
+<li><strong>წყარო:</strong> IT-ის ყოველდღიური xlsx (ახლა მეილით მოდის), ატვირთვით. იკითხება <strong>მხოლოდ</strong> ეს სვეტები: <code>FLD_PAPER_ID, CADCODE, SURVEY_DAY, SURVEY_TIME, CALL_STATUS, ST_NAME, TR_NAME, USER_REAL_NAME, REGNUMBER, CREATE_DATE</code>. 🔐 განმცხადებლების სვეტები (APPLICS, APP_PERSONS, REG_EMP, ADDRESS) არ იკითხება, ატვირთული ფაილი კი დამუშავებისთანავე იშლება;</li>
+<li><strong>ამზომველი:</strong> REGFIELDALL-ის MOXAZ_CREATOR, რადგან სპორადულზე OQMI ყოველთვის „სისტემური სერვისია“ (ძველ ჩანაწერებს 95% ემთხვევა);</li>
+<li><strong>ფილტრები:</strong> ❓ დასაზუსტებელია (ღია კითხვა Q11 ა–დ). ამიტომ ყველა წესი გვერდზე იცვლება:
+<ul>
+<li>SURVEY_DAY: მხოლოდ გუშინ, ან გუშინ და N დღით ადრე;</li>
+<li>CALL_STATUS = „დასრულებულია“;</li>
+<li>ღია სტატუსის გამორიცხვა;</li>
+<li>ოპერატორებზე: რაოდენობით ან თანაბრად;</li>
+</ul>
+</li>
+<li><strong>დუბლიკატი:</strong> სისტემურში გაუვლელი ოქმი სპორადულში გადადის (<code>converted_to_sporadic</code>); შემოწმებული აღარ ემატება.</li>
+</ul>
+<h3>4.9 ძველი მონაცემის გადმოტანა</h3>
+<p><code>services/legacy_import.py</code>, <code>scripts/fetch_sheets.py</code>, <code>scripts/build_db.py</code>.</p>
+<table>
+<thead>
+<tr>
+<th>ნაბიჯი</th>
+<th>რა ხდება</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. წამოღება</td>
+<td><code>fetch_sheets.py fetch</code> — კონტროლის ცხრილის ჩანართები QCStatRead Apps Script-ით, <strong>მხოლოდ GET</strong>, 8 000-მწკრივიანი გვერდებით → <code>data/raw/control/*.json</code>. სარკისებრი ჩანართები (<code>ყველა-მონაცემი</code>, <code>SQL</code>, …) და „პირადი ნომრები“ არ იკითხება. Field Group — Distributor-ის Apps Script-ით → <code>data/raw/field_group.json</code></td>
+</tr>
+<tr>
+<td>2. აწყობა</td>
+<td><code>build_db.py</code> — ბაზას <strong>ნულიდან</strong> აწყობს (≈ 2 წთ, სერვერი გაჩერებული უნდა იყოს)</td>
+</tr>
+<tr>
+<td>3. სვეტები</td>
+<td>სათაურით იკითხება. „სინქრონის დრო“ ორჯერ გვხვდება: პირველი = Q (კონტროლი), მეორე = S (ველი)</td>
+</tr>
+<tr>
+<td>4. დუბლიკატი</td>
+<td>ერთი ჩანაწერი რჩება. თუ სპორადულშიცაა — სპორადული, სხვა შემთხვევაში ყველაზე სრული</td>
+</tr>
+<tr>
+<td>5. მდგომარეობა</td>
+<td>E დადებითი → closed; M = TRUE → closed/corrected; ველის პასუხის შემდეგ: Q &gt; S და O-ში შენიშვნა → <code>returned_to_manager</code>, სხვაგვარად → QC მენეჯერთან ან QC-ის გადასამოწმებელი; ცარიელი / „პროცესშია“ → pending</td>
+</tr>
+<tr>
+<td>6. ამზომველები</td>
+<td>F და G სვეტის სახელები, ალიასებით; ცარიელზე REGFIELDALL-იდან შეივსო 1 550 ოქმი</td>
+</tr>
+<tr>
+<td>7. TYPE (V)</td>
+<td>correct → „სწორია“, false defect → „არასწორი ხარვეზი“, missed defect → „გამორჩენილი“ (<code>qc_reviews</code>, <code>source=legacy</code>)</td>
+</tr>
+<tr>
+<td>8. ისტორია</td>
+<td>ძველი ცხრილი ზედ წერდა, ამიტომ ქრონოლოგია ვერ აღდგება. ინახება ბოლო მდგომარეობა + ნედლი ანაბეჭდი (<code>legacy_extra</code>), დროები <code>approx = true</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>შეჯერება</strong> (დოკუმენტირებული, <code>ARCHITECTURE.md</code> §9):</p>
+<ul>
+<li>„შემაჯამებელის“ „შემოწმებული“ თითოეულ ოპერატორზე = ჩვენი რიცხვი + მოცილებული დუბლიკატები, ზუსტად (4 „პროცესშია“ ჩანაწერის გარდა);</li>
+<li>271 დავა ემთხვევა QC მენეჯერთან მყოფ სისტემურ ოქმებს.</li>
+</ul>
+<p><strong>მარტივად რომ ავხსნათ:</strong> ძველი ცხრილის ყველა ჩანართი წავიკითხეთ, ცხრილს არაფერი შევუცვალეთ, და ახალ ბაზაში დავალაგეთ. ერთი ოქმი თუ ორჯერ ეწერა, ერთხელ დავტოვეთ. თითო ოქმზე დავადგინეთ, „ვისთანაა ახლა“: ველზე, მენეჯერთან, QC მენეჯერთან თუ დახურულია. მერე ჯამები ძველ შემაჯამებელს შევადარეთ, და დაემთხვა. ძველი ცხრილი მხოლოდ ბოლო მდგომარეობას ინახავდა, ამიტომ წინა ნაბიჯების ისტორია ვერ აღდგება.</p>
+<p>⚠️ <strong>ეს პროტოტიპის ერთჯერადი იმპორტია და არა დამტკიცებული მიგრაცია.</strong> საწარმოო მიგრაცია ცალკე უნდა დამტკიცდეს (იხ. §7 და <a href="02-%E1%83%9E%E1%83%98%E1%83%A0%E1%83%90%E1%83%93%E1%83%98-%E1%83%A2%E1%83%94%E1%83%A5%E1%83%9C%E1%83%98%E1%83%99%E1%83%A3%E1%83%A0%E1%83%98-%E1%83%A1%E1%83%90%E1%83%AE%E1%83%94%E1%83%9A%E1%83%9B%E1%83%AB%E1%83%A6%E1%83%95%E1%83%90%E1%83%9C%E1%83%94%E1%83%9A%E1%83%9D.html">სახელმძღვანელოს F თავი</a>).</p>
+<h3>4.10 სტატისტიკა</h3>
+<p><code>services/stats.py</code>, გვერდი <code>/stats</code>, API <code>/api/stats</code>, ექსპორტი <code>/stats/export.xlsx</code>.</p>
+<ul>
+<li><strong>ერთი წყარო, ერთი განმარტება:</strong> ყველა როლისთვის ერთი და იგივე ფუნქციები ითვლის. როლი მხოლოდ იმას ცვლის, რომელი ჩანაწერები შედის (<code>scope.item_filter</code>). ამიტომ ოპერატორის, მენეჯერისა და კოორდინატორის ციფრები ერთმანეთს ვერ დაშორდება;</li>
+<li><strong>მეტრიკები:</strong>
+<ul>
+<li>შემოწმებული (D პერიოდით);</li>
+<li>დადებითი (დაზუსტება არ ითვლება);</li>
+<li>ხარვეზი % = უარყოფითი ÷ შემოწმებული;</li>
+<li>კრიტიკული % = უარყოფითი ≥ 1 კრიტიკული კოდით ÷ შემოწმებული;</li>
+<li>რეკომენდაცია (ცალკე ხაზი);</li>
+<li>გასწორდა;</li>
+<li>ველზე ღია;</li>
+<li>პასუხის დრო;</li>
+</ul>
+</li>
+<li><strong>ჭრილები:</strong> ოპერატორი, მენეჯერი (ოქმი ყველა მიკუთვნებულ მენეჯერს ეთვლება), ამზომველი (ყველა ამზომველი იღებს შემთხვევას), ზონა, კოდი, სიმძიმე;</li>
+<li><strong>შეზღუდული ნაწილი</strong> (მხოლოდ QC მენეჯერი და ადმინი): ოპერატორის შეცდომა, QC მენეჯერის შეფასებები, ძველი TYPE, „ორივე მართალია“. „ცრუ გასწორება“ — QC მენეჯერს, საველე მენეჯერს და ადმინს;</li>
+<li><strong>სიჩქარე:</strong> SQLite-ზე 2–3 წამი (44 ათასი შემთხვევა), დოკუმენტირებული <code>ARCHITECTURE.md</code> §14-ში.</li>
+</ul>
+<p><strong>მარტივად რომ ავხსნათ:</strong> ყველა ერთი და იმავე „სასწორით“ იწონის. ოპერატორი ხედავს მხოლოდ თავის ოქმებს, მენეჯერი — თავისი გუნდისას, ხელმძღვანელობა — ყველას, მაგრამ ფორმულა ერთია. ამიტომ ერთი და იგივე ოქმი სხვადასხვა ადამიანთან სხვადასხვანაირად ვერ დაითვლება. ოპერატორების შეცდომები კი მხოლოდ მათ უჩანთ, ვისაც ეს ეხება.</p>
+<h3>4.11 Pre-QC (ახლა დემო)</h3>
+<p><code>services/preqc_demo.py</code>, <code>routes/preqc.py</code>.</p>
+<ul>
+<li>216 ფიქსირებული შემოწმება გამოგონილ გუნდზე, <code>is_demo = true</code>;</li>
+<li>ხილვადობა <strong>მხოლოდ</strong> საველე მენეჯერსა და ამზომველს აქვს (<code>scope.can_see_preqc</code>). ადმინს და QC-საც კი ეკრძალება (403);</li>
+<li>გრაფიკი: მივლინების მე-3 დღიდან, დღე N ამოწმებს დღე N−2-ის ოქმებს (<code>preqc_lag_days = 2</code>, პარამეტრია);</li>
+<li>🗓 რეალური ინტეგრაცია დაგეგმილია. ⚠️ კონტრაქტზე შეუსაბამობა იხ. §9.</li>
+</ul>
+<h3>4.12 მეილით შეტყობინება</h3>
+<p><code>services/notify.py</code>.</p>
+<ul>
+<li>მოქმედებაზე მონიშვნით (✉): QC-ის დაბრუნება, QC მენეჯერის სამი გადაწყვეტილება, კომენტარი;</li>
+<li>ადრესატი პასუხისმგებელი მენეჯერია, CC-ში — დანარჩენი მიკუთვნებული მენეჯერები;</li>
+<li>SMTP-ის გარეშე მეილი <code>preview</code> სტატუსით ინახება და ჩანს: ადმინისტრირება → მეილები. სტატუსები: <code>preview / sent / failed / no_address</code>;</li>
+<li>✅ ახლა ყველა მეილი <code>no_address</code> იქნება, რადგან ბაზაში ელფოსტა არავის აქვს;</li>
+<li>💡 გაგზავნა მოთხოვნის შიგნით, სინქრონულად ხდება (timeout 15 წმ). საწარმოოში ფონურ რიგში უნდა გადავიდეს (§8.3).</li>
+</ul>
+<h3>4.13 ერთდროული მუშაობა</h3>
+<p><strong>ტექნიკურად:</strong></p>
+<ul>
+<li><strong>ოპტიმისტური ბლოკირება:</strong> ფორმა ატარებს <code>version</code>-ს. <code>workflow.apply()</code> ადარებს მას ჩანაწერის <code>version</code>-ს და, თუ არ ემთხვევა, აბრუნებს <code>ConflictError</code>-ს. წარმატებისას <code>version += 1</code>;</li>
+<li><strong>„ახლა ხსნის“:</strong> ბარათი ყოველ ~20 წამში აგზავნის <code>POST /api/presence/{id}</code>-ს. ჩანაწერი 60 წამის განმავლობაში ითვლება აქტიურად, 10 წუთზე ძველი კი იშლება.</li>
+</ul>
+<p><strong>მარტივად რომ ავხსნათ:</strong> თუ ორი ამზომველი ერთ ოქმს ერთდროულად ხსნის, ორივე ხედავს ყვითელ ნიშანს: „ახლა ხსნის: X“. პასუხს ის იღებს, ვინც პირველი გააგზავნა. მეორეს სისტემა ეუბნება: „უკვე უპასუხა X-მა“, და კომენტარის დამატებას სთავაზობს.</p>
+<p>⚠️ ტექნიკური შენიშვნა იხ. §8.3 (G5): შემოწმება აპლიკაციის დონეზეა და PostgreSQL-ზე გასამკაცრებელია.</p>
+<h3>4.14 მარშრუტები (routes)</h3>
+<table>
+<thead>
+<tr>
+<th>ჯგუფი</th>
+<th>მარშრუტები</th>
+<th>ვისთვის</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>შესვლა</td>
+<td><code>GET /login</code>, <code>POST /login/demo</code>, <code>POST /login/pin</code>, <code>POST /logout</code>, <code>POST /role</code>, <code>GET /auth/google</code>, <code>GET /auth/google/callback</code></td>
+<td>ყველა</td>
+</tr>
+<tr>
+<td>მთავარი</td>
+<td><code>GET /</code>, <code>GET /about</code></td>
+<td>შესული მომხმარებელი</td>
+</tr>
+<tr>
+<td>QC</td>
+<td><code>GET /qc</code>, <code>GET /qc/next</code>, <code>POST /qc/bulk-send</code>, <code>GET /qc/disagreements</code>, <code>GET /qc/requests</code>, <code>GET /checked</code></td>
+<td>QC როლები; „არ დათანხმებულები“ და მოთხოვნები — QC მენეჯერი/ადმინი; <code>/checked</code> — კოორდინატორი, QC მენეჯერი, ადმინი</td>
+</tr>
+<tr>
+<td>ველი</td>
+<td><code>GET /field</code></td>
+<td>ამზომველი, საველე მენეჯერი, ადმინი</td>
+</tr>
+<tr>
+<td>ბარათი</td>
+<td><code>GET /items/{id}</code>, <code>POST /items/{id}/action</code>, <code>GET /attachments/{id}</code></td>
+<td>ხილვადობით</td>
+</tr>
+<tr>
+<td>განაწილება</td>
+<td><code>/distribution</code> (+ <code>preview</code>, <code>confirm</code>, <code>runs/{id}</code>, <code>presets</code>, <code>export/{token}</code>, <code>sporadic</code>, <code>sporadic/preview</code>, <code>sporadic/confirm</code>, <code>unsorted</code>, <code>unsorted/assign</code>, <code>overrides/{id}/delete</code>)</td>
+<td>QC მენეჯერი, ადმინი</td>
+</tr>
+<tr>
+<td>სტატისტიკა</td>
+<td><code>GET /stats</code>, <code>GET /api/stats</code>, <code>GET /stats/export.xlsx</code></td>
+<td>ყველა, როლის ფილტრით</td>
+</tr>
+<tr>
+<td>Pre-QC</td>
+<td><code>GET /preqc</code>, <code>GET /preqc/{id}</code></td>
+<td>საველე მენეჯერი, ამზომველი</td>
+</tr>
+<tr>
+<td>ადმინისტრირება</td>
+<td><code>/admin</code>, <code>/admin/users/{id}</code>, <code>/admin/teams</code>, <code>/admin/codes</code>, <code>/admin/settings</code>, <code>/admin/import</code>, <code>/admin/audit</code>, <code>/admin/emails</code></td>
+<td>ადმინი</td>
+</tr>
+<tr>
+<td>JSON API</td>
+<td><code>GET /api/health</code>, <code>GET /api/me</code>, <code>GET /api/items</code>, <code>GET /api/items/{id}</code>, <code>POST /api/presence/{id}</code>, <code>POST /api/presence/{id}/leave</code>, <code>GET /api/presence</code></td>
+<td>ხილვადობით</td>
+</tr>
+<tr>
+<td>დოკუმენტაცია</td>
+<td><code>GET /docs</code> (OpenAPI)</td>
+<td>⚠️ ავტორიზაციის გარეშე (FastAPI-ის ნაგულისხმევი)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>მარტივად რომ ავხსნათ:</strong> მარშრუტი საიტის „ოთახის მისამართია“: <code>/qc</code> ოპერატორის სიაა, <code>/field</code> ველის სია, <code>/admin</code> ადმინისტრირება. თითო ოთახს წერია, ვის შეუძლია შესვლა, და ამას სერვერი ამოწმებს. <code>/api/...</code> იგივე ოთახებია პროგრამებისთვის: გვერდის ნაცვლად მონაცემს აბრუნებს.</p>
+<h3>4.15 კონფიგურაცია</h3>
+<p>ყველაფერი გარემოს ცვლადებშია (<code>app/config.py</code>). კოდში კონკრეტული სერვერი არ წერია.</p>
+<table>
+<thead>
+<tr>
+<th>ცვლადი</th>
+<th>ნაგულისხმევი</th>
+<th>საწარმოოში</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>QCP_DATABASE_URL</code></td>
+<td><code>sqlite:///data/platform.db</code></td>
+<td><code>postgresql+psycopg://…</code> (⚠️ დრაივერი ჯერ არ აყენია, §8.3)</td>
+</tr>
+<tr>
+<td><code>QCP_DATA_DIR</code></td>
+<td><code>data/</code></td>
+<td>ფაილების საცავი</td>
+</tr>
+<tr>
+<td><code>QCP_SESSION_SECRET</code></td>
+<td>იქმნება <code>data/.session_secret</code>-ში</td>
+<td>საიდუმლოების საცავიდან</td>
+</tr>
+<tr>
+<td><code>QCP_BASE_URL</code></td>
+<td>—</td>
+<td><code>https://&lt;დომენი&gt;</code></td>
+</tr>
+<tr>
+<td><code>QCP_DEMO_LOGIN</code></td>
+<td><strong><code>1</code> (ჩართული)</strong></td>
+<td><strong><code>0</code> სავალდებულოა</strong></td>
+</tr>
+<tr>
+<td><code>QCP_DEMO_PIN</code></td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>QCP_GOOGLE_CLIENT_ID</code> / <code>_SECRET</code> / <code>_ALLOWED_DOMAIN</code></td>
+<td>—</td>
+<td>IT-ის OAuth client</td>
+</tr>
+<tr>
+<td><code>QCP_SMTP_HOST</code> / <code>_PORT</code> / <code>_USER</code> / <code>_PASSWORD</code> / <code>_FROM</code> / <code>_STARTTLS</code></td>
+<td>— / 587 / … / <code>1</code></td>
+<td>IT-ის SMTP relay</td>
+</tr>
+<tr>
+<td><code>QCP_DISTRIBUTOR_DB</code>, <code>QCP_QC_WORKBOOK</code></td>
+<td>ლოკალური ფაილები</td>
+<td>იცვლება წყაროს კონექტორით</td>
+</tr>
+<tr>
+<td><code>QCP_PORT</code></td>
+<td>8200</td>
+<td>proxy-ს უკან</td>
+</tr>
+</tbody>
+</table>
+<p><strong>მარტივად რომ ავხსნათ:</strong> სერვერის „მისამართები და გასაღებები“ კოდში ჩაწერილი არ არის. ისინი ცალკე „ბარათზე“ (გარემოს ცვლადებში) წერია. სერვერის შეცვლისას მხოლოდ ბარათი იცვლება, კოდი კი იგივე რჩება. ⚠️ ერთი ჩანაწერი საწარმოოში აუცილებლად უნდა შეიცვალოს: <code>QCP_DEMO_LOGIN=0</code>.</p>
+<h3>4.16 ტესტები და შემოწმება</h3>
+<p>✅ <code>pytest -q</code> → <strong>57 passed</strong> (2026-10-22, ≈ 6 წმ). ტესტები დროებით ბაზაზე მუშაობს და <code>data/</code>-ს არ ეხება.</p>
+<table>
+<thead>
+<tr>
+<th>ფაილი</th>
+<th>რას ამოწმებს</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test_workflow.py</code></td>
+<td>სამუშაო პროცესის ყველა გადასვლა, სავალდებულო ველები, ვერსიის კონფლიქტი</td>
+</tr>
+<tr>
+<td><code>test_scope.py</code></td>
+<td>ხილვადობა როლების მიხედვით, 404 სხვისზე</td>
+</tr>
+<tr>
+<td><code>test_distribution.py</code></td>
+<td>ალგორითმი, პროცენტები, ნაშთი, დუბლიკატის აკრძალვა</td>
+</tr>
+<tr>
+<td><code>test_legacy.py</code></td>
+<td>ძველი ცხრილის წესები (Q/S/O, დუბლიკატი, TYPE)</td>
+</tr>
+<tr>
+<td><code>test_sporadic_notify.py</code></td>
+<td>სპორადულის ფაილი და ფილტრები; მეილი პასუხისმგებელ მენეჯერს; Google-ით შესვლა მხოლოდ დარეგისტრირებული ელფოსტით (Google-თან კავშირი იმიტირებულია)</td>
+</tr>
+<tr>
+<td><code>test_auth.py</code></td>
+<td>დემო შესვლა PIN-ით და მის გარეშე; სხვა საიტიდან გაგზავნილი POST უარყოფილია (CSRF)</td>
+</tr>
+<tr>
+<td><code>test_pages.py</code></td>
+<td>გვერდები ყველა როლით იხსნება; სამსახურის უფროსს ოპერატორების ჭრილი არ უჩანს; მეორე მენეჯერი ხედავს (CC), მაგრამ ვერ ადასტურებს</td>
+</tr>
+</tbody>
+</table>
+<p>დამატებით: <code>scripts/smoke_pages.py</code> (ყველა გვერდი ყველა როლით, გაშვებულ სერვერზე), <code>smoke_stats.py</code>, <code>smoke_distribution.py</code> (რეალურ წყაროზე, არაფერს წერს).</p>
+<p>❓ <strong>არ არის ტესტირებული:</strong> PostgreSQL, რამდენიმე worker, დატვირთვა (load test), Google OAuth რეალურ client-ზე, SMTP.</p>
+<p><strong>მარტივად რომ ავხსნათ:</strong> ტესტი პატარა პროგრამაა, რომელიც სისტემას თავისით „აკლიკებს“: მაგალითად, ცდილობს, ოპერატორმა სხვისი ოქმი გახსნას, და ამოწმებს, რომ ვერ გახსნა. 57 ასეთი შემოწმება 6 წამში სრულდება და რეალურ მონაცემს არ ეხება. ჯერ არ შეგვიმოწმებია, როგორ იქცევა სისტემა ნამდვილ სერვერზე, PostgreSQL-ზე და ბევრ ერთდროულ მომხმარებელზე.</p>
+<hr />
+<h2>5. სრული ნაკადი: წყაროდან QC-ის დახურვამდე და სტატისტიკამდე</h2>
+<h3>5.1 ნაკადის სქემა</h3>
+<pre><code>სააგენტოს სისტემები (მხოლოდ კითხვა)
+  REGFIELDALL (ღამის GDB, Z:\REGFIELDALL) ──► Distributor-ის SQLite ასლი ──┐
+  სპორადულის xlsx (IT, ყოველდღე) ─────────────────── ატვირთვა ──────────┤
+  Field Group (Google ცხრილი, Apps Script GET) ──► data/raw ─────────────┤
+  ძველი კონტროლის ცხრილი (Apps Script GET) ──► data/raw (ერთჯერადი) ────┤
+                                                                         ▼
+                                                ┌──────────── პლატფორმა ────────────┐
+                                                │ 1. განაწილება (გადახედვა → დადასტ.) │
+                                                │ 2. QC შემოწმება (ოპერატორი)        │
+                                                │ 3. ველის პასუხი (ამზომველი)         │
+                                                │ 4. მენეჯერის დადასტურება            │
+                                                │ 5. QC მენეჯერის გადაწყვეტილება      │
+                                                │ 6. QC-ის გადამოწმება → დახურვა      │
+                                                │ 7. სტატისტიკა (იმავე ბაზიდან)       │
+                                                └─────────────────────────────────────┘
+                                                         │            │
+                                              ბრაუზერი / ტელეფონი    მეილი (🗓 SMTP)
+Pre-QC Validator ──► (🗓 API) ──► Pre-QC შედეგები ველისთვის
+</code></pre>
+<p><strong>მარტივად რომ ავხსნათ:</strong> მონაცემი სამი მხრიდან შემოდის: რა აიზომა (REGFIELDALL), ვინ ვისი გუნდიდანაა (Field Group) და რა ხდებოდა აქამდე (ძველი ცხრილი). საიტში ეს ყველაფერი ერთ ბაზაში ერთიანდება. შემდეგ ადამიანები ოქმს ეტაპობრივად ამუშავებენ, ყოველი ნაბიჯი ინახება და სტატისტიკა იმავე მონაცემიდან ითვლება.</p>
+<h3>5.2 რეალისტური მაგალითი — ერთი ოქმის გზა</h3>
+<p>ოქმის ნომერი და კოდი გამოგონილია; სტრუქტურა რეალურია.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>მოქმედება</th>
+<th>ვინ</th>
+<th>რა იცვლება ბაზაში</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>ღამით REGFIELDALL-ის ახალი GDB ჩნდება. Distributor მას ლოკალურ SQLite-ში ტვირთავს</td>
+<td>სისტემა / Distributor</td>
+<td>Distributor-ის <code>parcels</code> (პლატფორმის ბაზა არ იცვლება)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>QC მენეჯერი ირჩევს: 01.10–07.10, 14 ოპერატორი × 200, ნაგულისხმევი 70% → <strong>გადახედვა</strong></td>
+<td>QC მენეჯერი</td>
+<td>არაფერი — მხოლოდ მეხსიერება</td>
+</tr>
+<tr>
+<td>3</td>
+<td>კოდი <code>202.43.12.42.095.042</code> შედის: პირველი ოქმი (№ 6150001) 03.10-ისაა, სტატუსი დახურულია, შემდგენი და მეორე ამზომველი Field Group-ში არიან. ბლოკი <code>202.43.12.42.095</code>, ზონა 43</td>
+<td>ალგორითმი</td>
+<td>—</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>დადასტურება</strong></td>
+<td>QC მენეჯერი</td>
+<td><code>qc_items</code> (state = <code>pending</code>, <code>operator_id</code>), <code>item_people</code> (2 ამზომველი + 1–2 მენეჯერი), <code>qc_events</code> (<code>assigned</code>), <code>distribution_runs</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>ოპერატორი „▶ შემდეგი ოქმი“ → „უარყოფითი“ + კომენტარი „მიჯნის კოორდინატი არ ემთხვევა…“ → კოდი ავტომატურად ისმება → ფოტო → <strong>გაგზავნა</strong></td>
+<td>QC ოპერატორი</td>
+<td><code>verdict = negative</code>, <code>checked_at</code> (D), <code>first_sent_at</code>, <code>state = awaiting_field</code>, <code>qc_item_codes</code>, <code>attachments</code>, <code>qc_events</code> (<code>sent</code>)</td>
+</tr>
+<tr>
+<td>6</td>
+<td>შემდგენი ამზომველი ველის სიაში ნარინჯისფერ ოქმს ხედავს → „არ ვეთანხმები“ + დასაბუთება</td>
+<td>ამზომველი</td>
+<td><code>field_response = disagree</code>, <code>state = awaiting_manager</code>, <code>qc_events</code> (<code>field_responded</code>)</td>
+</tr>
+<tr>
+<td>7</td>
+<td>პასუხისმგებელი მენეჯერი ადასტურებს</td>
+<td>საველე მენეჯერი</td>
+<td><code>dispute_count = 1</code>, <code>state = awaiting_qcm</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td>QC მენეჯერი: <strong>ხარვეზი რჩება</strong> + ახსნა, მოუნიშნავი „საჭიროა მენეჯერის ჩართვა“, ✉ მონიშნული</td>
+<td>QC მენეჯერი</td>
+<td><code>qcm_decision = stand</code>, <code>state = awaiting_field</code>, <code>emails</code> (preview / sent)</td>
+</tr>
+<tr>
+<td>9</td>
+<td>ამზომველი ასწორებს REDI-ში → „შესწორდა“</td>
+<td>ამზომველი</td>
+<td><code>field_response = corrected</code>, <code>state = awaiting_qc</code></td>
+</tr>
+<tr>
+<td>10</td>
+<td>ოპერატორი ამოწმებს → <strong>გასწორდა — დადასტურება (M)</strong></td>
+<td>QC ოპერატორი</td>
+<td><code>corrected_confirmed = true</code>, <code>state = closed</code>, <code>close_reason = corrected</code>. ვერდიქტი ისევ <code>negative</code>-ია</td>
+</tr>
+<tr>
+<td>11</td>
+<td>სტატისტიკა: ოქმი ითვლება შემოწმებულად (D = მე-5 ნაბიჯის დღე), უარყოფითად, კრიტიკულად (თუ კოდი კრიტიკულია) და „გასწორდა“-დ. ეთვლება ორივე ამზომველს და ყველა მიკუთვნებულ მენეჯერს</td>
+<td>სისტემა</td>
+<td>არაფერი — მხოლოდ კითხვა</td>
+</tr>
+</tbody>
+</table>
+<p><strong>ალტერნატიული ბოლო:</strong> თუ მე-8 ნაბიჯზე QC მენეჯერი „ველი მართალია“-ს ირჩევს, ოქმი იხურება <code>qc_error</code>-ით, ვერდიქტი ხდება <code>positive</code>, ხოლო ოპერატორის შეცდომა შეზღუდულ სტატისტიკაში ითვლება.</p>
+<h3>5.3 სპორადულის გზა მოკლედ</h3>
+<ol>
+<li>დილით QC მენეჯერი (სპორადული) IT-ის xlsx-ს ტვირთავს;</li>
+<li>სისტემა მხოლოდ საჭირო სვეტებს კითხულობს, ფილტრავს (SURVEY_DAY, CALL_STATUS, ღია სტატუსი) და ოქმის ნომრით REGFIELDALL-ში ეძებს ამზომველს (MOXAZ_CREATOR);</li>
+<li>გადახედვა → დადასტურება → <code>qc_items</code> (<code>kind = sporadic</code>). ფაილი იშლება;</li>
+<li>შემდეგ ზუსტად იგივე სამუშაო პროცესია, რაც სისტემურზე.</li>
+</ol>
+<hr />
+<h2>6. ინტეგრაციები — რა არის დადასტურებული და რა არა</h2>
+<table>
+<thead>
+<tr>
+<th>წყარო</th>
+<th>რა გვჭირდება</th>
+<th><strong>დღეს როგორ მიიღება</strong></th>
+<th>სტატუსი</th>
+<th>საწარმოოში (რეკომენდაცია)</th>
+<th>სტატუსი</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>REGFIELDALL</strong> (საველე ოქმები)</td>
+<td><code>FLD_PAPER_ID, CADCODE, MOX_CREATE_DATE, FLD_STATUS_NAME, OQMI_CREATOR, MOXAZ_CREATOR, IS_LAST</code></td>
+<td>ღამის GDB ქსელურ საქაღალდეში <code>Z:\REGFIELDALL</code> → Distributor-ის SQLite → პლატფორმა <code>mode=ro</code></td>
+<td>✅</td>
+<td>(ა) read-only view სერვისის ანგარიშით, ან (გ) ღამის ექსპორტი სერვერისთვის ხელმისაწვდომ საქაღალდეში / SFTP-ზე</td>
+<td>💡 ❓</td>
+</tr>
+<tr>
+<td><strong>სპორადულის სია</strong></td>
+<td>ზემოთ ჩამოთვლილი 10 სვეტი, განმცხადებლების გარეშე</td>
+<td>IT-ის xlsx მეილით → ხელით ატვირთვა</td>
+<td>✅</td>
+<td>(ა) view ან (გ) ყოველდღიური ფაილი SFTP-ზე</td>
+<td>💡 ❓</td>
+</tr>
+<tr>
+<td><strong>Field Group</strong> (ამზომველი → მენეჯერი)</td>
+<td>სახელი, მენეჯერი, აქტიურობა</td>
+<td>Google ცხრილი, Apps Script Web App (GET, token-ით) → <code>data/raw/field_group.json</code></td>
+<td>✅</td>
+<td>გუნდებს პლატფორმის ადმინი მართავს (<code>teams</code>, <code>team_members</code> უკვე არსებობს); ან HR/AD წყარო</td>
+<td>💡</td>
+</tr>
+<tr>
+<td><strong>ძველი კონტროლის ცხრილი</strong></td>
+<td>ყველა ოპერატორის ჩანართი + სპორადული</td>
+<td>QCStatRead Apps Script (GET)</td>
+<td>✅</td>
+<td>ერთჯერადი მიგრაცია + პარალელური პერიოდი</td>
+<td>💡</td>
+</tr>
+<tr>
+<td><strong>ოქმის დეტალები</strong> (შემსრულებლები, დანართები)</td>
+<td>„საველე სამუშაოების შესრულებაზე უფლებამოსილი პირები“</td>
+<td><strong>არ მიიღება</strong> (ამზომველი OQMI/MOXAZ-დან ითვლება)</td>
+<td>—</td>
+<td>API: ოქმის ნომერი → JSON</td>
+<td>🗓 ❓</td>
+</tr>
+<tr>
+<td><strong>REDI</strong> (Pre-QC-ისთვის)</td>
+<td>ოქმის გვერდი, ბარათები, ფოტოები</td>
+<td>თანამშრომლის ბრაუზერის სესიით, გაფართოებით (<code>api.napr.gov.ge/lr/redi*</code>, <code>bs.napr.gov.ge</code>)</td>
+<td>✅ Pre-QC-ში</td>
+<td>სერვერისთვის API ან ექსპორტი</td>
+<td>❓</td>
+</tr>
+<tr>
+<td><strong>SLR WFS</strong> (Pre-QC GIS)</td>
+<td>ნაკვეთების გეომეტრია, მეზობლები</td>
+<td>HTTP Basic, მომხმარებელი/პაროლი <code>.env</code>-ში (<code>wblr.napr.gov.ge/data/SLR/ows</code>)</td>
+<td>✅ Pre-QC-ში</td>
+<td>სერვისის ანგარიში + სერვერის IP-ის ნებართვა</td>
+<td>❓</td>
+</tr>
+<tr>
+<td><strong>Google OAuth</strong></td>
+<td>ვინაობა (email)</td>
+<td>კოდი მზადაა, client არ არის</td>
+<td>🗓</td>
+<td>IT-ის Google Cloud პროექტი, Web client</td>
+<td>❓</td>
+</tr>
+<tr>
+<td><strong>SMTP</strong></td>
+<td>მეილის გაგზავნა</td>
+<td>კოდი მზადაა, სერვერი არ არის</td>
+<td>🗓</td>
+<td>IT-ის SMTP relay, გამგზავნი მისამართი SPF/DKIM-ით</td>
+<td>❓</td>
+</tr>
+<tr>
+<td><strong>Pre-QC → პლატფორმა</strong></td>
+<td>შემოწმების შედეგები</td>
+<td>დემო მონაცემი</td>
+<td>🗓</td>
+<td>API (იხ. §9, კონტრაქტის შეუსაბამობა)</td>
+<td>💡</td>
+</tr>
+</tbody>
+</table>
+<p><strong>მარტივად რომ ავხსნათ:</strong> დღეს მონაცემი მოდის იმიტომ, რომ ჩვენი კომპიუტერი შიდა ქსელშია, ქსელური დისკი მიერთებული აქვს და ბრაუზერში REDI-ში შესულები ვართ. სერვერს არცერთი ეს არ აქვს. ამიტომ IT-სგან თითო წყაროზე ცალკე, ოფიციალური და მხოლოდ კითხვის წვდომა გვჭირდება.</p>
+<hr />
+<h2>7. რა არის მზად, რა აკლია, რა იგეგმება</h2>
+<h3>7.1 მზადაა ✅ (პროტოტიპში, რეალურ მონაცემზე)</h3>
+<ul>
+<li>შვიდი როლი და ხილვადობა სერვერზე;</li>
+<li>სრული სამუშაო პროცესი:
+<ul>
+<li>გაგზავნა, შენახვა, დაზუსტება;</li>
+<li>„არ ვეთანხმები“ მენეჯერის დადასტურებით;</li>
+<li>QC მენეჯერის სამი გადაწყვეტილება;</li>
+<li>CC პრინციპი;</li>
+<li>სტატუსის შეცვლის მოთხოვნა;</li>
+<li>QC მენეჯერის შეფასება;</li>
+</ul>
+</li>
+<li>ისტორია (append-only) და აუდიტი;</li>
+<li>სისტემური განაწილება პროცენტებით, ნაშთით და „დაუჯგუფებლით“;</li>
+<li>სპორადული ფაილის ატვირთვით;</li>
+<li>ძველი ცხრილის გადმოტანა (44 159 შემთხვევა) შეჯერებით;</li>
+<li>სტატისტიკა, შეზღუდული ნაწილი, Excel ექსპორტი;</li>
+<li>ფოტოს ატვირთვა (მხოლოდ კონტროლი);</li>
+<li>„ახლა ხსნის“ ნიშანი, ვერსიის შემოწმება;</li>
+<li>მეილის შაბლონი და გამავალი ყუთი;</li>
+<li>Google OIDC-ის კოდი (Authorization Code + PKCE);</li>
+<li>JSON API და OpenAPI;</li>
+<li>ადმინისტრირება: მომხმარებლები, როლები, გუნდები, კოდები, პარამეტრები, მეილები, აუდიტი;</li>
+<li>LAN-ზე ჩვენება PIN-ით;</li>
+<li>57 ტესტი.</li>
+</ul>
+<h3>7.2 დემოა ან დროებითია</h3>
+<ul>
+<li>Pre-QC შედეგები (216 ფიქსირებული);</li>
+<li>კოორდინატორისა და სამსახურის უფროსის ანგარიშები;</li>
+<li>შესვლა სიიდან არჩევით;</li>
+<li>მეილი მხოლოდ ინახება;</li>
+<li>მონაცემის განახლება ხელით ხდება (<code>fetch_sheets.py</code>, <code>build_db.py</code>), და <code>build_db.py</code> ბაზას ნულიდან აწყობს.</li>
+</ul>
+<h3>7.3 აკლია ან დასაზუსტებელია</h3>
+<table>
+<thead>
+<tr>
+<th>საკითხი</th>
+<th>ვისზეა დამოკიდებული</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>სპორადულის ფილტრები (Q11 ა–დ)</td>
+<td>ჩვენ / ხელმძღვანელობა ❓</td>
+</tr>
+<tr>
+<td>კოორდინატორისა და სამსახურის უფროსის როლის დახვეწა და პირები</td>
+<td>ხელმძღვანელობა ❓</td>
+</tr>
+<tr>
+<td>თანამშრომლების ელფოსტები (ახლა 0)</td>
+<td>მენეჯერები აგროვებენ 🗓</td>
+</tr>
+<tr>
+<td>Pre-QC-ის შეყვანის ფორმატი (HTML / TXT / API)</td>
+<td>ხელმძღვანელობა + IT ❓</td>
+</tr>
+<tr>
+<td>წყაროებზე სერვერის წვდომა</td>
+<td>IT ❓</td>
+</tr>
+<tr>
+<td>ავტომატური ელფოსტა მონიშვნის გარეშე, დღის შეჯამება</td>
+<td>ხელმძღვანელობა ❓</td>
+</tr>
+</tbody>
+</table>
+<h3>7.4 შემდეგი ფაზები (შეთავაზება)</h3>
+<table>
+<thead>
+<tr>
+<th>ფაზა</th>
+<th>შინაარსი</th>
+<th>წინაპირობა</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>0. მომზადება</strong></td>
+<td>PostgreSQL-ზე გადასვლა, მიგრაციები, ფონური ამოცანები, უსაფრთხოების გამკაცრება (§8.3)</td>
+<td>ჩვენი სამუშაო</td>
+</tr>
+<tr>
+<td><strong>1. პილოტი</strong></td>
+<td>სერვერი + PostgreSQL + დომენი + HTTPS + Google OAuth; მცირე ჯგუფი (QC + 1–2 გუნდი); მონაცემი ჯერ დღევანდელი გზით მოდის</td>
+<td>IT: სერვერი, ბაზა, დომენი, OAuth</td>
+</tr>
+<tr>
+<td><strong>2. წყაროები</strong></td>
+<td>REGFIELDALL-ის view/ექსპორტი ღამის განახლებით; სპორადულის view</td>
+<td>IT: წვდომა</td>
+</tr>
+<tr>
+<td><strong>3. სრული გაშვება</strong></td>
+<td>ყველა მომხმარებელი, SMTP, პარალელური პერიოდის შემდეგ Google ცხრილი მხოლოდ საკითხავი ხდება</td>
+<td>შეჯერება დამთხვეულია</td>
+</tr>
+<tr>
+<td><strong>4. Pre-QC</strong></td>
+<td>Validator-ის შედეგები API-ით, ოქმის API, WFS სერვისის ანგარიშით</td>
+<td>IT: API, WFS</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>8. შემოთავაზებული საწარმოო არქიტექტურა</h2>
+<h3>8.1 დღევანდელი (პროტოტიპი) ✅</h3>
+<pre><code>დეველოპერის PC (Windows)
+  uvicorn (1 პროცესი, 127.0.0.1:8200 ან 0.0.0.0:8200 LAN-ზე)
+    └─ FastAPI აპლიკაცია
+         ├─ SQLite: data/platform.db (WAL)
+         ├─ ფაილები: data/uploads/
+         ├─ წყარო: ..\NAPR_Distributor\napr_data.sqlite (mode=ro)
+         └─ სკრიპტები ხელით: fetch_sheets.py, build_db.py
+</code></pre>
+<h3>8.2 შემოთავაზებული (საწარმოო) 💡 ❓</h3>
+<pre><code>მომხმარებელი (ოფისი / ველი, ტელეფონი)
+      │ HTTPS 443 (qc.&lt;სააგენტოს დომენი&gt;)
+      ▼
+Reverse proxy (nginx / IIS / სააგენტოს load balancer) — TLS, ზომის ლიმიტი, ლოგი
+      │ HTTP, localhost ან შიდა ქსელი
+      ▼
+აპლიკაციის სერვერი (VM, Linux ან Windows Server; სასურველია Docker)
+  ├─ ვებ-პროცესი: uvicorn / gunicorn, N worker (სერვისად, ავტომატური რესტარტით)
+  ├─ ფონური worker + განრიგი: ღამის იმპორტი, მეილის რიგი, presence-ის გასუფთავება
+  └─ ფაილების საცავი (ფოტო/PDF) — ლოკალური დისკი ან ქსელური საცავი, ბექაპით
+      │ 5432 (TLS)
+      ▼
+PostgreSQL 16 (იმავე ან ცალკე VM / სააგენტოს DB კლასტერი)
+  ├─ აპლიკაციის მომხმარებელი (მხოლოდ ჩვენი სქემა)
+  ├─ ღამის ბექაპი + WAL არქივი (PITR)
+  └─ მიგრაციის მომხმარებელი (სქემის ცვლილებისთვის)
+
+გამავალი კავშირები: Google OAuth (accounts.google.com, oauth2.googleapis.com), SMTP relay
+შიდა წყაროები (მხოლოდ კითხვა): REGFIELDALL view/ექსპორტი, სპორადულის view, 🗓 ოქმის API, WFS
+</code></pre>
+<p><strong>მარტივად რომ ავხსნათ:</strong></p>
+<ul>
+<li><strong>Reverse proxy</strong> სახლის კარია: დაცული შესასვლელი (HTTPS), რომელიც სტუმარს სწორ ოთახში ატარებს.</li>
+<li><strong>აპლიკაციის სერვერი</strong> სამზარეულოა, სადაც საქმე კეთდება.</li>
+<li><strong>ფონური worker</strong> ღამის მორიგეა: ახალ მონაცემს იღებს და მეილებს აგზავნის, ისე რომ მომხმარებელს არ ალოდინებს.</li>
+<li><strong>PostgreSQL</strong> სეიფია, სადაც ყველა ჩანაწერი ინახება და ყოველ ღამე ასლი კეთდება.</li>
+</ul>
+<p>ყველა ეს ნაწილი შეიძლება <strong>ერთ ვირტუალურ სერვერზე</strong> იყოს; გაყოფა სავალდებულო არ არის (იხ. <a href="02-%E1%83%9E%E1%83%98%E1%83%A0%E1%83%90%E1%83%93%E1%83%98-%E1%83%A2%E1%83%94%E1%83%A5%E1%83%9C%E1%83%98%E1%83%99%E1%83%A3%E1%83%A0%E1%83%98-%E1%83%A1%E1%83%90%E1%83%AE%E1%83%94%E1%83%9A%E1%83%9B%E1%83%AB%E1%83%A6%E1%83%95%E1%83%90%E1%83%9C%E1%83%94%E1%83%9A%E1%83%9D.html">სახელმძღვანელო §A.10</a>).</p>
+<h3>8.3 რა უნდა შეიცვალოს კოდში საწარმოომდე (აუდიტის აღმოჩენები)</h3>
+<p>ესენი ✅ <strong>დადასტურებული</strong> ფაქტებია კოდში. გამოსავალი 💡 რეკომენდებულია, და არცერთი ჯერ არ გაკეთებულა.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>აღმოჩენა</th>
+<th>სად</th>
+<th>რატომ არის მნიშვნელოვანი</th>
+<th>შემოთავაზებული გამოსავალი</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>G1</td>
+<td>PostgreSQL-ის დრაივერი (<code>psycopg</code>) <code>requirements.txt</code>-ში არ არის; კოდი PostgreSQL-ზე არასოდეს გაშვებულა</td>
+<td><code>requirements.txt</code></td>
+<td>„მხოლოდ URL-ის შეცვლა“ თეორიულად სწორია (SQLAlchemy), მაგრამ შემოწმებული არ არის</td>
+<td>დრაივერის დამატება, ტესტების გაშვება PostgreSQL-ზე, <code>JSON</code> → <code>JSONB</code>-ის განხილვა</td>
+</tr>
+<tr>
+<td>G2</td>
+<td>სქემა იქმნება <code>Base.metadata.create_all()</code>-ით გაშვებისას; მიგრაციის ინსტრუმენტი არ არის</td>
+<td><code>app/main.py</code></td>
+<td><code>create_all</code> ახალ ცხრილს ქმნის, არსებულს კი <strong>არ ცვლის</strong>. ველის დამატება საწარმოოში ხელით გახდებოდა საჭირო</td>
+<td>Alembic (Pre-QC hosted-ში უკვე გამოიყენება)</td>
+</tr>
+<tr>
+<td>G3</td>
+<td><code>QCP_DEMO_LOGIN</code> ნაგულისხმევად <code>1</code>-ია; დემო შესვლის cookie-ს <code>Secure</code> ნიშანი არ აქვს</td>
+<td><code>app/config.py</code>, <code>routes/auth.py</code></td>
+<td>თუ საწარმოოში ცვლადი დაგვავიწყდა, ნებისმიერს შეეძლება სიიდან ნებისმიერი ადამიანის არჩევა</td>
+<td>ნაგულისხმევი <code>0</code>; ან საწარმოოს რეჟიმში (<code>QCP_ENV=production</code>) დემო ფიზიკურად გაითიშოს</td>
+</tr>
+<tr>
+<td>G4</td>
+<td>Google-ის cookie-ზე <code>Secure</code> ჩაირთვება მხოლოდ მაშინ, როცა <code>request.url.scheme == &quot;https&quot;</code>; IP აუდიტში <code>request.client.host</code>-იდან იწერება</td>
+<td><code>routes/google_auth.py</code>, <code>security.py</code></td>
+<td>proxy-ს უკან აპლიკაცია HTTP-ს ხედავს: cookie <code>Secure</code>-ის გარეშე დარჩება, აუდიტში კი proxy-ს IP ჩაიწერება</td>
+<td>uvicorn <code>--proxy-headers --forwarded-allow-ips=&lt;proxy IP&gt;</code> ან <code>Secure</code> საწარმოოში ყოველთვის</td>
+</tr>
+<tr>
+<td>G5</td>
+<td>ვერსიის შემოწმება აპლიკაციის დონეზეა (წაკითხვა → შედარება → ჩაწერა). <code>UPDATE … WHERE version = ?</code> არ ხდება. თუ ფორმას <code>version</code> არ აქვს, შემოწმება გამოტოვდება</td>
+<td><code>workflow.apply()</code></td>
+<td>SQLite ჩაწერას თანმიმდევრულად ასრულებს, ამიტომ რისკი მცირეა. PostgreSQL-ზე რამდენიმე worker-ით ორი ერთდროული მოთხოვნა ორივე გაივლის</td>
+<td>SQLAlchemy <code>version_id_col</code> ან <code>SELECT … FOR UPDATE</code>; <code>version</code> სავალდებულო</td>
+</tr>
+<tr>
+<td>G6</td>
+<td>განაწილებისა და სპორადულის გადახედვა სერვერის <strong>მეხსიერებაში</strong> ინახება (<code>_PREVIEWS</code>), დაცვა <code>threading.Lock</code>-ით</td>
+<td><code>services/distribution/service.py</code>, <code>services/sporadic.py</code></td>
+<td>რამდენიმე worker-ზე გადახედვა ერთ პროცესშია, დადასტურება კი შეიძლება მეორეში მოხვდეს → „ვადა ამოიწურა“. ლოკი მხოლოდ ერთ პროცესს იცავს</td>
+<td>გადახედვა ბაზის ცხრილში; დადასტურებაზე advisory lock</td>
+</tr>
+<tr>
+<td>G7</td>
+<td>SMTP-ით გაგზავნა მოთხოვნის შიგნით, სინქრონულად ხდება (timeout 15 წმ)</td>
+<td><code>services/notify.py</code></td>
+<td>SMTP-ის შენელება მომხმარებლის ღილაკს „ჩამოკიდებს“</td>
+<td>გამავალი რიგი (outbox) + ფონური worker, ხელახალი ცდით</td>
+</tr>
+<tr>
+<td>G8</td>
+<td>CSRF: მოწმდება <code>Origin</code>/<code>Referer</code>; თუ ორივე აკლია, მოთხოვნა გადის</td>
+<td><code>security.same_origin()</code></td>
+<td>თანამედროვე ბრაუზერები ამ თავსართს აგზავნიან, მაგრამ დაცვა სრული არ არის. ეს უკვე წერია <code>ARCHITECTURE.md</code> §11-ში</td>
+<td>CSRF token ფორმებში + <code>SameSite=Lax</code> (უკვე არის)</td>
+</tr>
+<tr>
+<td>G9</td>
+<td><code>/docs</code> (OpenAPI) ავტორიზაციის გარეშე იხსნება</td>
+<td>FastAPI-ის ნაგულისხმევი</td>
+<td>მარშრუტების სია და სქემები ჩანს. მონაცემი არ ჩანს — API თავად ავტორიზაციას ითხოვს</td>
+<td>საწარმოოში გამორთვა (<code>docs_url=None</code>) ან მხოლოდ ადმინისთვის</td>
+</tr>
+<tr>
+<td>G10</td>
+<td>დრო <code>datetime.now()</code>-ით იწერება, დროის სარტყლის გარეშე</td>
+<td><code>models._now</code>, <code>workflow</code>, <code>security</code></td>
+<td>ჩანაწერის დრო სერვერის საათის სარტყელზეა დამოკიდებული. თუ სერვერი UTC-ზეა, D-ის თარიღები 4 საათით დაიძვრება და დღის რაოდენობა აირევა</td>
+<td>სერვერზე <code>Asia/Tbilisi</code> ან UTC-ში შენახვა + ჩვენებისას გადაყვანა; გადაწყვეტილება მიგრაციამდე</td>
+</tr>
+<tr>
+<td>G11</td>
+<td>მონაცემის განახლება ხელით, სკრიპტებით ხდება; <code>build_db.py</code> ბაზას ნულიდან აწყობს</td>
+<td><code>scripts/</code></td>
+<td>საწარმოოში ასეთი განახლება ყველა სამუშაოს წაშლიდა</td>
+<td>ინკრემენტული კონექტორი (upsert) + განრიგი + იმპორტის ჟურნალი (<code>import_runs</code> უკვე არის)</td>
+</tr>
+<tr>
+<td>G12</td>
+<td>წყაროს მისამართები დეველოპერის გარემოზეა მიბმული: Distributor-ის ფაილი, სხვა პროექტების <code>config.json</code> (token-ებით), <code>Z:\</code></td>
+<td><code>config.py</code>, <code>scripts/fetch_sheets.py</code></td>
+<td>სერვერზე ეს ბილიკები არ არსებობს</td>
+<td>IT-ის ოფიციალური წყაროები (§6)</td>
+</tr>
+<tr>
+<td>G13</td>
+<td>ფოტოები ლოკალურ დისკზე ინახება (<code>data/uploads/</code>)</td>
+<td><code>workflow.save_files()</code></td>
+<td>რამდენიმე სერვერზე ან კონტეინერში ფაილი ერთ ადგილას უნდა იყოს; ბექაპიც სჭირდება</td>
+<td>ერთი საცავი (ქსელური ან ობიექტური) + ბექაპი; დიდი ფაილების ზღვარი proxy-ზეც</td>
+</tr>
+<tr>
+<td>G14</td>
+<td>სტატისტიკის გვერდი SQLite-ზე 2–3 წამში იტვირთება</td>
+<td><code>services/stats.py</code></td>
+<td>300 მომხმარებელზე შეიძლება შენელდეს</td>
+<td>PostgreSQL + ინდექსების შემოწმება (<code>EXPLAIN</code>), საჭიროებისას ქეში ან materialized view</td>
+</tr>
+<tr>
+<td>G15</td>
+<td>0 ელფოსტა ბაზაში</td>
+<td><code>users.email</code></td>
+<td>Google-ით შესვლა ვერავის შეეძლება</td>
+<td>მენეჯერები აგროვებენ, ადმინი შეიყვანს (ან CSV იმპორტი)</td>
+</tr>
+<tr>
+<td>G16</td>
+<td>ლოგირება: <code>log_level=&quot;warning&quot;</code> — წვდომის ჟურნალი პრაქტიკულად გამორთულია, სტრუქტურირებული ლოგი არ არის</td>
+<td><code>scripts/run_local.py</code></td>
+<td>ინციდენტის გამოძიებისას ვერ დავადგენთ, რა მოხდა</td>
+<td>წვდომის ლოგი proxy-ზე (query string-ის გარეშე, რომ OAuth <code>code</code> არ ჩაიწეროს), აპლიკაციის ლოგი ფაილში ან ცენტრალურ სისტემაში</td>
+</tr>
+<tr>
+<td>G17</td>
+<td>პროექტის საქაღალდე git-ის რეპოზიტორია არ არის (<code>not a git repository</code>, 2026-10-22)</td>
+<td>პროექტის ფესვი</td>
+<td>ვერსიების ისტორია, განახლების კონტროლი და დაბრუნება არ არსებობს</td>
+<td>git (სააგენტოს სერვერზე ან private), ვერსიის ტეგები, ცვლილებების ჟურნალი</td>
+</tr>
+<tr>
+<td>G18</td>
+<td>მომხმარებლის გათიშვა (<code>active = false</code>) გუნდის წევრობას არ ხურავს, და <code>manager_map</code> წევრის აქტიურობას არ ამოწმებს</td>
+<td><code>routes/admin.user_save</code>, <code>services/seed.manager_map</code></td>
+<td>წასული ამზომველის ახალი ოქმები ძველ მენეჯერს მიეწერება, სანამ წევრობა ხელით არ დაიხურება</td>
+<td>გათიშვისას წევრობის დახურვა (<code>valid_to</code>) ან <code>manager_map</code>-ში <code>tm.user.active</code>-ის შემოწმება; მასობრივი გადაწერის ინსტრუმენტი წასული მენეჯერისა და ოპერატორის ოქმებისთვის</td>
+</tr>
+</tbody>
+</table>
+<p><strong>მარტივად რომ ავხსნათ:</strong> პროტოტიპი ერთ კომპიუტერზე, ერთ ადამიანზე და ერთ პროცესზეა აწყობილი. ამიტომ რამდენიმე რამ მარტივად არის გაკეთებული: ბაზა ფაილშია, ზოგი რამ მეხსიერებაში ინახება, მეილი „ახლავე“ იგზავნება. სერვერზე, სადაც ბევრი ადამიანი ერთდროულად მუშაობს, ეს ნაწილები უფრო მკაცრად უნდა გაკეთდეს. სამუშაო მოცულობით პატარაა, მაგრამ IT-ს გულახდილად უნდა ვუთხრათ, რომ ის გასაკეთებელია.</p>
+<hr />
+<h2>9. აღმოჩენილი შეუსაბამობები ⚠️</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>შეუსაბამობა</th>
+<th>წყარო A</th>
+<th>წყარო B</th>
+<th>როგორ ვუდგებით</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C1</td>
+<td>კოორდინატორი ბარათს ხედავს თუ არა</td>
+<td>UI: <code>/checked</code> და <code>scope.can_view</code> კოორდინატორს გავლილ ოქმებს ნახვით უჩვენებს; ტესტი <code>test_coordinator_reads_checked_items…</code> ამას ადასტურებს</td>
+<td>API: <code>GET /api/items</code> კოორდინატორს 403-ს უბრუნებს: „კოორდინატორს მხოლოდ სტატისტიკა უჩანს“</td>
+<td>ბიზნეს-წესი (2026-10-20) — გავლილი ოქმები ნახვით. API გასასწორებელია, ან როლის დახვეწისას გადაწყდება</td>
+</tr>
+<tr>
+<td>C2</td>
+<td>ATR-04-ის სიმძიმე</td>
+<td>Dashboard <code>HANDOFF.md</code> (2026-08-17): ATR-04 კრიტიკული → <strong>მნიშვნელოვანი</strong></td>
+<td>პლატფორმა (2026-10-20): ATR-04 <strong>კრიტიკულია</strong></td>
+<td>ბოლო გადაწყვეტილება (10-20) მოქმედებს. ძველ პანელსა და ახალ პლატფორმაში კრიტიკული % განსხვავებული იქნება</td>
+</tr>
+<tr>
+<td>C3</td>
+<td>„მხოლოდ URL-ის შეცვლა საკმარისია PostgreSQL-ისთვის“</td>
+<td><code>config.py</code>, <code>ARCHITECTURE.md</code></td>
+<td>დრაივერი არ აყენია, ტესტი არ ყოფილა (G1)</td>
+<td>IT-ს ვეუბნებით: „SQLAlchemy ამას იძლევა, გადასვლა და ტესტირება ჩვენი სამუშაოა პილოტამდე“</td>
+</tr>
+<tr>
+<td>C4</td>
+<td>Pre-QC-ის ინტეგრაციის კონტრაქტი</td>
+<td><code>ARCHITECTURE.md</code> §10: <code>POST /api/preqc/results</code> (API გასაღებით), ველები <code>protocol_number, cadcode, checked_on, score, status, findings[…]</code></td>
+<td>Pre-QC Hosted: <code>POST /api/preqc/checks</code>, <code>Authorization: Bearer pqcv_…</code>, idempotency <code>sha256(protocol_number|checked_at|validator_version|score|status)</code></td>
+<td>ერთი კონტრაქტი უნდა შეთანხმდეს. 💡 Hosted-ის კონტრაქტი უფრო სრულია (idempotency, scope) — მისი აღება</td>
+</tr>
+<tr>
+<td>C5</td>
+<td>Pre-QC-ის ხილვადობა</td>
+<td>პლატფორმა: მხოლოდ საველე მენეჯერი და ამზომველი, <strong>ადმინიც არა</strong></td>
+<td>Pre-QC Hosted: ADMIN ყველაფერს ხედავს, მიუკუთვნებელი — მხოლოდ ADMIN-ს</td>
+<td>ბიზნეს-წესი პლატფორმისაა. ტექნიკური ადმინის საჭიროება (მიუკუთვნებელი ოქმები) ცალკე უნდა გადაწყდეს ❓</td>
+</tr>
+<tr>
+<td>C6</td>
+<td>ამზომველის მიბმა</td>
+<td>პლატფორმა: სახელით + ალიასებით (<code>name_key</code>, <code>person_aliases</code>)</td>
+<td>Pre-QC Hosted: <strong>მხოლოდ პირადი ნომრით</strong>, სახელით მხოლოდ მაშინ, თუ ზუსტად ერთი დამთხვევაა (თანამოსახელეების რისკი)</td>
+<td>💡 საწარმოოში სახელით მიბმა პირადი ნომრით უნდა გამყარდეს, თუ წყარო მას იძლევა (Field Group-ის API ახლა პირად ნომერს არ აბრუნებს)</td>
+</tr>
+<tr>
+<td>C7</td>
+<td>მომხმარებლების რაოდენობა</td>
+<td><code>IT_REQUEST.md</code>: ≈ 300 თანამშრომელი</td>
+<td>ბაზაში 605 მომხმარებელია (წასულების და ისტორიული სახელების ჩათვლით); აქტიური როლებით ≈ 280</td>
+<td>IT-ს ვეუბნებით: „≈ 300 აქტიური, ერთდროულად ≈ 40 (შეფასება)“</td>
+</tr>
+<tr>
+<td>C8</td>
+<td>ტესტების რაოდენობა</td>
+<td><code>README.md</code>: 57</td>
+<td><code>def test_</code> ფუნქცია 50-ია; parametrize-ით 57 გაშვება</td>
+<td>შეუსაბამობა არ არის — 57 გაშვებაა ✅</td>
+</tr>
+<tr>
+<td>C9</td>
+<td>სტატისტიკის პანელის განთავსება</td>
+<td><code>DEPLOY.md</code>: Render + Neon (გარე ღრუბელი)</td>
+<td><code>OPEN_QUESTIONS.md</code> #5: საბოლოოდ სააგენტოს სერვერზე, „არა Render/ღრუბელი“</td>
+<td>ახალი პლატფორმა სააგენტოში. ძველი პანელის მდგომარეობა გადასამოწმებელია ❓</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>10. რისკები</h2>
+<table>
+<thead>
+<tr>
+<th>რისკი</th>
+<th>ალბათობა</th>
+<th>გავლენა</th>
+<th>შემცირება</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>წყაროებზე წვდომა დიდხანს ვერ მივიღეთ</td>
+<td>საშუალო</td>
+<td>პილოტი ძველი გზით რჩება</td>
+<td>პილოტი ისე იგეგმება, რომ დღევანდელი ექსპორტებით იმუშაოს; ეტაპობრივი ჩანაცვლება</td>
+</tr>
+<tr>
+<td>ახალი და ძველი ციფრები არ დაემთხვა</td>
+<td>საშუალო</td>
+<td>ნდობის დაკარგვა</td>
+<td>პარალელური პერიოდი, შეჯერების ანგარიში (მეთოდი უკვე გამოცდილია, §4.9)</td>
+</tr>
+<tr>
+<td>სახელით მიბმის შეცდომა (თანამოსახელე, აკრეფის შეცდომა)</td>
+<td>დაბალი–საშუალო</td>
+<td>ოქმი სხვა ადამიანს ხვდება</td>
+<td>ალიასების ცნობარი; „დაუჯგუფებელი“ ხელით; 💡 პირადი ნომრით მიბმა</td>
+</tr>
+<tr>
+<td>ელფოსტები არ შეგროვდა</td>
+<td>საშუალო</td>
+<td>შესვლა ვერ ხერხდება</td>
+<td>გაშვებამდე სავალდებულო ნაბიჯი</td>
+</tr>
+<tr>
+<td>ერთი ადამიანი იცის სისტემა</td>
+<td>მაღალი</td>
+<td>ადმინისტრირება ჭედავს</td>
+<td>ეს დოკუმენტები; ორი ადმინი; IT-თან ოპერაციული პასუხისმგებლობის განაწილება</td>
+</tr>
+<tr>
+<td>პირადი მონაცემის გაჟონვა</td>
+<td>დაბალი</td>
+<td>სამართლებრივი</td>
+<td>მინიმალური მონაცემი, ნიღბვა, HTTPS, როლები, აუდიტი</td>
+</tr>
+<tr>
+<td>ერთდროული ცვლილების კონფლიქტი PostgreSQL-ზე</td>
+<td>დაბალი</td>
+<td>ორი პასუხი ერთ კოდზე</td>
+<td>G5</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>11. ღია კითხვები (ერთ სიაში)</h2>
+<ol>
+<li><strong>სპორადულის ფილტრი Q11:</strong>
+<ul>
+<li>(ა) SURVEY_DAY — მხოლოდ გუშინ, თუ გუშინ და ადრე?</li>
+<li>(ბ) მხოლოდ CALL_STATUS „დასრულებული“?</li>
+<li>(გ) ღია საველე სტატუსის გამორიცხვა?</li>
+<li>(დ) ოპერატორებზე რაოდენობით, თუ თანაბრად?
+ძველი პრაქტიკა: ორშაბათს მოწმდება პარასკევი–კვირა; სტატუსით არ ფილტრავდნენ (1 690-დან 1 689 მოხვდა კონტროლში); დღიური წილი თანაბარი იყო.</li>
+</ul>
+</li>
+<li>ვინ იქნებიან კოორდინატორი და სამსახურის უფროსი, და რა უნდა დაინახონ ზუსტად?</li>
+<li>Pre-QC-ის შეყვანის ფორმატი: HTML, TXT თუ API?</li>
+<li>IT-ის კითხვები — <a href="04-IT-%E1%83%98%E1%83%9C%E1%83%A4%E1%83%A0%E1%83%90%E1%83%A1%E1%83%A2%E1%83%A0%E1%83%A3%E1%83%A5%E1%83%A2%E1%83%A3%E1%83%A0%E1%83%98%E1%83%A1-%E1%83%9B%E1%83%9D%E1%83%97%E1%83%AE%E1%83%9D%E1%83%95%E1%83%9C%E1%83%94%E1%83%91%E1%83%98.html">დოკუმენტი 04</a>, §3.</li>
+<li>ავტომატური მეილი (მონიშვნის გარეშე) და დღის შეჯამება მენეჯერებს?</li>
+<li>ძველი სტატისტიკის პანელის მომავალი (გაითიშოს? ახალი ჩაანაცვლებს?).</li>
+<li>ისტორიული მონაცემის საწარმოო მიგრაცია — ვინ ამტკიცებს და რა პერიოდით?</li>
+</ol>
+<hr />
+<h2>12. ოპერაციული ინსტრუქცია (პროტოტიპი)</h2>
+<table>
+<thead>
+<tr>
+<th>ამოცანა</th>
+<th>ბრძანება</th>
+<th>შენიშვნა</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ერთჯერადი დაყენება</td>
+<td><code>setup.bat</code></td>
+<td><code>.venv</code> + ბიბლიოთეკები + მონაცემი</td>
+</tr>
+<tr>
+<td>გაშვება</td>
+<td><code>run.bat</code> → <a href="http://127.0.0.1:8200">http://127.0.0.1:8200</a></td>
+<td>uvicorn <code>--reload</code>-ის გარეშე</td>
+</tr>
+<tr>
+<td>ჩვენება ტელეფონზე</td>
+<td><code>run_lan.bat</code></td>
+<td>ახალი PIN ყოველ გაშვებაზე; მხოლოდ Private ქსელი; დასრულებისას დახურეთ</td>
+</tr>
+<tr>
+<td>მონაცემის წამოღება</td>
+<td><code>.venv\Scripts\python.exe scripts\fetch_sheets.py fetch</code></td>
+<td>მხოლოდ GET</td>
+</tr>
+<tr>
+<td>ბაზის აწყობა</td>
+<td><code>.venv\Scripts\python.exe scripts\build_db.py</code></td>
+<td>⚠️ სერვერი გააჩერეთ; ≈ 2 წთ; <strong>ყველა ლოკალური ცვლილება იშლება</strong></td>
+</tr>
+<tr>
+<td>ტესტები</td>
+<td><code>.venv\Scripts\python.exe -m pytest -q</code></td>
+<td>დროებით ბაზაზე</td>
+</tr>
+<tr>
+<td>შემოწმება გაშვებულ სერვერზე</td>
+<td><code>scripts\smoke_pages.py</code>, <code>smoke_stats.py</code>, <code>smoke_distribution.py</code></td>
+<td>არაფერს წერს</td>
+</tr>
+</tbody>
+</table>
+<p><strong>ცნობილი ხაფანგები:</strong></p>
+<ul>
+<li><code>.bat</code> ფაილები მხოლოდ ASCII უნდა იყოს. cmd.exe UTF-8-ს ვერ კითხულობს, ამიტომ ქართული შეტყობინებები Python-იდან იბეჭდება;</li>
+<li>სპორადულის xlsx განმცხადებლების პირად ნომრებსა და ტელეფონებს შეიცავს. მისი ასლი არსად შეინახოთ.</li>
+</ul>
+<p>🔐 <strong>მონაცემის დაცვა:</strong> <code>data\</code> შეიცავს რეალურ სახელებს, QC კომენტარებს და პირად ნომრებს. ის არ უნდა მოხვდეს ფოსტაში, საზიარო საქაღალდეში ან git-ში (<code>.gitignore</code>-შია).</p>
+<hr />
+<h2>13. დოკუმენტების რუკა</h2>
+<table>
+<thead>
+<tr>
+<th>დოკუმენტი</th>
+<th>რისთვის</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ეს (01)</td>
+<td>რა არის, როგორ მუშაობს, რა აკლია</td>
+</tr>
+<tr>
+<td><a href="02-%E1%83%9E%E1%83%98%E1%83%A0%E1%83%90%E1%83%93%E1%83%98-%E1%83%A2%E1%83%94%E1%83%A5%E1%83%9C%E1%83%98%E1%83%99%E1%83%A3%E1%83%A0%E1%83%98-%E1%83%A1%E1%83%90%E1%83%AE%E1%83%94%E1%83%9A%E1%83%9B%E1%83%AB%E1%83%A6%E1%83%95%E1%83%90%E1%83%9C%E1%83%94%E1%83%9A%E1%83%9D.html">02 — პირადი ტექნიკური სახელმძღვანელო</a></td>
+<td>ცნებების სწავლა: სერვერი, SQL, API, უსაფრთხოება, არქიტექტურა, მიგრაცია</td>
+</tr>
+<tr>
+<td><a href="03-IT-%E1%83%A8%E1%83%94%E1%83%AE%E1%83%95%E1%83%94%E1%83%93%E1%83%A0%E1%83%98%E1%83%A1-%E1%83%99%E1%83%98%E1%83%97%E1%83%AE%E1%83%95%E1%83%94%E1%83%91%E1%83%98-%E1%83%93%E1%83%90-%E1%83%9E%E1%83%90%E1%83%A1%E1%83%A3%E1%83%AE%E1%83%94%E1%83%91%E1%83%98.html">03 — IT შეხვედრის კითხვები და პასუხები</a></td>
+<td>62 კითხვა პასუხებით</td>
+</tr>
+<tr>
+<td><a href="04-IT-%E1%83%98%E1%83%9C%E1%83%A4%E1%83%A0%E1%83%90%E1%83%A1%E1%83%A2%E1%83%A0%E1%83%A3%E1%83%A5%E1%83%A2%E1%83%A3%E1%83%A0%E1%83%98%E1%83%A1-%E1%83%9B%E1%83%9D%E1%83%97%E1%83%AE%E1%83%9D%E1%83%95%E1%83%9C%E1%83%94%E1%83%91%E1%83%98.html">04 — IT ინფრასტრუქტურის მოთხოვნები</a></td>
+<td>რა გვჭირდება IT-სგან, რატომ, რა მოხდება მის გარეშე</td>
+</tr>
+<tr>
+<td><a href="05-%E1%83%9E%E1%83%A0%E1%83%94%E1%83%96%E1%83%94%E1%83%9C%E1%83%A2%E1%83%90%E1%83%AA%E1%83%98%E1%83%98%E1%83%A1%E1%83%90-%E1%83%93%E1%83%90-%E1%83%A1%E1%83%90%E1%83%A3%E1%83%91%E1%83%A0%E1%83%98%E1%83%A1-%E1%83%92%E1%83%96%E1%83%90%E1%83%9B%E1%83%99%E1%83%95%E1%83%9A%E1%83%94%E1%83%95%E1%83%98.html">05 — პრეზენტაციისა და საუბრის გზამკვლევი</a></td>
+<td>სათქმელი ტექსტები და ჩვენების თანმიმდევრობა</td>
+</tr>
+<tr>
+<td><a href="06-%E1%83%A1%E1%83%AC%E1%83%A0%E1%83%90%E1%83%A4%E1%83%98-%E1%83%A8%E1%83%9E%E1%83%90%E1%83%A0%E1%83%92%E1%83%90%E1%83%9A%E1%83%99%E1%83%90.html">06 — სწრაფი შპარგალკა</a></td>
+<td>შეხვედრაზე სწრაფად მოსაძებნი</td>
+</tr>
+<tr>
+<td><code>docs/ARCHITECTURE.md</code>, <code>docs/IT_REQUEST.md</code>, <code>docs/DEMO.md</code>, <code>docs/OPEN_QUESTIONS.md</code></td>
+<td>ადრე მომზადებული დოკუმენტები (2026-10-20). ეს handoff მათ ავსებს და აუდიტის შედეგებით აზუსტებს</td>
+</tr>
+</tbody>
+</table>
+<p class="meta">გენერირებულია 01-სრული-ტექნიკური-handoff.md-იდან — სწორდება მხოლოდ .md ფაილი.</p></body></html>

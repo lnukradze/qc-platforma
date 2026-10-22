@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ka">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>შესვლა · NAPR ხარისხის კონტროლი</title>
+  <link rel="stylesheet" href="/static/css/app.css?v={{ VERSION }}">
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-head">
+      <span class="brand-mark" style="width:44px;height:44px;font-size:16px">QC</span>
+      <div>
+        <h1>ხარისხის კონტროლის ერთიანი პლატფორმა</h1>
+        <p>განაწილება · QC შემოწმება · ველის პასუხები · Pre-QC · სტატისტიკა — ერთ სივრცეში</p>
+      </div>
+    </div>
+    <div class="login-body">
+      {% if err == 'pin' %}<div class="notice err">დემო კოდი არასწორია.</div>{% elif err and err not in ('not_registered', 'google_domain', 'google_cancel', 'google_state', 'google_token', 'google_claims', 'google_off') %}<div class="notice err">შესვლა ვერ მოხერხდა ({{ err }}).</div>{% endif %}
+      {% set gerr = {'not_registered': 'ეს ელფოსტა სისტემაში არ არის რეგისტრირებული — მიმართეთ ადმინისტრატორს (ლუკა ნუკრაძე / სალომე დავითაშვილი).',
+                     'google_domain': 'ამ დომენის ანგარიშით შესვლა დაშვებული არ არის.',
+                     'google_cancel': 'Google-ით შესვლა გაუქმდა.', 'google_state': 'სესიის ვადა ამოიწურა — სცადეთ თავიდან.',
+                     'google_token': 'Google-თან კავშირი ვერ დამყარდა — სცადეთ თავიდან.', 'google_claims': 'Google-ის პასუხი ვერ დადასტურდა.',
+                     'google_off': 'Google-ით შესვლა ჯერ ჩართული არ არის (IT-მ OAuth კლიენტი უნდა შექმნას).'} %}
+      {% if err in gerr %}<div class="notice err">{{ gerr[err] }}</div>{% endif %}
+      <a class="google-btn" {% if google %}href="/auth/google?next={{ next|urlencode }}"{% else %}aria-disabled="true" title="Google OAuth კლიენტი ჯერ არ არის შექმნილი"{% endif %}>
+        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+        Google ანგარიშით შესვლა
+      </a>
+      <p class="hint" style="margin:6px 0 0">საწარმოო ვერსიაში შესვლა მხოლოდ Google ანგარიშით იქნება — მხოლოდ იმ ელფოსტებით, რომლებსაც ადმინისტრატორი დაარეგისტრირებს.</p>
+
+      {% if demo and pin_required %}
+      <div class="divider">დემო რეჟიმი — ქსელში ჩვენება</div>
+      <form method="post" action="/login/pin" class="pin-form">
+        <input type="hidden" name="next" value="{{ next }}">
+        <div class="field"><label for="pin">დემო კოდი (PIN)</label>
+          <input id="pin" type="text" name="pin" inputmode="numeric" autocomplete="off" required autofocus placeholder="კოდი ჩანს სერვერის ფანჯარაში"></div>
+        <button class="btn btn-primary" type="submit">გაგრძელება</button>
+      </form>
+      {% elif demo %}
+      <div class="divider">დემო რეჟიმი — აირჩიეთ, ვისი სახელით შეხვალთ</div>
+      <div class="field" style="margin-bottom:12px">
+        <label for="usearch">ძებნა</label>
+        <input id="usearch" type="search" placeholder="სახელი ან გვარი…" autocomplete="off">
+      </div>
+      <div class="role-groups" id="groups">
+        {% for role, users in groups.items() if users %}
+        <div class="role-group" data-role="{{ role }}">
+          <h3>{{ ROLE_LABELS[role] }} <span>{{ users|length }}</span></h3>
+          {% for u in users %}
+          <form method="post" action="/login/demo" class="u-item" data-name="{{ u.full_name|lower }}" {% if loop.index > show %}hidden data-extra="1"{% endif %}>
+            <input type="hidden" name="user_id" value="{{ u.id }}">
+            <input type="hidden" name="role" value="{{ role }}">
+            <input type="hidden" name="next" value="{{ next }}">
+            <button class="user-btn" type="submit"><span class="avatar">{{ u.full_name[:1] }}</span>{{ u.full_name }}{% if u.is_demo %}<span class="extra tag demo">დემო</span>{% elif u.role_set|length > 1 %}<span class="extra">{{ u.role_set|length }} როლი</span>{% endif %}</button>
+          </form>
+          {% endfor %}
+          {% if users|length > show %}<p class="hint more">+ {{ users|length - show }} — გამოიყენეთ ძებნა</p>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+<script>
+  (function () {
+    const q = document.getElementById('usearch');
+    if (!q) return;
+    q.addEventListener('input', function () {
+      const t = q.value.trim().toLowerCase();
+      document.querySelectorAll('.role-group').forEach(function (g) {
+        let shown = 0;
+        g.querySelectorAll('.u-item').forEach(function (f) {
+          const hit = t ? f.dataset.name.includes(t) : !f.dataset.extra;
+          f.hidden = !hit || (t && shown >= 30);
+          if (hit) shown++;
+        });
+        const more = g.querySelector('.more');
+        if (more) more.hidden = !!t;
+        g.hidden = t && shown === 0;
+      });
+    });
+  })();
+</script>
+</body>
+</html>

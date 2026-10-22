@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Pre-QC · {{ c.protocol_number }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="small"><a href="/preqc">← Pre-QC ხარვეზები</a></div>
+    <h1 class="mono">ოქმი {{ c.protocol_number }} <span class="tag demo">დემო</span></h1>
+    <div class="sub">{{ c.surveyor.full_name if c.surveyor else '—' }} · ოქმის დღე {{ c.protocol_date|date }} · შემოწმდა {{ c.checked_on|date }} (მივლინება {{ c.mission_n }})</div>
+  </div>
+  <div class="center"><div class="score st-{{ c.status }}">{{ c.score }}</div><div class="small st-{{ c.status }}" style="font-weight:600">{{ labels[c.status] }}</div></div>
+</div>
+<div class="split">
+  <div>
+    {% for f in c.findings|sort(attribute='severity') %}
+    <div class="issue {{ f.severity }}">
+      <h4><span class="code">{{ f.official_code }}</span> {{ f.title }}</h4>
+      <p style="margin:4px 0"><b>რა ვიპოვეთ:</b> {{ f.message }}</p>
+      {% if f.recommendation %}<p style="margin:4px 0"><b>რა უნდა გაკეთდეს:</b> {{ f.recommendation }}</p>{% endif %}
+      <p class="small muted" style="margin:4px 0 0">შიდა შემოწმება: {{ f.code }} · {{ {'fail': 'ხარვეზი', 'warn': 'გაფრთხილება', 'unknown': 'ვერ დადასტურდა — ხელით გადასამოწმებელი'}[f.severity] }}</p>
+    </div>
+    {% else %}
+    <div class="card"><div class="empty">ხარვეზი არ მოიძებნა — ოქმი მზადაა გასაგზავნად.</div></div>
+    {% endfor %}
+  </div>
+  <div>
+    <div class="card"><div class="card-head"><h2>როგორ ითვლება</h2></div><div class="card-body small">
+      <p style="margin-top:0">ქულა 0–100: გამართული შემოწმება სრულ წონას იღებს, გაფრთხილება — ნახევარს, ხარვეზი — 0-ს.</p>
+      <p><b>კრიტიკული ხარვეზი</b> ქულის მიუხედავად სტატუსს „გასასწორებელს“ ხდის.</p>
+      <p style="margin-bottom:0">Pre-QC რჩევაა და არა ვერდიქტი — საბოლოო შეფასებას კონტროლი აკეთებს, Pre-QC-ის ნახვის გარეშე.</p>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

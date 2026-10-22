@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}ხარისხის კონტროლი{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>ხარისხის კონტროლი</h1>
+    <div class="sub">{% if ctx.role == D.QC_OPERATOR %}ჩემზე დანიშნული ოქმები — რიგით, ღილაკით „შემდეგი ოქმი“{% else %}ყველა ოპერატორის ოქმები{% endif %}</div>
+  </div>
+  {% if ctx.role == D.QC_OPERATOR and counts.todo %}
+  <a class="btn btn-primary btn-lg" href="/qc/next">▶ შემდეგი ოქმი</a>
+  {% endif %}
+</div>
+
+{% if daily %}
+<div class="daybar" role="status" aria-label="დღის რაოდენობა">
+  <div class="day-main"><span class="day-num">{{ daily.today|num }}</span><span class="day-lbl">დღეს გავლილი<small>გაგზავნილი ოქმი — დაზუსტების კითხვის ჩათვლით</small></span></div>
+  <div class="day-side"><span>გუშინ <b>{{ daily.yesterday|num }}</b></span><span>ამ კვირაში <b>{{ daily.week|num }}</b></span><span>გასავლელი <b>{{ daily.pending|num }}</b></span></div>
+</div>
+{% endif %}
+
+<div class="wtabs" role="tablist">
+  {% for key, (label, _cond) in tabs.items() %}
+  <a class="wtab {% if tab == key %}active{% endif %}" href="/qc?tab={{ key }}{% if p.kind %}&kind={{ p.kind }}{% endif %}">{{ label }} <span class="cnt {% if key == 'returned' and counts[key] %}hot{% endif %}">{{ counts[key]|num }}</span></a>
+  {% endfor %}
+  <span class="kind-chips" aria-label="სახეობა">
+    <a class="kchip {% if p.kind not in (D.SYSTEMATIC, D.SPORADIC) %}on{% endif %}" href="/qc?tab={{ tab }}&kind=all">ყველა</a>
+    <a class="kchip {% if p.kind == D.SYSTEMATIC %}on{% endif %}" href="/qc?tab={{ tab }}&kind={{ D.SYSTEMATIC }}">სისტემური</a>
+    <a class="kchip {% if p.kind == D.SPORADIC %}on{% endif %}" href="/qc?tab={{ tab }}&kind={{ D.SPORADIC }}">სპორადული</a>
+  </span>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form class="filters" method="get" action="/qc" hx-get="/qc" hx-target="#results" hx-push-url="true" hx-trigger="submit, change from:select">
+      <input type="hidden" name="tab" value="{{ tab }}">
+      {% if p.kind %}<input type="hidden" name="kind" value="{{ p.kind }}">{% endif %}
+      <div class="field"><label for="f-protocol">ოქმის#</label><input id="f-protocol" type="text" name="protocol" value="{{ p.protocol or '' }}" inputmode="numeric"></div>
+      <div class="field"><label for="f-cad">საკ. კოდი</label><input id="f-cad" type="text" name="cad" value="{{ p.cad or '' }}" placeholder="202.51.…"></div>
+      {% if limited %}
+      <p class="hint filters-note">გასავლელში ოქმები რიგით გადის — მენეჯერის, ამზომველისა და ზონის ფილტრი აქ არ არის, რომ ყველა გუნდის ოქმი თანაბრად გავიდეს. ძებნა შეგიძლიათ „გაგზავნილში“ და „დასრულებულში“.</p>
+      {% else %}
+      <div class="field"><label for="f-surv">ამზომველი</label><input id="f-surv" type="text" name="surveyor" value="{{ p.surveyor or '' }}"></div>
+      <div class="field"><label for="f-mgr">საველე მენეჯერი</label>
+        <select id="f-mgr" name="manager"><option value="">— ყველა —</option>
+          {% for i, n in managers %}<option value="{{ i }}" {% if p.manager == i|string %}selected{% endif %}>{{ n }}</option>{% endfor %}
+        </select></div>
+      {% if operators %}
+      <div class="field"><label for="f-op">ოპერატორი</label>
+        <select id="f-op" name="operator"><option value="">— ყველა —</option>
+          {% for i, n in operators %}<option value="{{ i }}" {% if p.operator == i|string %}selected{% endif %}>{{ n }}</option>{% endfor %}
+        </select></div>
+      {% endif %}
+      <div class="field"><label for="f-verdict">ვერდიქტი</label>
+        <select id="f-verdict" name="verdict"><option value="">— ყველა —</option>
+          {% for v in D.VERDICTS %}<option value="{{ v }}" {% if p.verdict == v %}selected{% endif %}>{{ VERDICT_LABELS[v] }}</option>{% endfor %}
+        </select></div>
+      {% if tab != 'todo' %}
+      <div class="field"><label for="f-resp">ველის პასუხი</label>
+        <select id="f-resp" name="response"><option value="">— ყველა —</option>
+          {% for r, lbl in RESPONSE_LABELS.items() %}<option value="{{ r }}" {% if p.response == r %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
+        </select></div>
+      {% endif %}
+      <div class="field"><label for="f-zone">ზონა</label><input id="f-zone" type="text" name="zone" value="{{ p.zone or '' }}" placeholder="51" inputmode="numeric"></div>
+      <div class="field"><label for="f-df">ნახაზი — დან</label><input id="f-df" type="date" name="date_from" value="{{ p.date_from or '' }}"></div>
+      <div class="field"><label for="f-dt">ნახაზი — მდე</label><input id="f-dt" type="date" name="date_to" value="{{ p.date_to or '' }}"></div>
+      {% endif %}
+      <div class="filters-actions"><a class="btn btn-ghost" href="/qc?tab={{ tab }}">გასუფთავება</a><button class="btn btn-primary" type="submit">ძებნა</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="results">{% include "qc/_table.html" %}</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/presence.js?v={{ VERSION }}"></script>{% endblock %}

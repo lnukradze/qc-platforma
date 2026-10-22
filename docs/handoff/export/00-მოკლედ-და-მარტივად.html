@@ -1,0 +1,216 @@
+<!doctype html><html lang="ka"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>QC პლატფორმა — მოკლედ და მარტივად</title><style>
+@font-face { font-family: 'NSG'; font-weight: 400; src: url('../../../app/static/vendor/fonts/noto-sans-georgian/noto-sans-georgian-georgian-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'NSG'; font-weight: 600; src: url('../../../app/static/vendor/fonts/noto-sans-georgian/noto-sans-georgian-georgian-600-normal.woff2') format('woff2'); }
+@font-face { font-family: 'NSGL'; font-weight: 400; src: url('../../../app/static/vendor/fonts/noto-sans-georgian/noto-sans-georgian-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'NSGL'; font-weight: 600; src: url('../../../app/static/vendor/fonts/noto-sans-georgian/noto-sans-georgian-latin-600-normal.woff2') format('woff2'); }
+:root { --fg:#1d232b; --muted:#5b6672; --line:#d9dee4; --bg:#ffffff; --code:#f4f6f8; --accent:#1f5f99; }
+html { background: var(--bg); }
+body { font-family: 'NSGL','NSG','Sylfaen','Segoe UI',sans-serif; color: var(--fg); background: var(--bg);
+       max-width: 980px; margin: 0 auto; padding: 24px 16px 64px; font-size: 14.5px; line-height: 1.6; }
+h1 { font-size: 1.75em; border-bottom: 2px solid var(--accent); padding-bottom: .3em; }
+h1, h2, h3, h4 { line-height: 1.3; break-after: avoid; }
+h2 { font-size: 1.35em; margin-top: 1.8em; border-bottom: 1px solid var(--line); padding-bottom: .2em; }
+h3 { font-size: 1.12em; margin-top: 1.5em; }
+a { color: var(--accent); text-decoration: none; }
+blockquote { margin: 1em 0; padding: .4em 1em; border-left: 4px solid var(--accent); background: #f3f7fb; color: var(--fg); }
+code { font-family: Consolas,'Cascadia Mono',monospace; background: var(--code); padding: .1em .3em; border-radius: 3px; font-size: .92em; }
+pre { background: var(--code); padding: 10px 12px; border-radius: 4px; overflow-x: auto; font-size: 12.5px; line-height: 1.45; break-inside: avoid; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1em 0; font-size: .93em; }
+th, td { border: 1px solid var(--line); padding: 5px 8px; vertical-align: top; text-align: left; }
+th { background: #eef2f6; }
+tr { break-inside: avoid; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 2em 0; }
+.meta { color: var(--muted); font-size: .85em; }
+@media print { body { max-width: none; padding: 0; font-size: 11pt; } a { color: var(--fg); } pre { white-space: pre-wrap; } }
+@page { size: A4; margin: 16mm 14mm; }
+</style></head><body><h1>QC პლატფორმა — მოკლედ და მარტივად</h1>
+<blockquote>
+<p>ვისთვის: ლუკასა და სალომესთვის, IT შეხვედრისთვის. წასაკითხია 10 წუთში.
+დეტალები საჭიროების შემთხვევაში დანარჩენ ექვს დოკუმენტშია (README.md).</p>
+</blockquote>
+<hr />
+<h2>1. რა არის ეს</h2>
+<p><strong>ერთი საიტი, რომელიც ხუთ ცალკე ხელსაწყოს ცვლის:</strong> Google ცხრილს, მის სკრიპტებს, განაწილების პროგრამას, სტატისტიკის საიტს და Pre-QC-ს.</p>
+<p>ოქმი ერთ ადგილას ნაწილდება, მოწმდება, ველზე მიდის, ბრუნდება და იხურება. ყოველი ნაბიჯი ინახება: ვინ, რა და როდის გააკეთა. სტატისტიკა თავისით ითვლება.</p>
+<p><strong>დღეს:</strong> ჩემს კომპიუტერზე მუშაობს, რეალურ მონაცემზე (44 159 შემთხვევა). სააგენტოს სისტემებს მხოლოდ კითხულობს და არაფერს წერს.</p>
+<h2>2. რატომ არ გვყოფნის ცხრილი</h2>
+<ul>
+<li>30 000-ზე მეტი მწკრივია და ნელია;</li>
+<li>სტატუსი ზედ იწერება, ამიტომ ისტორია იკარგება;</li>
+<li>წესებს ადამიანები იცავენ და არა სისტემა;</li>
+<li>ძველი ცხრილიდან გადმოტანისას 379 დუბლიკატი აღმოჩნდა;</li>
+<li>განაწილების პროგრამა ერთ კომპიუტერზეა მიბმული.</li>
+</ul>
+<h2>3. როგორ არის აწყობილი (ძალიან მარტივად)</h2>
+<table>
+<thead>
+<tr>
+<th>ნაწილი</th>
+<th>რა არის</th>
+<th>მარტივად</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Python</strong> (FastAPI)</td>
+<td>პროგრამის „ტვინი“</td>
+<td>წყვეტს, ვინ რას ხედავს და რა შეუძლია</td>
+</tr>
+<tr>
+<td><strong>ბაზა</strong></td>
+<td>მონაცემების შესანახი ადგილი</td>
+<td>ახლა SQLite (ერთი ფაილი), საწარმოოში PostgreSQL</td>
+</tr>
+<tr>
+<td><strong>HTML + პატარა JavaScript</strong></td>
+<td>გვერდები</td>
+<td>სერვერი მზა გვერდს აგზავნის, ბრაუზერი აჩვენებს</td>
+</tr>
+<tr>
+<td><strong>Google შესვლა</strong></td>
+<td>ვინ არის თანამშრომელი</td>
+<td>პაროლს ჩვენ არ ვინახავთ</td>
+</tr>
+</tbody>
+</table>
+<p><strong>ორი მთავარი წესი:</strong></p>
+<ol>
+<li>სერვერი ყოველ ჯერზე თვითონ ამოწმებს, ვის რა შეუძლია. სხვისი ოქმი არ ჩანს.</li>
+<li>ყოველი ცვლილება ისტორიაში იწერება და არასოდეს იშლება.</li>
+</ol>
+<h2>4. რა გვჭირდება IT-სგან</h2>
+<p><strong>პილოტისთვის (ჯერ მცირე ჯგუფი):</strong></p>
+<ol>
+<li><strong>ერთი ვირტუალური სერვერი</strong> (ჩვენი შეფასებით 4 პროცესორი, 8 GB, 100 GB. ეს შეფასებაა, პილოტზე გავზომავთ);</li>
+<li><strong>PostgreSQL ბაზა</strong> (თქვენს არსებულ სერვერზეც შეიძლება);</li>
+<li><strong>ბაზის ბექაპი</strong> (ყოველ ღამე, სხვა ადგილას);</li>
+<li><strong>დომენი და HTTPS</strong> (Google შესვლას სჭირდება);</li>
+<li><strong>Google-ის OAuth client</strong> სააგენტოს სახელზე (მხოლოდ სახელი და ელფოსტა);</li>
+<li><strong>გამავალი კავშირი</strong> სერვერიდან Google-თან.</li>
+</ol>
+<p><strong>მერე:</strong></p>
+<ul>
+<li>ველიდან ტელეფონით შესვლა (საჯარო HTTPS ან VPN);</li>
+<li>მეილი (SMTP);</li>
+<li>REGFIELDALL-ის და სპორადულის სიის წაკითხვა (read-only);</li>
+<li>Pre-QC-ისთვის ოქმის მონაცემზე წვდომა.</li>
+</ul>
+<h2>5. გულწრფელად: რა არ არის მზად</h2>
+<p><strong>ჩვენი მხრიდან:</strong></p>
+<ul>
+<li>PostgreSQL-ზე ჯერ არ გაგვიშვია (გადასვლა და ტესტირება ჩვენი სამუშაოა);</li>
+<li>დატვირთვის ტესტი არ ჩატარებულა;</li>
+<li>დემო შესვლა საწარმოოში უნდა გაითიშოს;</li>
+<li>ბაზაში ელფოსტა არავის აქვს (მენეჯერები უნდა შეგროვდეს);</li>
+<li>პროექტი ჯერ git-ში არ არის.</li>
+</ul>
+<p><strong>გადასაწყვეტი:</strong></p>
+<ul>
+<li>სპორადულის ფილტრები;</li>
+<li>კოორდინატორისა და სამსახურის უფროსის როლები;</li>
+<li>Pre-QC დღეს დემოა და სერვერზე მუშაობას ოფიციალური გზა უნდა.</li>
+</ul>
+<h2>6. რა არ ვთქვათ</h2>
+<table>
+<thead>
+<tr>
+<th>❌ არ ვამბობთ</th>
+<th>✅ ვამბობთ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>„მზადაა საწარმოოსთვის“</td>
+<td>„ფუნქციონალი მზადაა, საწარმოოსთვის ინფრასტრუქტურა გვჭირდება“</td>
+</tr>
+<tr>
+<td>„PostgreSQL-ზე მუშაობს“</td>
+<td>„PostgreSQL-ზე გადასვლა ჩვენი სამუშაოა პილოტამდე“</td>
+</tr>
+<tr>
+<td>„300 კაცს გაუძლებს“</td>
+<td>„დატვირთვის ტესტს პილოტამდე ჩავატარებთ“</td>
+</tr>
+<tr>
+<td>„მეილი იგზავნება“</td>
+<td>„მზადდება, SMTP-ის შემდეგ გაიგზავნება“</td>
+</tr>
+<tr>
+<td>რიცხვის გამოგონება</td>
+<td>„ეს შეფასებაა“ ან „გავარკვევ და მოგწერ“</td>
+</tr>
+</tbody>
+</table>
+<h2>7. ხშირი კითხვები — მოკლე პასუხებით</h2>
+<table>
+<thead>
+<tr>
+<th>კითხვა</th>
+<th>პასუხი</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>რატომ არა ჩვენი ბაზა?</strong></td>
+<td>თქვენსას მხოლოდ ვკითხულობთ. ჩვენს სამუშაოს ცალკე ადგილი სჭირდება (თქვენს სერვერზეც შეიძლება).</td>
+</tr>
+<tr>
+<td><strong>რატომ PostgreSQL და არა SQL Server?</strong></td>
+<td>უფასოა და ჩვენი სხვა პროექტი მასზეა. SQL Server-ზეც გადავიტანთ, ტესტირებით.</td>
+</tr>
+<tr>
+<td><strong>ცალკე სერვერი რატომ?</strong></td>
+<td>ჩემს კომპიუტერზე ვერ დარჩება: ითიშება, ბექაპი არ აქვს. ერთი ვირტუალური სერვერი საკმარისია.</td>
+</tr>
+<tr>
+<td><strong>100 ადამიანი ერთდროულად?</strong></td>
+<td>ჩვეულებრივი დატვირთვაა, მაგრამ ტესტამდე ციფრს ვერ დაგპირდებით.</td>
+</tr>
+<tr>
+<td><strong>დისკი?</strong></td>
+<td>ბაზა დღეს 94 MB-ია. ზრდა რამდენიმე GB წელიწადში (შეფასება).</td>
+</tr>
+<tr>
+<td><strong>ინტერნეტის გარეშე?</strong></td>
+<td>შიგნით მუშაობს. გარეთ მხოლოდ Google-ის შესვლა გადის.</td>
+</tr>
+<tr>
+<td><strong>მონაცემი როგორ მოდის?</strong></td>
+<td>ღამით, საჭირო ველების ასლი. თქვენს სისტემებში არაფერს ვწერთ.</td>
+</tr>
+<tr>
+<td><strong>ციფრები ზუსტია?</strong></td>
+<td>ერთი ფორმულა ყველასთვის. ძველ შემაჯამებელს ყოველ ოპერატორზე დაემთხვა.</td>
+</tr>
+<tr>
+<td><strong>ბექაპი?</strong></td>
+<td>ყოველ ღამე; სრული გაშვებისთვის წუთობრივი აღდგენა. სასურველია თქვენი სისტემით.</td>
+</tr>
+<tr>
+<td><strong>ვინ ადმინისტრირებს?</strong></td>
+<td>აპლიკაციას ჩვენ ორნი. სერვერს და ბაზას — თქვენთან ვთავაზობთ.</td>
+</tr>
+<tr>
+<td><strong>თანამშრომელი წავიდა?</strong></td>
+<td>ერთი ღილაკით ვთიშავთ, მყისიერად მოქმედებს. HR-ისგან შეტყობინება გვჭირდება.</td>
+</tr>
+<tr>
+<td><strong>განახლება როგორ?</strong></td>
+<td>ჯერ სატესტოზე, მერე საწარმოოში. შეფერხება წამებია.</td>
+</tr>
+<tr>
+<td><strong>უსაფრთხოება?</strong></td>
+<td>Google შესვლა, უფლებები სერვერზე, სხვისი ოქმი „ვერ მოიძებნა“, ისტორია არ იშლება. ცნობილ ხარვეზებს თვითონ ჩამოგითვლით.</td>
+</tr>
+<tr>
+<td><strong>Pre-QC სერვერზე?</strong></td>
+<td>დღეს თანამშრომლის ბრაუზერის სესიით მუშაობს. სერვერისთვის ოფიციალური გზა (API) გვჭირდება. მოგვიანებით ეტაპია.</td>
+</tr>
+</tbody>
+</table>
+<h2>8. შეხვედრის მიზანი</h2>
+<p>დღეს უნდა შევთანხმდეთ ერთზე: <strong>ვინ გამოყოფს სერვერს და ბაზას, და დაახლოებით როდის.</strong> დანარჩენს ჩვენ პარალელურად ვაკეთებთ.</p>
+<p><strong>თუ რამე არ ვიცით:</strong> „ზუსტად არ ვიცი, ჩავიწერ და მოგწერ.“
+<strong>თუ IT უარს ამბობს:</strong> „რა იქნებოდა თქვენთვის მისაღები ალტერნატივა?“</p>
+<p class="meta">გენერირებულია 00-მოკლედ-და-მარტივად.md-იდან — სწორდება მხოლოდ .md ფაილი.</p></body></html>

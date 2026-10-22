@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}ხარვეზის კოდები{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>ხარვეზის კოდები</h1><div class="sub">კანონიკური კატალოგი — „ხარვეზის კოდების პრაქტიკული სახელმძღვანელო“ (27 კოდი + QC-00). ცვლილება აუდიტში იწერება.</div></div><a class="btn btn-secondary" href="/static/docs/guide.pdf" target="_blank">სახელმძღვანელო (PDF) ↗</a></div>
+{% include "admin/_nav.html" %}
+<div class="notice demo">⚠ <b>ATR-04:</b>&nbsp;კატალოგის ფაილში „კრიტიკულია“, qc-dashboard-ის დოკუმენტაციაში — „მნიშვნელოვანი“, ხოლო ავტომატურ წესებში (rules.gs) — „Major“. დასადასტურებელია, რომელია სწორი.</div>
+{% for c in codes %}<form id="f-{{ c.code }}" method="post" action="/admin/codes/{{ c.code }}"></form>{% endfor %}
+<div class="card">
+  <div class="card-body flush table-wrap">
+    <table class="data compact">
+      <thead><tr><th>კოდი</th><th>ჯგუფი</th><th style="width:44%">დასახელება</th><th>სიმძიმე</th><th>გვ.</th><th>აქტიური</th><th></th></tr></thead>
+      <tbody>
+      {% for c in codes %}
+      <tr>
+        <td><span class="code sev-{{ c.severity }}">{{ c.code }}</span></td>
+        <td class="small">{{ c.group }}</td>
+        <td><input form="f-{{ c.code }}" type="text" name="name" value="{{ c.name }}" aria-label="დასახელება — {{ c.code }}"></td>
+        <td><select form="f-{{ c.code }}" name="severity" aria-label="სიმძიმე — {{ c.code }}"><option value="Critical" {% if c.severity == 'Critical' %}selected{% endif %}>კრიტიკული</option><option value="Major" {% if c.severity == 'Major' %}selected{% endif %}>მნიშვნელოვანი</option><option value="pending" {% if c.severity == 'pending' %}selected{% endif %}>დროებითი</option></select></td>
+        <td>{% if c.page %}<a href="/static/docs/guide.pdf#page={{ c.page }}" target="_blank">{{ c.page }}</a>{% endif %}</td>
+        <td><input form="f-{{ c.code }}" type="checkbox" name="active" {% if c.active %}checked{% endif %} aria-label="აქტიური — {{ c.code }}"></td>
+        <td><button form="f-{{ c.code }}" class="btn btn-ghost btn-sm" type="submit">შენახვა</button></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

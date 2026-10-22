@@ -1,0 +1,1214 @@
+<!doctype html><html lang="ka"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>IT ინფრასტრუქტურის მოთხოვნები — NAPR ხარისხის კონტროლის პლატფორმა</title><style>
+@font-face { font-family: 'NSG'; font-weight: 400; src: url('../../../app/static/vendor/fonts/noto-sans-georgian/noto-sans-georgian-georgian-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'NSG'; font-weight: 600; src: url('../../../app/static/vendor/fonts/noto-sans-georgian/noto-sans-georgian-georgian-600-normal.woff2') format('woff2'); }
+@font-face { font-family: 'NSGL'; font-weight: 400; src: url('../../../app/static/vendor/fonts/noto-sans-georgian/noto-sans-georgian-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'NSGL'; font-weight: 600; src: url('../../../app/static/vendor/fonts/noto-sans-georgian/noto-sans-georgian-latin-600-normal.woff2') format('woff2'); }
+:root { --fg:#1d232b; --muted:#5b6672; --line:#d9dee4; --bg:#ffffff; --code:#f4f6f8; --accent:#1f5f99; }
+html { background: var(--bg); }
+body { font-family: 'NSGL','NSG','Sylfaen','Segoe UI',sans-serif; color: var(--fg); background: var(--bg);
+       max-width: 980px; margin: 0 auto; padding: 24px 16px 64px; font-size: 14.5px; line-height: 1.6; }
+h1 { font-size: 1.75em; border-bottom: 2px solid var(--accent); padding-bottom: .3em; }
+h1, h2, h3, h4 { line-height: 1.3; break-after: avoid; }
+h2 { font-size: 1.35em; margin-top: 1.8em; border-bottom: 1px solid var(--line); padding-bottom: .2em; }
+h3 { font-size: 1.12em; margin-top: 1.5em; }
+a { color: var(--accent); text-decoration: none; }
+blockquote { margin: 1em 0; padding: .4em 1em; border-left: 4px solid var(--accent); background: #f3f7fb; color: var(--fg); }
+code { font-family: Consolas,'Cascadia Mono',monospace; background: var(--code); padding: .1em .3em; border-radius: 3px; font-size: .92em; }
+pre { background: var(--code); padding: 10px 12px; border-radius: 4px; overflow-x: auto; font-size: 12.5px; line-height: 1.45; break-inside: avoid; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1em 0; font-size: .93em; }
+th, td { border: 1px solid var(--line); padding: 5px 8px; vertical-align: top; text-align: left; }
+th { background: #eef2f6; }
+tr { break-inside: avoid; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 2em 0; }
+.meta { color: var(--muted); font-size: .85em; }
+@media print { body { max-width: none; padding: 0; font-size: 11pt; } a { color: var(--fg); } pre { white-space: pre-wrap; } }
+@page { size: A4; margin: 16mm 14mm; }
+</style></head><body><h1>IT ინფრასტრუქტურის მოთხოვნები — NAPR ხარისხის კონტროლის პლატფორმა</h1>
+<blockquote>
+<p><strong>ვისთვის:</strong> ჩემთვის, სალომესთვის და, საჭიროებისას, NAPR-ის IT სამსახურისთვის — სამუშაო ჩამონათვალი შეხვედრაზე.
+<strong>მდგომარეობა:</strong> 2026-10-22. ავსებს და აზუსტებს ადრინდელ <code>docs/IT_REQUEST.md</code>-ს (2026-10-20).
+<strong>სტატუსის ნიშნები:</strong> ✅ დადასტურებული · 🗓 დაგეგმილი · 💡 რეკომენდებული · ❓ IT-ის დასადასტურებელი · ⚠️ შეუსაბამობა.
+<strong>რიცხვები:</strong> CPU, RAM და დისკის ყოველი ციფრი <strong>შეფასებაა</strong> 💡 (არა გაზომვა), და მიზეზი თან ახლავს. დატვირთვის ტესტი ჯერ არ ჩატარებულა.</p>
+</blockquote>
+<hr />
+<h2>0. როგორ არის აწყობილი</h2>
+<p>თითო მოთხოვნას (R1–R26) აქვს:</p>
+<ol>
+<li><strong>რა გვჭირდება</strong> — ტექნიკურად;</li>
+<li><strong>რატომ</strong> — ტექნიკური მიზეზი;</li>
+<li><strong>რა ფუნქციაა დამოკიდებული</strong>;</li>
+<li><strong>სავალდებულოა თუ არჩევითი</strong> და რომელ ფაზაში;</li>
+<li><strong>ალტერნატივები</strong>;</li>
+<li><strong>რა მოხდება, თუ IT ვერ მოგვცემს</strong>;</li>
+<li><strong>🗣 შეხვედრაზე მარტივად</strong> — როგორ ავხსნა ხმამაღლა.</li>
+</ol>
+<p><strong>სავალდებულოობა:</strong></p>
+<ul>
+<li><strong>M</strong> — სავალდებულო: ამის გარეშე ფაზა ვერ დაიწყება;</li>
+<li><strong>S</strong> — სასურველი: ალტერნატივით შეიძლება;</li>
+<li><strong>O</strong> — არჩევითი.</li>
+</ul>
+<p><strong>ფაზები:</strong></p>
+<ul>
+<li><strong>P1</strong> — პილოტი;</li>
+<li><strong>P2</strong> — წყაროები;</li>
+<li><strong>P3</strong> — სრული გაშვება;</li>
+<li><strong>P4</strong> — Pre-QC.</li>
+</ul>
+<p><strong>ზოგადი პრინციპები, რომლებიც ყველა მოთხოვნას ეხება:</strong></p>
+<ol>
+<li><strong>მხოლოდ კითხვა</strong> — სააგენტოს სისტემებში (REGFIELDALL, REDI, SLR) არაფერს ვწერთ.</li>
+<li><strong>საკუთარი ასლი</strong> — საჭირო ველების ასლს ვინახავთ და განრიგით ვანახლებთ, ამიტომ წყაროს დატვირთვა მცირეა.</li>
+<li><strong>მინიმალური მონაცემი</strong> — მხოლოდ ის ველები, რაც სამუშაოს სჭირდება.</li>
+<li><strong>მინიმალური უფლება</strong> — ცალკე სერვისის ანგარიში თითო წყაროზე, მხოლოდ ჩვენი სერვერიდან.</li>
+<li><strong>გადატანადობა</strong> — ყველა პარამეტრი კონფიგურაციაშია (<code>QCP_*</code> გარემოს ცვლადები), კოდში სერვერი არ წერია.</li>
+</ol>
+<hr />
+<h2>1. შემაჯამებელი ჩამონათვალი</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>მოთხოვნა</th>
+<th>M/S/O</th>
+<th>ფაზა</th>
+<th>ვისზეა</th>
+<th>✓</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R1</td>
+<td>ვირტუალური სერვერი (VM)</td>
+<td>M</td>
+<td>P1</td>
+<td>IT</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R2</td>
+<td>OS და runtime (Python ≥ 3.12 ან Docker)</td>
+<td>M</td>
+<td>P1</td>
+<td>IT + ჩვენ</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R3</td>
+<td>PostgreSQL ბაზა (ცალკე ბაზა + 2 მომხმარებელი)</td>
+<td>M</td>
+<td>P1</td>
+<td>IT (DBA)</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R4</td>
+<td>ბაზის ბექაპი (P1: ღამის; P3: PITR)</td>
+<td>M</td>
+<td>P1/P3</td>
+<td>IT</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R5</td>
+<td>ფაილების საცავი (ფოტო/PDF) + ბექაპი</td>
+<td>M</td>
+<td>P1</td>
+<td>IT</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R6</td>
+<td>დომენი (ქვედომენი) და DNS</td>
+<td>M</td>
+<td>P1</td>
+<td>IT</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R7</td>
+<td>TLS სერტიფიკატი</td>
+<td>M</td>
+<td>P1</td>
+<td>IT</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R8</td>
+<td>Reverse proxy / load balancer</td>
+<td>M</td>
+<td>P1</td>
+<td>IT</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R9</td>
+<td>წვდომა შიდა ქსელიდან</td>
+<td>M</td>
+<td>P1</td>
+<td>IT</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R10</td>
+<td>წვდომა გარედან (ველი, ტელეფონი) — საჯარო HTTPS ან VPN</td>
+<td>M (P3), S (P1)</td>
+<td>P1/P3</td>
+<td>IT + უსაფრთხოება</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R11</td>
+<td>სერვერიდან გამავალი კავშირი (Google OAuth, SMTP, პაკეტები)</td>
+<td>M</td>
+<td>P1</td>
+<td>IT</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R12</td>
+<td>Google Cloud პროექტი + OAuth client (Web)</td>
+<td>M</td>
+<td>P1</td>
+<td>IT</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R13</td>
+<td>SMTP relay + გამგზავნი მისამართი (SPF/DKIM)</td>
+<td>S (P1), M (P3)</td>
+<td>P1/P3</td>
+<td>IT</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R14</td>
+<td>REGFIELDALL-ზე წვდომა (view ან ექსპორტი) + სერვისის ანგარიში</td>
+<td>M</td>
+<td>P2</td>
+<td>IT / მონაცემის მფლობელი</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R15</td>
+<td>სპორადულის სია (view ან SFTP), განმცხადებლების მონაცემის გარეშე</td>
+<td>S</td>
+<td>P2</td>
+<td>IT</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R16</td>
+<td>ოქმის დეტალების API (შემსრულებლები, დანართები)</td>
+<td>O (P2), S (P4)</td>
+<td>P4</td>
+<td>IT</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R17</td>
+<td>REDI / SLR / WFS — სერვისის ანგარიში (Pre-QC)</td>
+<td>S</td>
+<td>P4</td>
+<td>IT</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R18</td>
+<td>თანამშრომლების მონაცემი: გუნდები, ახალი/წასული (HR/AD)</td>
+<td>S</td>
+<td>P3</td>
+<td>HR + IT</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R19</td>
+<td>საიდუმლოებების შენახვა</td>
+<td>M</td>
+<td>P1</td>
+<td>IT</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R20</td>
+<td>მონიტორინგი, ლოგები, განგაში</td>
+<td>S (P1), M (P3)</td>
+<td>P1/P3</td>
+<td>IT</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R21</td>
+<td>სატესტო გარემო (staging)</td>
+<td>S</td>
+<td>P1</td>
+<td>IT</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R22</td>
+<td>ვერსიის კონტროლი (git) + deployment-ის წვდომა</td>
+<td>M</td>
+<td>P1</td>
+<td>IT + ჩვენ</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R23</td>
+<td>უსაფრთხოების შემოწმება, პერსონალური მონაცემის შეფასება, შენახვის ვადები</td>
+<td>M (P3)</td>
+<td>P3</td>
+<td>IT-უსაფრთხოება + იურიდიული</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R24</td>
+<td>დრო და სასაათო სარტყელი (NTP, Asia/Tbilisi)</td>
+<td>M</td>
+<td>P1</td>
+<td>IT</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R25</td>
+<td>ოპერაციული პასუხისმგებლობა (RACI), ინციდენტის პროცესი</td>
+<td>M</td>
+<td>P1</td>
+<td>IT + ჩვენ</td>
+<td>☐</td>
+</tr>
+<tr>
+<td>R26</td>
+<td>ატვირთული ფაილების ანტივირუსული შემოწმება</td>
+<td>O</td>
+<td>P3</td>
+<td>IT</td>
+<td>☐</td>
+</tr>
+</tbody>
+</table>
+<p><strong>პილოტისთვის (P1) მინიმუმი:</strong> R1, R2, R3, R4 (ღამის), R5, R6, R7, R8, R9, R11, R12, R19, R22, R24, R25.
+<strong>მარტივად:</strong> პილოტისთვის „ოთახი, კარადა, მისამართი, დაცული კარი და შესასვლელი“ გვჭირდება. მონაცემის წყაროები პილოტში ჯერ დღევანდელი გზით მოვა.</p>
+<hr />
+<h2>2. თითო მოთხოვნა დეტალურად</h2>
+<h3>R1. ვირტუალური სერვერი (VM)</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong> ერთი VM. 💡 საწყისი შეფასება: <strong>4 vCPU, 8 GB RAM, 100 GB SSD</strong>, PostgreSQL-ის ჩათვლით, თუ ბაზა იმავე VM-ზეა. ბაზის ცალკე სერვერზე განთავსებისას აპლიკაციის VM-ს 2 vCPU და 4 GB RAM ეყოფა (შეფასება).</li>
+<li><strong>რატომ:</strong> აპლიკაცია (uvicorn, 2–4 worker), ფონური ამოცანები (ღამის იმპორტი, მეილის რიგი), reverse proxy (თუ VM-ზეა) და PostgreSQL ერთად.
+შეფასების საფუძველი:
+<ul>
+<li>≈ 300 მომხმარებელი, ერთდროულად ≈ 40 (<code>IT_REQUEST.md</code>-ის შეფასება);</li>
+<li>✅ დღევანდელი ბაზა 94 MB-ია, 44 159 შემთხვევაზე;</li>
+<li>✅ სტატისტიკა SQLite-ზე 2–3 წმ-ს იღებს;</li>
+<li>✅ REGFIELDALL-ის ასლი ≈ 1 GB-ია.</li>
+</ul>
+</li>
+<li><strong>დამოკიდებულია:</strong> ყველაფერი.</li>
+<li><strong>M, P1.</strong></li>
+<li><strong>ალტერნატივები:</strong>
+<ul>
+<li>ადგილი არსებულ აპლიკაციის სერვერზე ან კონტეინერის პლატფორმაზე (Docker host, Kubernetes namespace);</li>
+<li>მცირე რესურსით დაწყება და გაზრდა გაზომვის შემდეგ.</li>
+</ul>
+</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> პლატფორმა ვერ გაიშვება. დარჩება პროტოტიპი ერთ კომპიუტერზე, რაც საწარმოოსთვის მიუღებელია (სახელმძღვანელო A.2).</li>
+<li><strong>🗣 მარტივად:</strong> „ერთი ვირტუალური სერვერი გვჭირდება, საშუალო ოფისის კომპიუტერის სიმძლავრის. ეს შეფასებაა: პილოტზე გავზომავთ და საჭიროებისას შევამცირებთ ან გავზრდით.“</li>
+</ol>
+<h3>R2. ოპერაციული სისტემა და runtime</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong> Linux (Ubuntu LTS / RHEL-ის ოჯახი) ან Windows Server. Python ≥ 3.12, ვირტუალური გარემოთი; ან Docker Engine, თუ კონტეინერი აირჩევა. სააგენტოს root CA-ს სერტიფიკატი OS-ის საცავში (კორპორატიული TLS-ისთვის). Linux-ზე: systemd სერვისი; Windows-ზე: Windows Service ან კონტეინერი.</li>
+<li><strong>რატომ:</strong>
+<ul>
+<li>✅ კოდი OS-დამოუკიდებელია (<code>pathlib</code>, <code>QCP_*</code>);</li>
+<li>✅ <code>truststore</code> OS-ის სერტიფიკატების საცავს იყენებს, ამიტომ შიდა CA იქ უნდა იყოს. თორემ Google OAuth-ზე და SMTP TLS-ზე კავშირი ჩავარდება;</li>
+<li>✅ ტესტირებულია Python 3.14.5-ზე, მოთხოვნა ≥ 3.12.</li>
+</ul>
+</li>
+<li><strong>დამოკიდებულია:</strong> აპლიკაციის გაშვება.</li>
+<li><strong>M, P1.</strong></li>
+<li><strong>ალტერნატივები:</strong> ჩვენ ვამზადებთ Docker image-ს, IT კი მხოლოდ კონტეინერის host-ს გვაძლევს. ⚠️ Dockerfile ჯერ არ არსებობს — ეს ჩვენი სამუშაოა.</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> —</li>
+<li><strong>🗣 მარტივად:</strong> „თქვენი სტანდარტული ოპერაციული სისტემა გამოგვადგება. პროგრამა ორივეზე მუშაობს. Docker-ის „ყუთში“ თუ მოგაწვდით, ინსტალაციაც მარტივი იქნება.“</li>
+</ol>
+<h3>R3. PostgreSQL ბაზა</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong> PostgreSQL 14+ (💡 სასურველია 16), ცალკე ბაზა (მაგ. <code>qc</code>), UTF-8 კოდირებით. ორი მომხმარებელი:
+<ul>
+<li><code>qc_app</code> — აპლიკაცია: მონაცემის წაკითხვა და ჩაწერა, სქემის შეცვლის გარეშე;</li>
+<li><code>qc_migrator</code> — სქემის მფლობელი, მიგრაციისთვის.
+superuser არ გვჭირდება. კავშირი მხოლოდ აპლიკაციის სერვერიდან; TLS, თუ ბაზა სხვა VM-ზეა.</li>
+</ul>
+</li>
+<li><strong>რატომ:</strong>
+<ul>
+<li>ერთდროული ჩაწერა (MVCC);</li>
+<li>ტრანზაქციები და შეზღუდვები;</li>
+<li>ბექაპი / PITR;</li>
+<li>უფლებების მართვა.
+SQLite (✅ პროტოტიპი) ერთ მწერალს უშვებს და ქსელურ წვდომას არ იძლევა (სახელმძღვანელო B.11).</li>
+</ul>
+</li>
+<li><strong>დამოკიდებულია:</strong> ყველა მონაცემი — ოქმები, ისტორია, მომხმარებლები, სესიები.</li>
+<li><strong>M, P1.</strong></li>
+<li><strong>ალტერნატივები:</strong> Microsoft SQL Server, თუ ეს სააგენტოს სავალდებულო სტანდარტია. ⚠️ ამ შემთხვევაში ჩვენ ტესტირება და დიალექტის განსხვავებების გასწორება გვიწევს (JSON სვეტები, collation, თარიღები).</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> სერვერული ბაზის გარეშე საწარმოო გაშვება შეუძლებელია.</li>
+<li><strong>🗣 მარტივად:</strong> „ბაზა ცენტრალური, დაცული „კარადაა“, სადაც საიტი ყველა ჩანაწერს ინახავს. თქვენს არსებულ DB სერვერზე ცალკე ბაზაც საკმარისია. ახალი სერვერი სავალდებულო არ არის.“</li>
+</ol>
+<p>⚠️ <strong>ჩვენი მხრიდან (G1, G2):</strong> PostgreSQL-ის დრაივერი ჯერ არ არის დაყენებული და ტესტი არ ჩატარებულა; მიგრაციის ინსტრუმენტი (Alembic) დასამატებელია. 💡 სატესტო PostgreSQL ადრე რომ მივიღოთ, ამ სამუშაოს პარალელურად გავაკეთებთ.</p>
+<h3>R4. ბაზის ბექაპი და აღდგენა</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong>
+<ul>
+<li><strong>P1:</strong> ღამის სრული ბექაპი (<code>pg_dump -Fc</code> ან თქვენი ინსტრუმენტი), მინიმუმ 14 დღის შენახვით;</li>
+<li><strong>P3:</strong> PITR — base backup + WAL-ის არქივი (pgBackRest / Barman / თქვენი ინსტრუმენტი);</li>
+<li>ბექაპი <strong>სხვა მედიაზე ან ლოკაციაზე</strong> უნდა იყოს და დაშიფრული;</li>
+<li>აღდგენის ტესტი კვარტალში ერთხელ.</li>
+</ul>
+</li>
+<li><strong>რატომ:</strong> QC-ის ისტორია და გადაწყვეტილებები ორგანიზაციის ჩანაწერებია. 💡 შეთავაზება: RPO ≤ 15 წთ, RTO ≤ 4 სთ (❓ ხელმძღვანელობისა და IT-ის დასამტკიცებელი).</li>
+<li><strong>დამოკიდებულია:</strong> მონაცემის დაკარგვისგან დაცვა.</li>
+<li><strong>M:</strong> P1 — ღამის; P3 — PITR.</li>
+<li><strong>ალტერნატივები:</strong>
+<ul>
+<li>VM-ის სნეპშოტი. მარტივია, მაგრამ შეიძლება არათანმიმდევრული აღმოჩნდეს, თუ ბაზა ჩაწერის შუაშია. ბაზის ბექაპის ნაცვლად არ გამოდგება;</li>
+<li>მართული PostgreSQL სერვისი, რომელსაც ბექაპი ჩაშენებული აქვს.</li>
+</ul>
+</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> დისკის ერთი დაზიანება ყველაფერს წაშლის. ✅ დღეს ბექაპი არ კეთდება, ხოლო <code>build_db.py</code> აღდგენა არ არის (ბაზას ნულიდან აწყობს).</li>
+<li><strong>🗣 მარტივად:</strong> „ყოველ ღამე ბაზის ასლი გვჭირდება, სხვა ადგილას. სრული გაშვებისთვის კი „ვიდეოჩანაწერი“, რომ ნებისმიერ წუთზე დავბრუნდეთ. და დროდადრო შევამოწმოთ, რომ ასლი მართლა აღდგება.“</li>
+</ol>
+<h3>R5. ფაილების საცავი (ფოტო / PDF)</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong> დისკზე ან ქსელურ საცავზე საქაღალდე (✅ დღეს <code>data/uploads/&lt;item_id&gt;/</code>), აპლიკაციის მომხმარებლის ჩაწერის უფლებით, და ბექაპი ბაზის ბექაპის იმავე განრიგით. 💡 მოცულობა: 1–3 GB წელიწადში (<code>IT_REQUEST.md</code>-ის შეფასება; ✅ დღეს 0 ატვირთვაა ბაზაში).</li>
+<li><strong>რატომ:</strong> ✅ ფოტოს (JPEG/PNG/WEBP/GIF/PDF, ≤ 10 MB) ტვირთავს მხოლოდ კონტროლი, და ის ოქმის ისტორიის ნაწილია. ბაზაში მხოლოდ მეტამონაცემი ინახება (<code>attachments</code>).</li>
+<li><strong>დამოკიდებულია:</strong> ფოტოს ატვირთვა და ნახვა ბარათზე და მეილში.</li>
+<li><strong>M, P1.</strong></li>
+<li><strong>ალტერნატივები:</strong> ობიექტური საცავი (S3-თავსებადი). 💡 ამისთვის კოდის მცირე ცვლილებაა საჭირო.</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> ფოტოები VM-ის ლოკალურ დისკზე დარჩება, ბექაპის გარეშე. VM-ის ხელახლა აწყობისას ისინი დაიკარგება.</li>
+<li><strong>🗣 მარტივად:</strong> „ფოტოებს ცალკე „ალბომი“ სჭირდება, და ალბომის ასლიც, ბაზის ასლთან ერთად.“</li>
+</ol>
+<h3>R6. დომენი და DNS</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong> ქვედომენი, მაგ. <code>qc.&lt;სააგენტოს დომენი&gt;</code> (❓ სახელი IT-ის წესით). A ან CNAME ჩანაწერი შიდა DNS-ში და, გარე წვდომის შემთხვევაში (R10), საჯარო DNS-შიც.</li>
+<li><strong>რატომ:</strong>
+<ul>
+<li>✅ Google OAuth-ის redirect URI (<code>&lt;QCP_BASE_URL&gt;/auth/google/callback</code>) სტაბილურ, HTTPS მისამართს მოითხოვს;</li>
+<li>✅ მეილის ბმულები <code>QCP_BASE_URL</code>-ზეა აგებული.</li>
+</ul>
+</li>
+<li><strong>დამოკიდებულია:</strong> შესვლა, მეილის ბმულები, მომხმარებლების წვდომა.</li>
+<li><strong>M, P1.</strong></li>
+<li><strong>ალტერნატივები:</strong> არსებული დომენის ქვებილიკი (<code>https://&lt;დომენი&gt;/qc</code>). ⚠️ ამას proxy-ს და აპლიკაციის კონფიგურაციის (root path) ცვლილება სჭირდება — 💡 შესამოწმებელია.</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> Google-ით შესვლა ვერ ჩაირთვება. IP მისამართით მუშაობა არასანდოა.</li>
+<li><strong>🗣 მარტივად:</strong> „საიტს სახელი სჭირდება, IP-ის ნაცვლად, რომ Google-მა „იცოდეს“, სად დააბრუნოს თანამშრომელი შესვლის შემდეგ.“</li>
+</ol>
+<h3>R7. TLS სერტიფიკატი</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong> სერტიფიკატი R6-ის დომენზე, TLS 1.2+, ავტომატური განახლებით ან ვადის კონტროლით. თუ ველიდან ტელეფონებით საჯარო წვდომა იქნება, 💡 საჯარო CA-ს სერტიფიკატი, რომ ტელეფონებზე შიდა root CA-ს დაყენება არ დაგვჭირდეს.</li>
+<li><strong>რატომ:</strong>
+<ul>
+<li>HTTPS Google OAuth-ის წინაპირობაა;</li>
+<li>სესიის cookie და QC მონაცემი დაშიფრული უნდა მოძრაობდეს;</li>
+<li>✅ cookie-ს <code>Secure</code> ნიშანი HTTPS-ზე მუშაობს.</li>
+</ul>
+</li>
+<li><strong>დამოკიდებულია:</strong> შესვლა, ყველა გვერდი.</li>
+<li><strong>M, P1.</strong></li>
+<li><strong>ალტერნატივები:</strong> შიდა CA, თუ წვდომა მხოლოდ შიდაა ან მართულ მოწყობილობებზე.</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> Google-ით შესვლა ვერ იმუშავებს, და მონაცემი ღიად მოძრაობს.</li>
+<li><strong>🗣 მარტივად:</strong> „სერტიფიკატი საიტის „პირადობის მოწმობაა“ და „დალუქული კონვერტი“. მის გარეშე Google შესვლას არ დაუშვებს.“</li>
+</ol>
+<h3>R8. Reverse proxy / load balancer</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong>
+<ul>
+<li>HTTPS-ის მიღება (TLS termination) და გადაცემა აპლიკაციაზე (<code>http://127.0.0.1:8200</code> ან შიდა IP);</li>
+<li>მოთხოვნის ზომა ≥ 12 MB (ფოტო ≤ 10 MB + ფორმა);</li>
+<li>timeout ≥ 120 წმ (განაწილების გადახედვა ათასობით ჩანაწერზე. ❓ PostgreSQL-ზე გასაზომია);</li>
+<li><code>X-Forwarded-For</code> და <code>X-Forwarded-Proto</code> თავსართები;</li>
+<li>HTTP → HTTPS გადამისამართება; HSTS;</li>
+<li>წვდომის ლოგი <strong>query string-ის გარეშე</strong>, ან მისი ნიღბვით, რომ OAuth-ის <code>code</code> ლოგში არ ჩაიწეროს.</li>
+</ul>
+</li>
+<li><strong>რატომ:</strong>
+<ul>
+<li>Python-ის აპლიკაციის სერვერი ინტერნეტზე პირდაპირ არ უნდა ჩანდეს;</li>
+<li>⚠️ G4: აპლიკაციას proxy-ს IP-ისა და თავსართების ცოდნა სჭირდება, <code>--proxy-headers --forwarded-allow-ips</code>-ისთვის. თორემ cookie <code>Secure</code>-ის გარეშე დარჩება, და აუდიტში არასწორი IP ჩაიწერება.</li>
+</ul>
+</li>
+<li><strong>დამოკიდებულია:</strong> HTTPS, ატვირთვა, ლოგები.</li>
+<li><strong>M, P1.</strong></li>
+<li><strong>ალტერნატივები:</strong>
+<ul>
+<li>nginx, ან IIS + ARR, ჩვენს VM-ზე;</li>
+<li>სააგენტოს ცენტრალური load balancer / WAF.</li>
+</ul>
+</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> proxy ჩვენს VM-ზე დავაყენებთ (nginx), ოღონდ სერტიფიკატი თქვენგან გვჭირდება.</li>
+<li><strong>🗣 მარტივად:</strong> „proxy შენობის „მიმღებია“: დაცული შესასვლელი, რომელიც სტუმარს სწორ ოთახში ატარებს. თქვენი სტანდარტული მიმღები გვირჩევნია.“</li>
+</ol>
+<h3>R9. წვდომა შიდა ქსელიდან</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong> სააგენტოს შიდა ქსელიდან (ოფისები, QC) დომენზე 443 პორტით წვდომა.</li>
+<li><strong>რატომ:</strong> QC ოპერატორები, მენეჯერები და ადმინები ოფისიდან მუშაობენ.</li>
+<li><strong>დამოკიდებულია:</strong> ყველა ოფისის მომხმარებელი.</li>
+<li><strong>M, P1.</strong></li>
+<li><strong>ალტერნატივები:</strong> —</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> —</li>
+<li><strong>🗣 მარტივად:</strong> „ოფისიდან საიტი ჩვეულებრივი მისამართით უნდა იხსნებოდეს.“</li>
+</ol>
+<h3>R10. წვდომა გარედან (ველი, ტელეფონი, პლანშეტი)</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong> ერთ-ერთი:
+<ul>
+<li><strong>(ა)</strong> საჯარო HTTPS გამოქვეყნება (proxy/WAF DMZ-ში → შიდა სერვერი);</li>
+<li><strong>(ბ)</strong> VPN მობილურ მოწყობილობებზე.
+💡 დამატებითი დაცვა (ა)-სთვის: WAF-ის წესები, rate limiting, HSTS, საჭიროებისას გეო-შეზღუდვა.</li>
+</ul>
+</li>
+<li><strong>რატომ:</strong> ≈ 250 ამზომველი და 14 საველე მენეჯერი ველის პასუხებს ტელეფონიდან და პლანშეტიდან აგზავნის. ✅ ინტერფეისი მობილურზე მუშაობს: ველის სია ბარათებად, შემოწმებულია <code>run_lan.bat</code>-ით.</li>
+<li><strong>დამოკიდებულია:</strong> ველის პასუხები, „არ ვეთანხმები“, მენეჯერის დადასტურება და Pre-QC-ის ნახვა ველიდან.</li>
+<li><strong>S (P1</strong> — პილოტი შეიძლება ოფისით დაიწყოს), <strong>M (P3).</strong></li>
+<li><strong>ალტერნატივები:</strong> მხოლოდ შიდა ქსელი + ველის მომხმარებლები ოფისში ან VPN-ით. ⚠️ ეს ველის სამუშაოს შეანელებს.</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> ველი ტელეფონიდან ვერ იმუშავებს, და პლატფორმის ერთი მთავარი სარგებელი იკარგება.</li>
+<li><strong>🗣 მარტივად:</strong> „ამზომველები ველში არიან. ან დაცული საჯარო მისამართი გვჭირდება, ან VPN ყველა ტელეფონზე. ჩვენ პირველს გირჩევთ, Google-ის შესვლითა და მხოლოდ დარეგისტრირებული ელფოსტებით. მაგრამ გადაწყვეტილება თქვენი პოლიტიკისაა.“</li>
+</ol>
+<h3>R11. სერვერიდან გამავალი კავშირი</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong>
+<ul>
+<li><code>oauth2.googleapis.com:443</code> — ✅ token-ის გაცვლა (<code>google_auth.TOKEN_URL</code>). <code>accounts.google.com</code>-ზე მომხმარებლის ბრაუზერი გადადის და არა სერვერი;</li>
+<li>SMTP relay (R13);</li>
+<li>ინსტალაციის დროს: PyPI (<code>pypi.org</code>, <code>files.pythonhosted.org</code>), ან შიდა სარკე, ან მზა Docker image;</li>
+<li>P4-ში: WFS (<code>wblr.napr.gov.ge:443</code>) და REDI-ს API, თუ გაჩნდება.</li>
+</ul>
+</li>
+<li><strong>რატომ:</strong> OIDC-ის Authorization Code ნაკადში სერვერი თავად ეკითხება Google-ს token-ს.</li>
+<li><strong>დამოკიდებულია:</strong> Google-ით შესვლა, მეილი, ინსტალაცია.</li>
+<li><strong>M, P1.</strong></li>
+<li><strong>ალტერნატივები:</strong>
+<ul>
+<li>კორპორატიული HTTP proxy-ით. 💡 <code>requests</code> <code>HTTPS_PROXY</code>-ს კითხულობს; ✅ <code>truststore</code> კორპორატიული სერტიფიკატისთვის;</li>
+<li>ინსტალაციისთვის: ოფლაინ wheel-ები ან Docker image.</li>
+</ul>
+</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> Google-ით შესვლა ვერ იმუშავებს. საჭირო გახდება სხვა OIDC პროვაიდერი შიდა ქსელში (Entra ID / ADFS / Keycloak) — Q45.</li>
+<li><strong>🗣 მარტივად:</strong> „სერვერმა Google-ს ერთი კითხვა უნდა დაუსვას შესვლისას: „ეს ადამიანი ნამდვილად ის არის?“. ამისთვის ერთ კონკრეტულ მისამართზე გასვლა სჭირდება, მეტი არაფერი.“</li>
+</ol>
+<h3>R12. Google Cloud პროექტი და OAuth client</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong>
+<ul>
+<li>Google Cloud პროექტი <strong>სააგენტოს სახელზე</strong> (არა პირად ანგარიშზე), 💡 ცალკე პროექტი მხოლოდ ამ აპლიკაციისთვის;</li>
+<li>OAuth consent screen: აპლიკაციის სახელი, დომენი, მხარდაჭერის ელფოსტა. ტიპი: Workspace-ის შემთხვევაში <strong>Internal</strong>, პირადი Gmail-ებისთვის <strong>External</strong> → სტატუსი „In production“ (Testing-ში მხოლოდ სატესტო მომხმარებლები შედიან) ❓;</li>
+<li>OAuth client ID, ტიპი <strong>Web application</strong>;</li>
+<li>Authorized redirect URI: <code>https://&lt;დომენი&gt;/auth/google/callback</code> (და სატესტო გარემოს მისამართი, თუ R21 იქნება);</li>
+<li>scope: მხოლოდ <code>openid email profile</code>;</li>
+<li>Client ID და Client Secret უსაფრთხო არხით, ან პირდაპირ სერვერის საიდუმლოების საცავში (R19).</li>
+</ul>
+</li>
+<li><strong>რატომ:</strong> ✅ კოდი მზადაა (<code>app/routes/google_auth.py</code>) და ჩაირთვება, როცა <code>QCP_GOOGLE_CLIENT_ID</code> და <code>QCP_GOOGLE_CLIENT_SECRET</code> მიეთითება. ✅ არჩევით: <code>QCP_GOOGLE_ALLOWED_DOMAIN</code> — მხოლოდ Workspace დომენი.</li>
+<li><strong>დამოკიდებულია:</strong> საწარმოო შესვლა (დემო შესვლა საწარმოოში გაითიშება).</li>
+<li><strong>M, P1.</strong></li>
+<li><strong>ალტერნატივები:</strong> Microsoft Entra ID / ADFS / Keycloak (OIDC), თუ ყველა თანამშრომელს სააგენტოს ანგარიში აქვს. 💡 მცირე ცვლილება კოდში.</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> შესვლის საწარმოო მექანიზმი არ იქნება.</li>
+<li><strong>🗣 მარტივად:</strong> „Google-ში საიტს „რეგისტრაცია“ სჭირდება, სააგენტოს სახელით. ჩვენ მხოლოდ სახელს და ელფოსტას ვითხოვთ. Gmail-ზე, Drive-ზე ან სხვა რამეზე წვდომა არ გვჭირდება.“</li>
+</ol>
+<p>⚠️ <strong>ჩვენი მხრიდან (G15):</strong> ბაზაში 0 ელფოსტაა. მენეჯერები აგროვებენ, ადმინები კი შეიყვანენ, გაშვებამდე.</p>
+<h3>R13. SMTP relay და გამგზავნი მისამართი</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong>
+<ul>
+<li>SMTP relay: host, port (✅ ნაგულისხმევი 587, STARTTLS), ავთენტიფიკაცია (თუ საჭიროა);</li>
+<li>გამგზავნი მისამართი, მაგ. <code>qc-noreply@&lt;დომენი&gt;</code>, SPF/DKIM-ით (და DMARC-ით).
+💡 მოცულობა: დღეში ათეულობით შეტყობინება, ძირითადად საველე მენეჯერებთან.</li>
+</ul>
+</li>
+<li><strong>რატომ:</strong>
+<ul>
+<li>✅ <code>services/notify.py</code>: შეტყობინება იგზავნება დაბრუნებაზე, QC მენეჯერის გადაწყვეტილებაზე და კომენტარზე, მხოლოდ ✉ მონიშვნით;</li>
+<li>✅ SMTP-ის გარეშე მეილი <code>preview</code> სტატუსით ინახება (ადმინისტრირება → მეილები).</li>
+</ul>
+</li>
+<li><strong>დამოკიდებულია:</strong> შეტყობინებები მენეჯერებთან.</li>
+<li><strong>S (P1), M (P3).</strong></li>
+<li><strong>ალტერნატივები:</strong> შეტყობინებები მხოლოდ პლატფორმაში (უკვე არსებობს: ფერები, რიცხვები, სიები).</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> მენეჯერებს შეტყობინება მეილით არ მივა, და სისტემაში შესვლაზე იქნებიან დამოკიდებული.</li>
+<li><strong>🗣 მარტივად:</strong> „მენეჯერს მეილი უნდა მივიდეს, როცა ოქმი დაუბრუნდა. სააგენტოს ფოსტით, რომ სპამში არ მოხვდეს.“</li>
+</ol>
+<p>⚠️ <strong>ჩვენი მხრიდან (G7):</strong> გაგზავნა მოთხოვნის შიგნით ხდება. 💡 ფონურ რიგში გადავიტანთ.</p>
+<h3>R14. REGFIELDALL-ზე წვდომა</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong> ერთ-ერთი (უპირატესობის რიგით):
+<ul>
+<li><strong>(ა)</strong> read-only view: <code>FLD_PAPER_ID, CADCODE, MOX_CREATE_DATE, FLD_STATUS_NAME, OQMI_CREATOR, MOXAZ_CREATOR, IS_LAST</code>, ცალკე მომხმარებლით, რომელსაც მხოლოდ ამ view-ზე <code>SELECT</code> აქვს, მხოლოდ ჩვენი სერვერის IP-დან;</li>
+<li><strong>(ბ)</strong> REST API იგივე ველებით;</li>
+<li><strong>(გ)</strong> ღამის ექსპორტი სერვერისთვის ხელმისაწვდომ საქაღალდეში ან SFTP-ზე. ✅ დღეს არსებობს <code>Z:\REGFIELDALL\REGFIELDALL_&lt;თარიღი&gt;_01-00_&lt;N&gt;.gdb</code>.
+<ul>
+<li>(გ1) ამ საქაღალდეზე წაკითხვის უფლება სერვისის ანგარიშით (SMB 445) + GDAL სერვერზე;</li>
+<li>(გ2) იგივე CSV-ად.</li>
+</ul>
+</li>
+<li>სიხშირე: ღამით + მოთხოვნით.</li>
+</ul>
+</li>
+<li><strong>რატომ:</strong>
+<ul>
+<li>✅ განაწილება კოდის <strong>პირველ</strong> ოქმს ეყრდნობა (უადრესი <code>MOX_CREATE_DATE</code>), „სისტემური სერვისის“ ოქმების გამორიცხვით და ღია საველე სტატუსის ფილტრით (<code>services/distribution/source.py</code>);</li>
+<li>✅ სპორადულზე ამზომველი MOXAZ_CREATOR-ით დგინდება;</li>
+<li>✅ წყარო ≈ 2.33 მლნ ჩანაწერია, ამიტომ ასლს ღამით ვანახლებთ.</li>
+</ul>
+</li>
+<li><strong>დამოკიდებულია:</strong> სისტემური განაწილება; სპორადულის ამზომველების დადგენა; ძველი ოქმების ამზომველების შევსება (✅ 1 550 ოქმი).</li>
+<li><strong>M, P2.</strong> P1-ში შეიძლება დღევანდელი გზით: Distributor-ის ასლის ხელით გადატანა ან (გ1).</li>
+<li><strong>ალტერნატივები:</strong> ზემოთ (ა)–(გ). ❓ ვინ არის მონაცემის მფლობელი და ვინ ამტკიცებს წვდომას.</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> განაწილება ჩვენი კომპიუტერიდან ხელით გადატანილ ასლზე დარჩება. ⚠️ ეს ერთი ადამიანის კომპიუტერზე დამოკიდებულებას ინარჩუნებს.</li>
+<li><strong>🗣 მარტივად:</strong> „ყოველ ღამე საველე ოქმების სიიდან შვიდი სვეტი გვჭირდება, მხოლოდ საკითხავად. საუკეთესოა პატარა „ფანჯარა“ (view) თქვენს ბაზაში. თუ ეს არ შეიძლება, დღევანდელი ღამის ფაილიც გამოდგება, ოღონდ სერვერისთვის ხელმისაწვდომ ადგილას.“</li>
+</ol>
+<h3>R15. სპორადულის სია</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong> view ან ყოველდღიური ფაილი (SFTP / დაცული საქაღალდე) ამ სვეტებით: <code>FLD_PAPER_ID, CADCODE, CREATE_DATE, SURVEY_DAY, SURVEY_TIME, CALL_STATUS, ST_NAME, TR_NAME, USER_REAL_NAME, REGNUMBER</code>. <strong>განმცხადებლების მონაცემის გარეშე</strong> (APPLICS, APP_PERSONS, REG_EMP, ADDRESS).</li>
+<li><strong>რატომ:</strong>
+<ul>
+<li>✅ დღეს xlsx მეილით მოდის განმცხადებლების პირადი ნომრებითა და ტელეფონებით. პლატფორმა მათ არ კითხულობს და ფაილს შლის (<code>services/sporadic.py</code>), მაგრამ მეილით გავრცელება რისკია;</li>
+<li>✅ 20.10-ის ფაილი: 50 320 ჩანაწერი.</li>
+</ul>
+</li>
+<li><strong>დამოკიდებულია:</strong> სპორადულის ყოველდღიური განაწილება.</li>
+<li><strong>S, P2.</strong></li>
+<li><strong>ალტერნატივები:</strong> ✅ დღევანდელი მეილი + ხელით ატვირთვა (მუშაობს).</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> ყოველ დილით ხელით ატვირთვა დარჩება, და პირადი მონაცემი ისევ მეილით გავრცელდება.</li>
+<li><strong>🗣 მარტივად:</strong> „სპორადულის სია მეილის ნაცვლად დაცულ ადგილას გვჭირდება, და მხოლოდ საჭირო სვეტებით. სხვისი პირადი ნომრები და ტელეფონები არ გვჭირდება.“</li>
+</ol>
+<h3>R16. ოქმის დეტალების API</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong> API: ოქმის ნომერი → JSON. ველები: შემსრულებლები სტატუსით „საველე სამუშაოების შესრულებაზე უფლებამოსილი პირი“ (სახელი, 💡 პირადი ნომერი მიბმისთვის), დანართების სია და Pre-QC-ისთვის საჭირო ველები. სერვისის ანგარიშით ან API გასაღებით.</li>
+<li><strong>რატომ:</strong>
+<ul>
+<li>✅ დღეს ამზომველები OQMI_CREATOR / MOXAZ_CREATOR-დან ითვლება და სახელით ებმება Field Group-ს. რეგისტრატორი რომ ამზომველად არ ჩაითვალოს, FIELD_GROUP_ALL-ით იფილტრება;</li>
+<li>🗓 მომავალში „შემსრულებლები ოქმის API-დან“ (<code>OPEN_QUESTIONS.md</code>);</li>
+<li>✅ Pre-QC hosted-მა 31 რეალურ ოქმზე გაზომა: 49/49 ხელმოწერას პირადი ნომერი აქვს. ამით მიბმა სახელით კი არა, ცალსახად გახდებოდა.</li>
+</ul>
+</li>
+<li><strong>დამოკიდებულია:</strong> ამზომველის ზუსტი მიბმა; Pre-QC სერვერზე.</li>
+<li><strong>O (P2), S (P4).</strong></li>
+<li><strong>ალტერნატივები:</strong> ოქმის HTML/TXT ექსპორტი.</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> სახელით მიბმა დარჩება (✅ მუშაობს ალიასებით და „დაუჯგუფებლით“), და Pre-QC ლოკალურად.</li>
+<li><strong>🗣 მარტივად:</strong> „ოქმის „ვინ შეასრულა“ ზუსტად გვინდა, ოქმიდანვე. დღეს სახელებით ვადარებთ, და სახელები ზოგჯერ სხვადასხვანაირად იწერება.“</li>
+</ol>
+<h3>R17. REDI / SLR / WFS — სერვისის ანგარიში (Pre-QC)</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong>
+<ul>
+<li>SLR WFS (<code>https://wblr.napr.gov.ge/data/SLR/ows</code>): სერვისის ანგარიში, მხოლოდ <code>GetFeature</code>, ფენები <code>SLR:GFLD_PARCELS</code>, <code>GFLD_BUILDINGS</code>, <code>GFLD_TOPOLINES</code>, <code>GFLD_EASEMENTS</code>; სერვერის IP-ის დაშვება;</li>
+<li>REDI-ზე: ოქმის მონაცემის API (R16), ან ოფიციალური გზა სერვერისთვის;</li>
+<li>არჩევით: LR_BUILDINGS WMS.</li>
+</ul>
+</li>
+<li><strong>რატომ:</strong>
+<ul>
+<li>✅ Pre-QC-ის GIS-შემოწმებები WFS-ს იყენებს (<code>pre-qc-validator-master/app/wfs.py</code>, HTTP Basic, <code>.env</code>-ში შენახული მომხმარებლით);</li>
+<li>✅ REDI-ს გვერდებს დღეს ბრაუზერის გაფართოება კითხულობს, თანამშრომლის საკუთარი სესიით;</li>
+<li>სერვერს ასეთი სესია არ აქვს, და მისი შექმნა სწორი არ არის.</li>
+</ul>
+</li>
+<li><strong>დამოკიდებულია:</strong> Pre-QC-ის ავტომატური შემოწმება სერვერზე.</li>
+<li><strong>S, P4.</strong></li>
+<li><strong>ალტერნატივები:</strong> Validator თანამშრომლის კომპიუტერზე რჩება და მხოლოდ შედეგს აგზავნის პლატფორმაში, API გასაღებით (Pre-QC hosted-ის მოდელი). ამ შემთხვევაში სერვერს REDI/WFS არ სჭირდება.</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> Pre-QC ისე დარჩება, როგორც დღეს მუშაობს (ლოკალურად), და პლატფორმაში მხოლოდ შედეგები გამოჩნდება.</li>
+<li><strong>🗣 მარტივად:</strong> „ავტომატური წინასწარი შემოწმება დღეს ადამიანის კომპიუტერიდან მუშაობს, მისივე „საშვებით“. სერვერზე რომ გადავიდეს, სისტემისთვის განკუთვნილი „საშვი“ გვჭირდება. ეს მოგვიანებით ეტაპია.“</li>
+</ol>
+<h3>R18. თანამშრომლების მონაცემი (გუნდები, ახალი / წასული)</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong>
+<ul>
+<li><strong>(ა)</strong> პროცესი: HR/IT ჩვენს ადმინებს ატყობინებს ახალ, გადაყვანილ და წასულ თანამშრომლებზე;</li>
+<li><strong>(ბ)</strong> შემდეგ ეტაპზე, შესაძლოა, HR/AD-იდან წაკითხვა: სახელი, ელფოსტა, აქტიურობა, განყოფილება, 💡 პირადი ნომერი ცალსახა მიბმისთვის.</li>
+</ul>
+</li>
+<li><strong>რატომ:</strong>
+<ul>
+<li>✅ გუნდები დღეს Google ცხრილიდან (Field Group) მოდის Apps Script-ით;</li>
+<li>✅ პლატფორმას უკვე აქვს <code>teams</code> / <code>team_members</code> თარიღებით და ადმინისტრირების გვერდი;</li>
+<li>✅ გათიშვა (<code>active = false</code>) მყისიერად მოქმედებს, მაგრამ ჩვენ უნდა ვიცოდეთ ამის შესახებ. ⚠️ G18: გათიშვა გუნდის წევრობას ჯერ ავტომატურად არ ხურავს (ჩვენი გასასწორებელია).</li>
+</ul>
+</li>
+<li><strong>დამოკიდებულია:</strong> მენეჯერის მიკუთვნება, წვდომის გაუქმება.</li>
+<li><strong>S, P3.</strong></li>
+<li><strong>ალტერნატივები:</strong> ადმინები ხელით მართავენ (✅ შესაძლებელია დღესაც).</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> რისკი: წასული თანამშრომელი აქტიური რჩება, სანამ ვინმე არ შეგვატყობინებს.</li>
+<li><strong>🗣 მარტივად:</strong> „როცა ვინმე იწყებს მუშაობას, სხვა გუნდში გადადის ან მიდის, ჩვენც უნდა ვიცოდეთ, რომ წვდომა დროულად შევცვალოთ.“</li>
+</ol>
+<h3>R19. საიდუმლოებების შენახვა</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong> ადგილი, სადაც სერვერზე ინახება:
+<ul>
+<li><code>QCP_DATABASE_URL</code> (ბაზის პაროლით);</li>
+<li><code>QCP_SESSION_SECRET</code>;</li>
+<li><code>QCP_GOOGLE_CLIENT_SECRET</code>;</li>
+<li><code>QCP_SMTP_PASSWORD</code>;</li>
+<li>მომავალში: წყაროების ანგარიშები.
+ეს შეიძლება იყოს გარემოს ფაილი <code>640</code> უფლებით, აპლიკაციის მომხმარებლისთვის, ან თქვენი საიდუმლოების საცავი (Vault / Credential Manager / Docker secrets).</li>
+</ul>
+</li>
+<li><strong>რატომ:</strong>
+<ul>
+<li>✅ კოდში საიდუმლოება არ წერია (<code>app/config.py</code>);</li>
+<li>⚠️ <code>QCP_SESSION_SECRET</code>-ის გარეშე გასაღები <code>data/.session_secret</code>-ში იქმნება. საწარმოოში ცვლადით უნდა მიეთითოს.</li>
+</ul>
+</li>
+<li><strong>დამოკიდებულია:</strong> სესიები, ბაზა, Google, SMTP.</li>
+<li><strong>M, P1.</strong></li>
+<li><strong>ალტერნატივები:</strong> —</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> —</li>
+<li><strong>🗣 მარტივად:</strong> „პაროლები სერვერზე, „სეიფში“. ჩვენ მათი ნახვაც არ გვჭირდება: შეგიძლიათ, პირდაპირ თქვენ ჩაწეროთ.“</li>
+</ol>
+<h3>R20. მონიტორინგი, ლოგები, განგაში</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong>
+<ul>
+<li>✅ health check: <code>GET /api/health</code> (1 წუთში ერთხელ);</li>
+<li>VM-ის მეტრიკები: CPU, RAM, დისკი;</li>
+<li>PostgreSQL-ის მეტრიკები: კავშირები, ზომა, ნელი შეკითხვები;</li>
+<li>proxy-ს წვდომის ლოგი (query string-ის გარეშე);</li>
+<li>აპლიკაციის ლოგი;</li>
+<li>განგაში: სერვისი გაჩერდა, დისკი &gt; 80%, ბექაპი ჩავარდა, 💡 ღამის იმპორტი ჩავარდა.</li>
+</ul>
+</li>
+<li><strong>რატომ:</strong>
+<ul>
+<li>⚠️ G16: დღეს აპლიკაციის ლოგი მინიმალურია;</li>
+<li>⚠️ <code>/api/health</code> ბაზის მიუწვდომლობისას 500-ს აბრუნებს. 💡 გავასწორებთ, თუ თქვენი health check ამას ითხოვს.</li>
+</ul>
+</li>
+<li><strong>დამოკიდებულია:</strong> ინციდენტის დროული აღმოჩენა.</li>
+<li><strong>S (P1), M (P3).</strong></li>
+<li><strong>ალტერნატივები:</strong> მარტივი uptime-შემოწმება + ლოგები ფაილში.</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> პრობლემას მომხმარებლები შეგვატყობინებენ, ჩვენ კი მათზე გვიან გავიგებთ.</li>
+<li><strong>🗣 მარტივად:</strong> „სერვერს „პულსს“ ყოველ წუთს ვუმოწმებთ. თუ გაჩერდა ან დისკი გაივსო, ვიღაცას უნდა ეცნობოს.“</li>
+</ol>
+<h3>R21. სატესტო გარემო (staging)</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong> მეორე, მცირე გარემო: VM ან კონტეინერი + ცალკე ბაზა. მასზე მოწმდება განახლებები და მიგრაციები, და ტარდება დატვირთვის ტესტი. მონაცემი: ანონიმიზებული ან საწარმოოს ასლი, თქვენი წესით. ცალკე Google redirect URI.</li>
+<li><strong>რატომ:</strong> ⚠️ G1/G2 — PostgreSQL-ზე გადასვლა და მიგრაციები ჯერ გამოსაცდელია; დატვირთვის ტესტი (Q13) საწარმოოზე არ ტარდება.</li>
+<li><strong>დამოკიდებულია:</strong> უსაფრთხო განახლებები.</li>
+<li><strong>S, P1.</strong></li>
+<li><strong>ალტერნატივები:</strong> სატესტო ბაზა საწარმოო VM-ზე (ნაკლებად იზოლირებულია).</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> განახლებები პირდაპირ საწარმოოში მოგვიწევს. ეს რისკია.</li>
+<li><strong>🗣 მარტივად:</strong> „„სარეპეტიციო დარბაზი“, სადაც ახალ ვერსიას ჯერ იქ ვამოწმებთ და მერე ვაყენებთ.“</li>
+</ol>
+<h3>R22. ვერსიის კონტროლი და deployment-ის წვდომა</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong>
+<ul>
+<li>git-ის რეპოზიტორია: სააგენტოს GitLab / Azure DevOps / Gitea, ან private საცავი თქვენი წესით;</li>
+<li>deployment-ის გზა: ან SSH/RDP წვდომა ჩვენთვის (შეზღუდული, აპლიკაციის საქაღალდეზე), ან CI/CD პაიპლაინი, ან განახლება თქვენი ადმინისტრატორის მიერ, ჩვენი პროცედურით.</li>
+</ul>
+</li>
+<li><strong>რატომ:</strong>
+<ul>
+<li>⚠️ G17: პროექტი ჯერ git-ში არ არის;</li>
+<li>IT-ს უნდა ხედავდეს, რა იცვლება;</li>
+<li>დაბრუნება ვერსიით.</li>
+</ul>
+</li>
+<li><strong>დამოკიდებულია:</strong> განახლებები, მხარდაჭერა, ცოდნის გადაცემა (Q8).</li>
+<li><strong>M, P1.</strong></li>
+<li><strong>ალტერნატივები:</strong> —</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> კოდი ჩვენს კომპიუტერზე დარჩება, და ეს მხარდაჭერის რისკია.</li>
+<li><strong>🗣 მარტივად:</strong> „კოდის „არქივი“ გვჭირდება, სადაც ყოველი ცვლილება ჩანს და უკან დაბრუნება შეიძლება. სასურველია, თქვენთან, რომ თქვენც ხედავდეთ.“</li>
+</ol>
+<h3>R23. უსაფრთხოების შემოწმება, პერსონალური მონაცემი, შენახვის ვადები</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong>
+<ul>
+<li><strong>(ა)</strong> უსაფრთხოების შემოწმება ან პენტესტი საწარმოომდე (თქვენი სტანდარტით);</li>
+<li><strong>(ბ)</strong> პერსონალური მონაცემის დამუშავების შეფასება და სამართლებრივი საფუძველი, განსაკუთრებით თანამშრომლის პირადი ნომრის შენახვაზე (✅ გადაწყვეტილებით ინახება ვინაობის შესადარებლად, ნიღბით ჩანს);</li>
+<li><strong>(გ)</strong> შენახვის ვადები: QC ჩანაწერები, აუდიტი, მეილები.</li>
+</ul>
+</li>
+<li><strong>რატომ:</strong>
+<ul>
+<li>✅ მონაცემის მინიმიზაცია: მოქალაქეების პირადი ნომრები არ იკითხება;</li>
+<li>✅ როლები, 404, აუდიტი;</li>
+<li>⚠️ ცნობილი ხარვეზები: G3 (დემო შესვლა), G8 (CSRF token), G9 (<code>/docs</code>), ფაილის ტიპის შემოწმება შიგთავსით. ყველა გასწორდება საწარმოომდე.</li>
+</ul>
+</li>
+<li><strong>დამოკიდებულია:</strong> საწარმოო გაშვების ნებართვა.</li>
+<li><strong>M, P3.</strong></li>
+<li><strong>ალტერნატივები:</strong> —</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> სამართლებრივი რისკი.</li>
+<li><strong>🗣 მარტივად:</strong> „სანამ ყველა თანამშრომელი შევა, გვინდა, რომ თქვენმა უსაფრთხოებამ და იურისტებმა შეამოწმონ: რას ვინახავთ, რამდენ ხანს, და კარგად არის თუ არა დაცული.“</li>
+</ol>
+<h3>R24. დრო და სასაათო სარტყელი</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong> NTP სინქრონი; სერვერის სასაათო სარტყელი <strong>Asia/Tbilisi</strong>, ან შეთანხმება, რომ სერვერი UTC-ზეა და ჩვენ კოდს შევცვლით.</li>
+<li><strong>რატომ:</strong> ⚠️ G10: დრო <code>datetime.now()</code>-ით, სარტყლის გარეშე იწერება. D (შემოწმების დრო), „დღის რაოდენობა“ და სტატისტიკის პერიოდები სერვერის ადგილობრივ დროზეა დამოკიდებული. UTC-ზე მყოფი სერვერი 4 საათით დაძრავდა თარიღებს.</li>
+<li><strong>დამოკიდებულია:</strong> სტატისტიკა, დღის რაოდენობა, ისტორიის დროები.</li>
+<li><strong>M, P1.</strong></li>
+<li><strong>ალტერნატივები:</strong> 💡 კოდის შეცვლა: შენახვა UTC-ში, ჩვენება Asia/Tbilisi-ში. ეს უფრო სწორი გადაწყვეტაა, მაგრამ მიგრაციამდე უნდა გაკეთდეს.</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> არასწორი თარიღები სტატისტიკაში.</li>
+<li><strong>🗣 მარტივად:</strong> „სერვერის საათი თბილისის დროზე უნდა იყოს. თორემ ღამის 11-ზე გაგზავნილი ოქმი „ხვალინდელად“ ჩაითვლება.“</li>
+</ol>
+<h3>R25. ოპერაციული პასუხისმგებლობა (RACI) და ინციდენტები</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong> წერილობითი შეთანხმება:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>სფერო</th>
+<th>პასუხისმგებელი (💡 შეთავაზება)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VM, OS, პაჩები, ქსელი, firewall, სერტიფიკატი</td>
+<td>IT</td>
+</tr>
+<tr>
+<td>PostgreSQL-ის ექსპლუატაცია, ბექაპი, აღდგენის ტესტი</td>
+<td>IT (DBA)</td>
+</tr>
+<tr>
+<td>აპლიკაციის განახლება</td>
+<td>ჩვენ ვამზადებთ; ერთად ვაყენებთ</td>
+</tr>
+<tr>
+<td>აპლიკაციის ადმინისტრირება (მომხმარებლები, როლები, გუნდები, განაწილება)</td>
+<td>QC ადმინები: ლუკა ნუკრაძე, სალომე დავითაშვილი</td>
+</tr>
+<tr>
+<td>შეცდომები კოდში</td>
+<td>ჩვენ</td>
+</tr>
+<tr>
+<td>ინციდენტი: სერვისი არ პასუხობს</td>
+<td>IT (პირველი ხაზი) → ჩვენ</td>
+</tr>
+<tr>
+<td>ინციდენტი: არასწორი მონაცემი / წესი</td>
+<td>ჩვენ</td>
+</tr>
+<tr>
+<td>უსაფრთხოების ინციდენტი</td>
+<td>IT-უსაფრთხოება + ჩვენ</td>
+</tr>
+</tbody>
+</table>
+<ol start="2">
+<li><strong>რატომ:</strong> ინციდენტის დროს უნდა ვიცოდეთ, ვინ რეკავს ვის.</li>
+<li><strong>დამოკიდებულია:</strong> მხარდაჭერა.</li>
+<li><strong>M, P1.</strong></li>
+<li><strong>ალტერნატივები:</strong> —</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> —</li>
+<li><strong>🗣 მარტივად:</strong> „წინასწარ შევთანხმდეთ, ვინ რას უვლის. თქვენ — „შენობას“, ჩვენ — „მაღაზიას“.“</li>
+</ol>
+<h3>R26. ატვირთული ფაილების ანტივირუსული შემოწმება (არჩევითი)</h3>
+<ol>
+<li><strong>რა გვჭირდება:</strong> ანტივირუსული შემოწმების სერვისი (მაგ. ClamAV ან თქვენი), რომელსაც აპლიკაცია ატვირთვისას გამოიძახებს.</li>
+<li><strong>რატომ:</strong>
+<ul>
+<li>✅ ატვირთვა მხოლოდ QC როლებს შეუძლიათ, მხოლოდ სურათი ან PDF, ≤ 10 MB, შემთხვევითი სახელით;</li>
+<li>⚠️ ტიპი ბრაუზერის <code>content_type</code>-ით მოწმდება. 💡 შიგთავსის შემოწმებასაც დავამატებთ.</li>
+</ul>
+</li>
+<li><strong>დამოკიდებულია:</strong> ფაილის უსაფრთხოება.</li>
+<li><strong>O, P3.</strong></li>
+<li><strong>ალტერნატივები:</strong> ფაილის სერვერის ანტივირუსი (პერიოდული სკანირება).</li>
+<li><strong>თუ ვერ მოგვცემს:</strong> რისკი დაბალია: ტვირთავს მხოლოდ კონტროლი.</li>
+<li><strong>🗣 მარტივად:</strong> „ფოტოებს მხოლოდ კონტროლი ტვირთავს, მაგრამ თუ ანტივირუსის სერვისი გაქვთ, სიამოვნებით ჩავრთავთ.“</li>
+</ol>
+<hr />
+<h2>3. ინფორმაცია, რომელიც IT-სგან უნდა მივიღოთ</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>კითხვა</th>
+<th>ეხება</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>სად შეიძლება სერვერის განთავსება და რა OS / ვირტუალიზაცია / კონტეინერი გაქვთ სტანდარტად?</td>
+<td>R1, R2</td>
+</tr>
+<tr>
+<td>2</td>
+<td>PostgreSQL თუ SQL Server — რა არის სტანდარტი? გაქვთ DBA და არსებული კლასტერი?</td>
+<td>R3</td>
+</tr>
+<tr>
+<td>3</td>
+<td>ბექაპის სისტემა: ინსტრუმენტი, შენახვის ვადა, PITR შესაძლებელია?</td>
+<td>R4, R5</td>
+</tr>
+<tr>
+<td>4</td>
+<td>ქვედომენის სახელი და სერტიფიკატის წყარო (შიდა / საჯარო CA)?</td>
+<td>R6, R7</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Proxy / load balancer / WAF: თქვენი გამოვიყენოთ? მისი IP (<code>forwarded-allow-ips</code>-ისთვის)?</td>
+<td>R8</td>
+</tr>
+<tr>
+<td>6</td>
+<td>გარე წვდომა: საჯარო HTTPS თუ VPN? რა დამატებითი დაცვა მოითხოვება?</td>
+<td>R10</td>
+</tr>
+<tr>
+<td>7</td>
+<td>სერვერიდან გამავალი კავშირი Google-თან: პირდაპირ თუ proxy-ით? PyPI-ის სარკე გაქვთ?</td>
+<td>R11</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Google Workspace აქვს სააგენტოს? Google Cloud პროექტს ვინ შექმნის და ვის სახელზე?</td>
+<td>R12</td>
+</tr>
+<tr>
+<td>9</td>
+<td>SMTP relay: host, პორტი, ავთენტიფიკაცია; გამგზავნი მისამართი; SPF/DKIM?</td>
+<td>R13</td>
+</tr>
+<tr>
+<td>10</td>
+<td>REGFIELDALL: view შესაძლებელია? თუ არა — ექსპორტის ფორმატი, ადგილი, დრო? ვინ არის მონაცემის მფლობელი?</td>
+<td>R14</td>
+</tr>
+<tr>
+<td>11</td>
+<td>სპორადულის სია: საიდან იქმნება? view ან SFTP შესაძლებელია, მხოლოდ საჭირო სვეტებით?</td>
+<td>R15</td>
+</tr>
+<tr>
+<td>12</td>
+<td>ოქმის შინაარსის (შემსრულებლები, დანართები) API არსებობს? ფორმატი?</td>
+<td>R16</td>
+</tr>
+<tr>
+<td>13</td>
+<td>REDI, SLR, WFS: სერვისის ანგარიში სერვერისთვის შესაძლებელია? IP-ის შეზღუდვა?</td>
+<td>R17</td>
+</tr>
+<tr>
+<td>14</td>
+<td>HR/AD: ახალი და წასული თანამშრომლის შესახებ შეტყობინების პროცესი? ამზომველებს სააგენტოს ანგარიში აქვთ?</td>
+<td>R18, Q45</td>
+</tr>
+<tr>
+<td>15</td>
+<td>საიდუმლოებების საცავი გაქვთ?</td>
+<td>R19</td>
+</tr>
+<tr>
+<td>16</td>
+<td>მონიტორინგის სისტემა და ლოგების ფორმატი?</td>
+<td>R20</td>
+</tr>
+<tr>
+<td>17</td>
+<td>სატესტო გარემო შესაძლებელია? მონაცემის წესი სატესტოზე?</td>
+<td>R21</td>
+</tr>
+<tr>
+<td>18</td>
+<td>კოდის საცავი (git) და deployment-ის წესი; ჩვენი წვდომა სერვერზე?</td>
+<td>R22</td>
+</tr>
+<tr>
+<td>19</td>
+<td>უსაფრთხოების შემოწმების და პერსონალური მონაცემის შეფასების პროცედურა; შენახვის ვადები?</td>
+<td>R23</td>
+</tr>
+<tr>
+<td>20</td>
+<td>სერვერის სასაათო სარტყელი?</td>
+<td>R24</td>
+</tr>
+<tr>
+<td>21</td>
+<td>მხარდაჭერის მოდელი, SLA, ინციდენტის არხი?</td>
+<td>R25</td>
+</tr>
+<tr>
+<td>22</td>
+<td>VM-ის, ბაზის და დომენის გამოყოფის სავარაუდო ვადა?</td>
+<td>ყველა</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>4. გადაწყვეტილებების ჟურნალი (შესავსები შეხვედრაზე)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>გადაწყვეტილება</th>
+<th>ვარიანტები</th>
+<th>არჩეული</th>
+<th>ვინ</th>
+<th>თარიღი</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D1</td>
+<td>OS / გაშვების გარემო</td>
+<td>Linux VM · Windows Server · Docker host · Kubernetes</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>D2</td>
+<td>ბაზის ძრავა</td>
+<td>PostgreSQL · SQL Server</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>D3</td>
+<td>ბაზის მდებარეობა</td>
+<td>იმავე VM-ზე · არსებულ კლასტერზე</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>D4</td>
+<td>გარე წვდომა</td>
+<td>საჯარო HTTPS · VPN · მხოლოდ შიდა (პილოტი)</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>D5</td>
+<td>შესვლა</td>
+<td>Google (Gmail) · Google Workspace (დომენით) · Entra ID / AD</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>D6</td>
+<td>REGFIELDALL-ის წყარო</td>
+<td>view · API · ექსპორტი (GDB / CSV)</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>D7</td>
+<td>სპორადულის წყარო</td>
+<td>view · SFTP · მეილი (როგორც დღეს)</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>D8</td>
+<td>Pre-QC-ის ინტეგრაცია</td>
+<td>ოქმის API · ექსპორტი · Validator ლოკალურად + შედეგის API</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>D9</td>
+<td>ბექაპი / RPO / RTO</td>
+<td>ღამის · PITR</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>D10</td>
+<td>deployment-ის მოდელი</td>
+<td>ჩვენ (SSH) · IT · CI/CD</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>5. რას ვაკეთებთ ჩვენ (ჩვენი ვალდებულებები IT-ის წინაშე)</h2>
+<p>ეს Handoff-ის §8.3-ის (G1–G18) შეჯამებაა: რას ვასწორებთ საწარმოომდე. ყველა 💡 დაგეგმილია და ჯერ არ არის გაკეთებული.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>ჩვენი სამუშაო</th>
+<th>რატომ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>W1</td>
+<td>PostgreSQL-ის დრაივერი + ტესტები PostgreSQL-ზე</td>
+<td>G1</td>
+</tr>
+<tr>
+<td>W2</td>
+<td>Alembic მიგრაციები</td>
+<td>G2</td>
+</tr>
+<tr>
+<td>W3</td>
+<td>საწარმოოს რეჟიმი: დემო შესვლა ფიზიკურად გათიშული; <code>Secure</code> cookie ყოველთვის; <code>--proxy-headers</code></td>
+<td>G3, G4</td>
+</tr>
+<tr>
+<td>W4</td>
+<td>ვერსიის შემოწმება ბაზის დონეზე</td>
+<td>G5</td>
+</tr>
+<tr>
+<td>W5</td>
+<td>გადახედვა ბაზაში (რამდენიმე worker-ისთვის)</td>
+<td>G6</td>
+</tr>
+<tr>
+<td>W6</td>
+<td>ფონური worker: ღამის იმპორტი (upsert), მეილის რიგი, გასუფთავება</td>
+<td>G7, G11</td>
+</tr>
+<tr>
+<td>W7</td>
+<td>CSRF token; <code>/docs</code> მხოლოდ ადმინისთვის ან გათიშული; CSP</td>
+<td>G8, G9</td>
+</tr>
+<tr>
+<td>W8</td>
+<td>დროის სარტყლის გადაწყვეტა</td>
+<td>G10</td>
+</tr>
+<tr>
+<td>W9</td>
+<td>წყაროს კონექტორები IT-ის არჩეული გზისთვის</td>
+<td>G12</td>
+</tr>
+<tr>
+<td>W10</td>
+<td>ფაილების საცავის კონფიგურაცია; შიგთავსის ტიპის შემოწმება</td>
+<td>G13</td>
+</tr>
+<tr>
+<td>W11</td>
+<td>სტატისტიკის ოპტიმიზაცია PostgreSQL-ზე; დატვირთვის ტესტი</td>
+<td>G14</td>
+</tr>
+<tr>
+<td>W12</td>
+<td>ელფოსტების შეგროვება და შეყვანა (მენეჯერებთან ერთად)</td>
+<td>G15</td>
+</tr>
+<tr>
+<td>W13</td>
+<td>ლოგირება (query string-ის გარეშე), health <code>degraded</code> რეჟიმი</td>
+<td>G16</td>
+</tr>
+<tr>
+<td>W14</td>
+<td>git, ვერსიები, ცვლილებების ჟურნალი</td>
+<td>G17</td>
+</tr>
+<tr>
+<td>W15</td>
+<td>გათიშვისას გუნდის წევრობის დახურვა; მასობრივი გადაწერა</td>
+<td>G18</td>
+</tr>
+<tr>
+<td>W16</td>
+<td>Dockerfile (თუ Docker აირჩევა); lock ფაილი ბიბლიოთეკებისთვის</td>
+<td>A.11, E.4</td>
+</tr>
+<tr>
+<td>W17</td>
+<td>ოპერაციული დოკუმენტაცია IT-სთვის: ინსტალაცია, განახლება, აღდგენა</td>
+<td>R25</td>
+</tr>
+</tbody>
+</table>
+<p><strong>🗣 მარტივად:</strong> „თქვენ რასაც გთხოვთ, იმის პარალელურად ჩვენც ვამზადებთ ჩვენს ნაწილს. ეს სიაა: რა უნდა შევცვალოთ, რომ ერთი კომპიუტერის პროტოტიპი სერვერისთვის მზად იყოს.“</p>
+<hr />
+<h2>6. რესურსის შეფასება — ვარაუდები ცალ-ცალკე</h2>
+<table>
+<thead>
+<tr>
+<th>რა</th>
+<th>✅ გაზომილი</th>
+<th>💡 შეფასება</th>
+<th>ვარაუდი</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>მომხმარებლები</td>
+<td>605 ჩანაწერი ბაზაში; აქტიური როლი: 247 ამზომველი, 14 მენეჯერი, 14 ოპერატორი, 2 QCM, 2 ადმინი, 2 დემო</td>
+<td>≈ 300 აქტიური, ≈ 40 ერთდროულად</td>
+<td><code>IT_REQUEST.md</code>-ის შეფასება</td>
+</tr>
+<tr>
+<td>აპლიკაციის ბაზა</td>
+<td>94 MB (SQLite) / 44 159 შემთხვევა</td>
+<td>+0.5–2 GB წელიწადში</td>
+<td>50–100 ათასი შემთხვევა წელიწადში; 5–10 მოვლენა თითოზე; PostgreSQL-ის ზომა SQLite-ზე მეტია</td>
+</tr>
+<tr>
+<td>REGFIELDALL-ის ასლი</td>
+<td>≈ 1 GB (11 ველი, 2.33 მლნ)</td>
+<td>1–2 GB</td>
+<td>იგივე ველები PostgreSQL-ში</td>
+</tr>
+<tr>
+<td>ფოტოები</td>
+<td>0</td>
+<td>1–3 GB წელიწადში</td>
+<td><code>IT_REQUEST.md</code></td>
+</tr>
+<tr>
+<td>ბექაპი</td>
+<td>—</td>
+<td>ბაზის ზომა × შენახვის დღეები (შეკუმშვით ნაკლები)</td>
+<td>14–30 დღე</td>
+</tr>
+<tr>
+<td>CPU / RAM</td>
+<td>ტესტები 6 წმ; სტატისტიკა 2–3 წმ (SQLite)</td>
+<td>4 vCPU / 8 GB (ბაზით)</td>
+<td>დატვირთვის ტესტი არ ყოფილა</td>
+</tr>
+<tr>
+<td>ქსელი</td>
+<td>—</td>
+<td>მცირე: HTML გვერდები, ერთჯერადი ECharts ≈ 1 MB (ქეშდება), ფოტოები ≤ 10 MB</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>7. თანმიმდევრობა</h2>
+<ol>
+<li><strong>P1 — პილოტი:</strong>
+<ul>
+<li>IT: R1, R2, R3, R4 (ღამის), R5, R6, R7, R8, R9, R11, R12, R19, R22, R24, R25;</li>
+<li>ჩვენ: W1–W5, W7, W8, W12, W14;</li>
+<li>მონაცემი დღევანდელი გზით მოდის (Distributor-ის ასლი, სპორადული მეილით);</li>
+<li>მცირე ჯგუფი: QC + 1–2 საველე გუნდი.</li>
+</ul>
+</li>
+<li><strong>P2 — წყაროები:</strong> R14, R15 (+R16 სურვილისამებრ); ჩვენ: W6, W9.</li>
+<li><strong>P3 — სრული გაშვება:</strong> R10, R13, R18, R20, R23 (+R26); ჩვენ: W10, W11, W13, W15–W17; ძველი ცხრილის მიგრაცია და cutover.</li>
+<li><strong>P4 — Pre-QC:</strong> R16, R17.</li>
+</ol>
+<p><strong>🗣 მარტივად:</strong> „ჯერ პატარა ჯგუფით ვიწყებთ, მინიმალური რესურსით. მერე ავტომატურ მონაცემს ვრთავთ, მერე ყველას, და ბოლოს ავტომატურ წინასწარ შემოწმებას.“</p>
+<p class="meta">გენერირებულია 04-IT-ინფრასტრუქტურის-მოთხოვნები.md-იდან — სწორდება მხოლოდ .md ფაილი.</p></body></html>

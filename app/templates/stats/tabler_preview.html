@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ka" data-bs-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>სტატისტიკა (Tabler — საცდელი) · NAPR</title>
+  <link rel="stylesheet" href="/static/vendor/fonts/noto-sans-georgian/fonts.css">
+  <link rel="stylesheet" href="/static/vendor/tabler/tabler.min.css">
+  <style>
+    :root { --tblr-font-sans-serif: "Noto Sans Georgian", "Segoe UI", system-ui, sans-serif; }
+    body { font-feature-settings: normal; }
+    .kpi-v { font-size: 1.75rem; font-weight: 600; line-height: 1.1; }
+    .chart { height: 320px; }
+    .chart.tall { height: 420px; }
+    .bar-cell { min-width: 150px; }
+    .bar-cell span { white-space: nowrap; }
+  </style>
+</head>
+<body class="antialiased">
+<div class="page">
+  <header class="navbar navbar-expand-md d-print-none">
+    <div class="container-xl">
+      <a class="navbar-brand navbar-brand-autodark pe-0 pe-md-3" href="/">
+        <span class="avatar avatar-sm bg-primary-lt me-2">QC</span><strong>NAPR</strong>
+      </a>
+      <div class="navbar-nav flex-row ms-auto align-items-center gap-2">
+        <span class="badge bg-yellow-lt">საცდელი დიზაინი</span>
+        <a class="btn btn-sm" href="/stats">← ახლანდელ გვერდზე დაბრუნება</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-wrapper">
+    <div class="page-header d-print-none">
+      <div class="container-xl">
+        <div class="row g-2 align-items-center">
+          <div class="col">
+            <div class="page-pretitle">{{ ROLE_LABELS[ctx.role] }}</div>
+            <h2 class="page-title">ხარვეზების სტატისტიკა</h2>
+          </div>
+          <div class="col-auto ms-auto d-flex gap-2 align-items-center">
+            <select id="p-range" class="form-select" aria-label="პერიოდი">
+              <option value="all">მთელი პერიოდი</option>
+              <option value="7">ბოლო 7 დღე</option>
+              <option value="30">ბოლო 30 დღე</option>
+              <option value="90">ბოლო 90 დღე</option>
+            </select>
+            <select id="p-kind" class="form-select" aria-label="სახეობა">
+              <option value="">სისტემური + სპორადული</option>
+              <option value="systematic">სისტემური</option>
+              <option value="sporadic">სპორადული</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-body">
+      <div class="container-xl">
+        <div class="alert alert-info" role="alert">
+          ეს <strong>საცდელი გვერდია</strong>: იგივე მონაცემი და იგივე ციფრები, რაც ძველ გვერდზე, ოღონდ Tabler-ის დიზაინით.
+          ძველი გვერდი ხელუხლებელია.
+        </div>
+
+        <div class="row row-deck row-cards" id="kpis"></div>
+
+        <div class="row row-deck row-cards mt-1">
+          <div class="col-lg-8">
+            <div class="card">
+              <div class="card-header"><h3 class="card-title">შემოწმებული კვირების მიხედვით</h3></div>
+              <div class="card-body"><div class="chart" id="ch-trend" role="img" aria-label="შემოწმებული ოქმები კვირების მიხედვით"></div></div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="card">
+              <div class="card-header"><h3 class="card-title">ყველაზე ხშირი ხარვეზები</h3></div>
+              <div class="card-body p-0"><div class="table-responsive" id="t-codes" style="max-height:340px;overflow:auto"></div></div>
+            </div>
+          </div>
+
+          <div class="col-12" id="card-operators" hidden>
+            <div class="card">
+              <div class="card-header"><h3 class="card-title">QC ოპერატორები</h3></div>
+              <div class="table-responsive" id="t-operators"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer footer-transparent d-print-none">
+      <div class="container-xl text-muted small">პროტოტიპი v{{ VERSION }} · საცდელი დიზაინი: Tabler (MIT ლიცენზია), ლოკალური ასლი</div>
+    </footer>
+  </div>
+</div>
+<script src="/static/vendor/echarts/echarts.min.js"></script>
+<script src="/static/js/stats-tabler-preview.js?v={{ VERSION }}"></script>
+</body>
+</html>

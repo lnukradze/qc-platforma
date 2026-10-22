@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pager %}
+{% block title %}მეილები{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>მეილები</h1><div class="sub">შეტყობინებები მენეჯერებს — მოქმედებაზე „✉ მეილით“ მონიშვნით ან ბარათის კომუნიკაციიდან</div></div></div>
+{% include "admin/_nav.html" %}
+{% if not smtp %}<div class="notice warn">SMTP ჯერ არ არის მითითებული (QCP_SMTP_HOST) — მეილები ინახება და აქ ჩანს, მაგრამ არ იგზავნება. საჭიროა IT-ის საფოსტო სერვერი.</div>{% endif %}
+<div class="card">
+  <div class="card-body flush table-wrap">
+    {% if rows %}
+    <table class="data cards">
+      <thead><tr><th>როდის</th><th>ვის</th><th>CC</th><th>თემა</th><th>გამომგზავნი</th><th>სტატუსი</th><th></th></tr></thead>
+      <tbody>
+      {% for m in rows %}
+      <tr>
+        <td data-label="როდის" class="nowrap">{{ m.created_at|dt }}</td>
+        <td data-label="ვის">{{ m.to_user.full_name if m.to_user else '—' }}<div class="small muted">{{ m.to_email or 'ელფოსტა არ არის' }}</div></td>
+        <td data-label="CC" class="small">{{ (m.cc or [])|join(', ') or '—' }}</td>
+        <td data-label="თემა">{{ m.subject }}</td>
+        <td data-label="გამომგზავნი">{{ m.created_by.full_name if m.created_by else '—' }}</td>
+        <td data-label="სტატუსი">{{ EMAIL_STATUS.get(m.status, m.status) }}{% if m.error %}<div class="small v-negative">{{ m.error }}</div>{% endif %}</td>
+        <td data-label=""><a class="btn btn-ghost btn-sm" href="/admin/emails/{{ m.id }}" target="_blank">ნახვა ↗</a>{% if m.item_id %} <a class="btn btn-ghost btn-sm" href="/items/{{ m.item_id }}">ოქმი</a>{% endif %}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="empty">მეილი ჯერ არ შექმნილა.</div>{% endif %}
+  </div>
+  {{ pager(page, pages, total, qs) }}
+</div>
+{% endblock %}

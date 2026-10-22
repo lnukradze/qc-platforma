@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pager %}
+{% block title %}აუდიტი{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>აუდიტის ჟურნალი</h1><div class="sub">შესვლა, როლის შეცვლა, მომხმარებლები, პარამეტრები, განაწილება. შემთხვევების ისტორია თითო ბარათზეა.</div></div></div>
+{% include "admin/_nav.html" %}
+<div class="card">
+  <div class="card-body flush table-wrap">
+    <table class="data compact"><thead><tr><th>დრო</th><th>ვინ</th><th>მოქმედება</th><th>ობიექტი</th><th>დეტალი</th><th>IP</th></tr></thead><tbody>
+    {% for a in rows %}<tr><td class="nowrap">{{ a.at|dt }}</td><td>{{ a.actor.full_name if a.actor else '—' }}</td><td>{{ a.action }}</td><td>{{ a.entity or '' }}{% if a.entity_id %} #{{ a.entity_id }}{% endif %}</td><td class="small"><div class="clip" title="{{ a.detail|tojson if a.detail else '' }}">{{ a.detail|tojson if a.detail else '' }}</div></td><td class="small muted">{{ a.ip or '' }}</td></tr>{% else %}<tr><td colspan="6" class="empty">ჩანაწერი არ არის.</td></tr>{% endfor %}
+    </tbody></table>
+  </div>
+  {{ pager(page, pages, total, qs) }}
+</div>
+{% endblock %}

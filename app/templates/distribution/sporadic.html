@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}სპორადული — განაწილება{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>სპორადულის განაწილება</h1>
+    <div class="sub">IT-ის ყოველდღიური სია (xlsx) → ადგილზე დათვალიერების დღით ფილტრი → ოპერატორებზე განაწილება. ამზომველი და მენეჯერი REGFIELDALL-ით და Field Group-ით დგინდება.</div>
+  </div>
+</div>
+{% include "distribution/_subnav.html" %}
+
+<div class="notice warn">⚠ ფილტრის წესები ჯერ <b>დასაზუსტებელია</b> (ღია კითხვა) — ამიტომ ქვემოთ ყველა პარამეტრი შეგიძლიათ შეცვალოთ. 🔐 ფაილიდან განმცხადებლების პირადი ნომრები, ტელეფონები და მისამართი არ იკითხება; ფაილი დამუშავებისთანავე იშლება.</div>
+
+<form method="post" action="/distribution/sporadic/preview" enctype="multipart/form-data" hx-post="/distribution/sporadic/preview" hx-encoding="multipart/form-data" hx-target="#sp-preview" hx-indicator="#sp-spin">
+<div class="grid-2">
+  <div class="card">
+    <div class="card-head"><h2>ფაილი და ფილტრი</h2></div>
+    <div class="card-body">
+      <div class="form-row"><label class="label" for="sp-file">სია (sporaduli_datvaliereba.xlsx)</label><input id="sp-file" type="file" name="file" accept=".xlsx" required></div>
+      <div class="form-row">
+        <span class="label">ადგილზე დათვალიერების დღე (SURVEY_DAY)</span>
+        <label class="check"><input type="radio" name="survey_day_mode" value="yesterday" {% if defaults.survey_day_mode == 'yesterday' %}checked{% endif %}> მხოლოდ გუშინ</label>
+        <label class="check"><input type="radio" name="survey_day_mode" value="upto_yesterday" {% if defaults.survey_day_mode != 'yesterday' %}checked{% endif %}> გუშინ და ადრე — ჯერ გაუნაწილებელი (უქმეების შემდეგ)</label>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:4px"><label class="small" for="lb">რამდენი დღით უკან</label><input id="lb" type="number" name="lookback_days" min="1" max="60" value="7" style="width:80px"></div>
+      </div>
+      <div class="form-row">
+        <label class="check"><input type="checkbox" name="call_status_completed_only" {% if defaults.call_status_completed_only %}checked{% endif %}> მხოლოდ „ადგილზე დათვალიერება დასრულებულია“</label>
+        <label class="check"><input type="checkbox" name="exclude_open_status" {% if defaults.exclude_open_status %}checked{% endif %}> ღია საველე სტატუსის გამორიცხვა</label>
+      </div>
+      <div class="form-row" style="display:flex;gap:8px;align-items:center"><label class="small" for="sp-today">დღევანდელი თარიღი (საჩვენებლად)</label><input id="sp-today" type="date" name="today" value="{{ today.isoformat() }}"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>ოპერატორები</h2><span class="muted small">რაოდენობის გარეშე — თანაბრად</span></div>
+    <div class="card-body flush table-wrap" style="max-height:360px;overflow:auto">
+      <table class="data compact op-table">
+        <thead><tr><th style="width:40px"></th><th>ოპერატორი</th><th>მაქსიმუმი</th></tr></thead>
+        <tbody>
+        {% for o in operators %}
+          <tr><td><input type="checkbox" name="op_on_{{ o.id }}" aria-label="{{ o.full_name }}"></td><td>{{ o.full_name }}</td>
+            <td><input type="number" name="op_q_{{ o.id }}" min="0" placeholder="თანაბრად" aria-label="მაქსიმუმი — {{ o.full_name }}"></td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="table-foot"><div class="form-actions">
+      <label class="small" for="sp-seed">seed</label><input id="sp-seed" type="text" name="seed" placeholder="შემთხვევითი" style="width:110px" inputmode="numeric">
+      <button class="btn btn-primary" type="submit">გადახედვა (ჩაწერის გარეშე)</button>
+      <span id="sp-spin" class="htmx-indicator muted small">ფაილი მუშავდება (≈20 წმ)…</span>
+    </div></div>
+  </div>
+</div>
+</form>
+
+<div id="sp-preview"></div>
+
+<div class="card">
+  <div class="card-head"><h2>ბოლო განაწილებები</h2></div>
+  <div class="card-body flush table-wrap">
+    {% if imports %}
+    <table class="data compact"><thead><tr><th>#</th><th>როდის</th><th>ვინ</th><th>ფაილი</th><th class="num">ოქმი</th><th>დათვალიერების დღეები</th></tr></thead><tbody>
+    {% for i in imports %}<tr><td>{{ i.id }}</td><td>{{ i.at|dt }}</td><td>{{ i.created_by.full_name if i.created_by else '—' }}</td><td class="small">{{ i.filename or '—' }}</td><td class="num">{{ i.item_count|num }}</td>
+      <td class="small">{% for d, n in (i.summary or {}).get('days') or [] %}{{ d|date }} ({{ n }}){% if not loop.last %}, {% endif %}{% endfor %}</td></tr>{% endfor %}
+    </tbody></table>
+    {% else %}<div class="empty">ახალ სისტემაში სპორადული ჯერ არ განაწილებულა.</div>{% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<style>.htmx-indicator{display:none}.htmx-request .htmx-indicator,.htmx-request.htmx-indicator{display:inline}</style>{% endblock %}

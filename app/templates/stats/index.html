@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}სტატისტიკა{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>ხარვეზების სტატისტიკა</h1>
+    <div class="sub">{{ ROLE_LABELS[ctx.role] }} — {% if ctx.role in (D.COORDINATOR, D.ADMIN, D.QC_MANAGER) %}მთელი სისტემა{% elif ctx.role == D.FIELD_MANAGER %}თქვენი გუნდი{% else %}თქვენი ოქმები{% endif %} · ყველა რიცხვი ერთი და იმავე წესით ითვლება</div>
+  </div>
+  <div class="form-actions"><a class="btn btn-secondary" id="xlsx" href="/stats/export.xlsx">Excel-ად ჩამოტვირთვა</a></div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form id="stats-filters" class="filters">
+      <div class="field"><label for="s-range">პერიოდი (D — შემოწმების თარიღი)</label>
+        <select id="s-range" name="range" data-nocount>
+          <option value="all">მთელი პერიოდი</option>
+          <option value="7">ბოლო 7 დღე</option><option value="30">ბოლო 30 დღე</option><option value="90">ბოლო 90 დღე</option>
+          <option value="year">მიმდინარე წელი</option>
+          {% for m in missions %}{% if m.start <= today %}<option value="m{{ m.n }}" data-from="{{ m.start }}" data-to="{{ m.end }}">მივლინება {{ m.n }} ({{ m.start|date }}–{{ m.end|date }})</option>{% endif %}{% endfor %}
+          <option value="custom">სხვა დიაპაზონი…</option>
+        </select></div>
+      <div class="field"><label for="s-from">დან</label><input id="s-from" type="date" name="date_from"></div>
+      <div class="field"><label for="s-to">მდე</label><input id="s-to" type="date" name="date_to"></div>
+      <div class="field"><label for="s-kind">სახეობა</label><select id="s-kind" name="kind"><option value="">სისტემური + სპორადული</option><option value="systematic">სისტემური</option><option value="sporadic">სპორადული</option></select></div>
+      {% if opts.operators|length > 1 %}
+      <div class="field"><label for="s-op">QC ოპერატორი</label><select id="s-op" name="operator"><option value="">— ყველა —</option>{% for o in opts.operators %}<option value="{{ o.id }}">{{ o.name }}</option>{% endfor %}</select></div>
+      {% endif %}
+      {% if opts.managers|length > 1 %}
+      <div class="field"><label for="s-mgr">საველე მენეჯერი</label><select id="s-mgr" name="manager"><option value="">— ყველა —</option>{% for o in opts.managers %}<option value="{{ o.id }}">{{ o.name }}</option>{% endfor %}</select></div>
+      {% endif %}
+      {% if surveyors %}
+      <div class="field"><label for="s-sv">ამზომველი</label><select id="s-sv" name="surveyor"><option value="">— ყველა —</option>{% for i, n in surveyors %}<option value="{{ i }}">{{ n }}</option>{% endfor %}</select></div>
+      {% endif %}
+      <div class="field"><label for="s-zone">ზონა</label><select id="s-zone" name="zone"><option value="">— ყველა —</option>{% for z in opts.zones %}<option value="{{ z }}">{{ z }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="s-v">QC სტატუსი</label><select id="s-v" name="verdict"><option value="">— ყველა —</option><option value="positive">დადებითი (+დაზუსტება)</option><option value="negative">უარყოფითი</option><option value="recommendation">რეკომენდაცია</option></select></div>
+      <div class="field"><label for="s-code">ხარვეზის კოდი</label><select id="s-code" name="code"><option value="">— ყველა —</option>{% for c in codes %}<option value="{{ c.code }}">{{ c.code }} — {{ c.name[:48] }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="s-grp">კოდის ჯგუფი</label><select id="s-grp" name="group"><option value="">— ყველა —</option>{% for g in groups %}<option value="{{ g }}">{{ g }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="s-sev">სიმძიმე</label><select id="s-sev" name="severity"><option value="">— ყველა —</option><option value="Critical">კრიტიკული</option><option value="Major">მნიშვნელოვანი</option></select></div>
+      <div class="field"><label for="s-cad">საკ. კოდი (იწყება)</label><input id="s-cad" type="text" name="cad" placeholder="202.51.12"></div>
+      <div class="field"><label for="s-proto">ოქმის#</label><input id="s-proto" type="text" name="protocol" inputmode="numeric"></div>
+      <div class="filters-actions"><button class="btn btn-ghost" type="reset">გასუფთავება</button><button class="btn btn-primary" type="submit">განახლება</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="stats-root" aria-live="polite">
+  <div class="kpis" id="kpis"></div>
+
+  <div class="grid-2" data-sec="trend">
+    <div class="card"><div class="card-head"><h2>შემოწმებული კვირების მიხედვით</h2><span class="legend" id="trend-legend"></span></div><div class="card-body"><div class="chart" id="ch-trend" role="img" aria-label="შემოწმებული ოქმები კვირების მიხედვით"></div></div></div>
+    <div class="card"><div class="card-head"><h2>ხარვეზის % კვირების მიხედვით</h2><span class="muted small">უარყოფითი ÷ შემოწმებული · კვირა &lt;30 შემოწმებით არ ისახება</span></div><div class="card-body"><div class="chart" id="ch-rate" role="img" aria-label="ხარვეზის პროცენტი კვირების მიხედვით"></div></div></div>
+  </div>
+
+  <div class="card" data-sec="operators"><div class="card-head"><h2>QC ოპერატორები</h2><span class="muted small">გავლილი = გაგზავნილი (დაზუსტების კითხვის ჩათვლით) · დღიური საშუალო = შემოწმებული ÷ აქტიური დღე</span></div><div class="card-body flush table-wrap" id="t-operators"></div></div>
+  <div class="card" data-sec="managers"><div class="card-head"><h2>საველე მენეჯერები</h2><span class="muted small">პასუხის დრო — გაგზავნიდან ველის პასუხამდე (მედიანა, დღე)</span></div><div class="card-body flush table-wrap" id="t-managers"></div></div>
+  <div class="card" data-sec="surveyors"><div class="card-head"><h2>ამზომველები</h2><div style="display:flex;gap:8px;align-items:center"><span class="muted small">ოქმის ყველა ამზომველი იღებს შემთხვევას; მენეჯერები სიაში არ შედიან</span><input type="search" id="surv-q" placeholder="ძებნა…" style="width:180px"></div></div><div class="card-body flush table-wrap" id="t-surveyors" style="max-height:520px;overflow:auto"></div></div>
+
+  <div class="grid-2">
+    <div class="card" data-sec="codes"><div class="card-head"><h2>ყველაზე ხშირი ხარვეზები</h2><span class="legend"><span><i class="sw" style="background:#d03b3b"></i>კრიტიკული</span><span><i class="sw" style="background:#eda100"></i>მნიშვნელოვანი</span></span></div><div class="card-body"><div class="chart tall" id="ch-codes" role="img" aria-label="ხარვეზის კოდების სიხშირე"></div></div></div>
+    <div class="card" data-sec="zones"><div class="card-head"><h2>ზონები — ხარვეზის %</h2><span class="muted small">ზონა = ადმინისტრაციული ერთეული</span></div><div class="card-body"><div class="chart tall" id="ch-map" role="img" aria-label="ზონების რუკა ხარვეზის პროცენტით"></div></div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card" data-sec="codes"><div class="card-head"><h2>კოდები — ცხრილი</h2></div><div class="card-body flush table-wrap" id="t-codes" style="max-height:420px;overflow:auto"></div></div>
+    <div class="card" data-sec="zones"><div class="card-head"><h2>ზონები — ცხრილი</h2></div><div class="card-body flush table-wrap" id="t-zones" style="max-height:420px;overflow:auto"></div></div>
+  </div>
+
+  {% if restricted or false_fix %}
+  <div class="card" data-sec="restricted" style="border-color:#e6b4ae">
+    <div class="card-head" style="background:#fdf5f4"><h2>შეზღუდული სტატისტიკა</h2><span class="muted small">საერთო სტატისტიკაში არ შედის · ხედავს: {% if restricted %}QC მენეჯერი, ადმინისტრატორი{% else %}საველე მენეჯერი (საკუთარი გუნდი), QC მენეჯერი, ადმინისტრატორი{% endif %}</span></div>
+    <div class="card-body">
+      <div class="grid-2">
+        {% if restricted %}<div style="grid-column:1/-1"><h3 style="font-size:14px;margin-bottom:8px">ოპერატორის შეცდომები — „ველი მართალია“ + QC მენეჯერის შეფასებები</h3><div class="table-wrap" id="t-qcerr"></div><p class="hint" id="legacy-flags"></p></div>{% endif %}
+        <div><h3 style="font-size:14px;margin-bottom:8px">„შესწორდა“ — მაგრამ QC-მ გაუსწორებელი ნახა</h3><div class="table-wrap" id="t-falsefix"></div></div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/vendor/echarts/echarts.min.js"></script>
+<script src="/static/js/stats.js?v={{ VERSION }}"></script>
+{% endblock %}

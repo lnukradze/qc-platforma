@@ -1,0 +1,49 @@
+{% from "_macros.html" import state_chip, verdict, response, codes, pager, legend, surveyors, managers, presence %}
+{%- set base = list_url|default('/qc') -%}
+<div class="card">
+  <div class="card-head">
+    {{ legend('qc') }}
+    <span class="muted small">{{ total|num }} ჩანაწერი</span>
+  </div>
+  <form method="post" action="/qc/bulk-send" id="bulk-form">
+    <input type="hidden" name="back" value="/qc?{{ qs() }}">
+    <div class="card-body flush table-wrap">
+      {% if rows %}
+      <table class="data cards">
+        <thead><tr>
+          {% if tab == 'todo' %}<th style="width:28px"><input type="checkbox" class="check-all" aria-label="ყველას მონიშვნა" title="შენახულების მონიშვნა გასაგზავნად"></th>{% endif %}
+          <th>ოქმის#</th><th>საკადასტრო კოდი</th><th>ნახაზი</th><th>ამზომველი</th><th>მენეჯერი</th>
+          {% if ctx.role != D.QC_OPERATOR %}<th>ოპერატორი</th>{% endif %}
+          <th>ვერდიქტი</th>{% if tab != 'todo' %}<th>ველის პასუხი</th>{% endif %}<th>კოდები</th><th>მდგომარეობა</th><th>D</th>
+        </tr></thead>
+        <tbody>
+        {% for i in rows %}
+          <tr class="clickable r-{{ operator_color(i.state, i.is_draft) }}" data-id="{{ i.id }}" data-href="/items/{{ i.id }}?back={{ (base ~ '?' ~ qs())|urlencode }}{% if tab == 'todo' %}&queue=1{% endif %}">
+            {% if tab == 'todo' %}<td data-label="">{% if i.state == D.PENDING %}<input type="checkbox" name="ids" value="{{ i.id }}" {% if not i.verdict %}disabled title="ჯერ მიანიჭეთ ვერდიქტი და შეინახეთ"{% endif %} aria-label="მონიშვნა">{% endif %}</td>{% endif %}
+            <td data-label="ოქმის#" class="mono">{{ presence(i) }}<a href="/items/{{ i.id }}?back={{ (base ~ '?' ~ qs())|urlencode }}">{{ i.protocol_number }}</a>{% if i.kind == D.SPORADIC %} <span class="tag kind-sporadic">სპორ.</span>{% endif %}</td>
+            <td data-label="საკ. კოდი" class="cad">{{ i.cadcode }}</td>
+            <td data-label="ნახაზი" class="nowrap">{{ i.drawing_date|date }}</td>
+            <td data-label="ამზომველი">{{ surveyors(i) }}</td>
+            <td data-label="მენეჯერი">{{ managers(i) }}</td>
+            {% if ctx.role != D.QC_OPERATOR %}<td data-label="ოპერატორი">{{ i.operator.full_name if i.operator else '—' }}</td>{% endif %}
+            <td data-label="ვერდიქტი">{{ verdict(i.verdict) }}</td>
+            {% if tab != 'todo' %}<td data-label="ველის პასუხი">{{ response(i.field_response) }}</td>{% endif %}
+            <td data-label="კოდები">{{ codes(i) }}</td>
+            <td data-label="მდგომარეობა">{{ state_chip(i.state, 'qc', i.close_reason, i.is_draft) }}</td>
+            <td data-label="D" class="nowrap" title="სტატუსის პირველი გაგზავნა">{{ i.checked_at|date }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty">{% if tab == 'todo' %}გასავლელი ოქმი არ არის.{% else %}ამ ფილტრით ჩანაწერი არ მოიძებნა.{% endif %}</div>
+      {% endif %}
+    </div>
+    {{ pager(page, pages, total, qs) }}
+    <div class="bulkbar" hidden id="bulkbar">
+      <span><b id="bulk-n">0</b> მონიშნული</span>
+      <button class="btn btn-primary btn-sm" type="submit">მონიშნულების გაგზავნა</button>
+      <span class="hint">იგზავნება მხოლოდ შენახული — ვერდიქტით და (საჭიროებისას) კომენტარით.</span>
+    </div>
+  </form>
+</div>

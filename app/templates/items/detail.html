@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+{% from "_macros.html" import state_chip, verdict, response %}
+{% block title %}{{ item.protocol_number }} · {{ item.cadcode }}{% endblock %}
+{% block content %}
+{%- set qc_side = ctx.role in (D.QC_OPERATOR, D.QC_MANAGER, D.ADMIN) -%}
+{%- set field_side = ctx.role in (D.FIELD_MANAGER, D.SURVEYOR) -%}
+<div class="page-head">
+  <div>
+    <div class="small"><a href="{{ back }}">← უკან სიაში</a>{% if next_id %} · <a href="/items/{{ next_id }}?back={{ back|urlencode }}&queue=1">შემდეგი ოქმი →</a>{% endif %}</div>
+    <h1 class="mono">ოქმი {{ item.protocol_number }} <span class="muted">·</span> {{ item.cadcode }}</h1>
+    <div class="sub" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px">
+      {{ state_chip(item.state, view, item.close_reason, item.is_draft) }}
+      <span class="tag {% if item.kind == D.SPORADIC %}kind-sporadic{% endif %}">{{ KIND_LABELS[item.kind] }}</span>
+      {% if item.is_legacy %}<span class="tag legacy" title="ჩანაწერი ძველი Google ცხრილიდან გადმოვიდა">ძველი ცხრილიდან · {{ item.legacy_source }}, მწკრ. {{ item.legacy_row }}</span>{% endif %}
+      {% if item.qc_error and show_qc_error %}<span class="tag tag-bad">ოპერატორის შეცდომა</span>{% endif %}
+      {% if item.both_right and show_qc_error %}<span class="tag">ორივე მართალია</span>{% endif %}
+      {% if pending_req and qc_side %}<span class="tag tag-warn">მოთხოვნილია სტატუსის შეცვლა</span>{% endif %}
+      {% if item.clarified %}<span class="tag">დაზუსტების შემდეგ</span>{% endif %}
+    </div>
+  </div>
+  <div class="counters">
+    {% if item.dispute_count %}<span class="counter" title="რამდენჯერ არ დაეთანხმა ველი (დადასტურებული)">არ დათანხმება: <b>{{ item.dispute_count }}</b></span>{% endif %}
+    {% if item.return_count %}<span class="counter">QC-მ დააბრუნა: <b>{{ item.return_count }}</b></span>{% endif %}
+    {% if show_false_fix and item.false_fix_count %}<span class="counter" title="„შესწორდა“ მოინიშნა, QC-მ კი გაუსწორებელი ნახა — მხოლოდ მენეჯერებს და ადმინს უჩანს">ცრუ „შესწორდა“: <b>{{ item.false_fix_count }}</b></span>{% endif %}
+    <span class="counter" title="ერთდროული ცვლილებისგან დაცვა">ვერსია {{ item.version }}</span>
+  </div>
+</div>
+
+{% if item.field_response %}
+<div class="resp-banner resp-{{ RESPONSE_STYLE[item.field_response] }}">
+  <span class="rb-icon" aria-hidden="true">{{ RESPONSE_ICONS[item.field_response] }}</span>
+  <div><div class="rb-title">ველის პასუხი: {{ RESPONSE_LABELS[item.field_response] }}</div>
+    <div class="rb-sub">{{ responder.full_name if responder else '' }}{% if item.field_responded_at %} · {{ item.field_responded_at|dt }}{% endif %}{% if item.field_comment %} — „{{ item.field_comment|truncate(160) }}“{% endif %}</div></div>
+</div>
+{% endif %}
+
+<div class="split">
+<div>
+  <div class="card">
+    <div class="card-head"><h2>ოქმის ინფორმაცია <span class="presence inline" data-presence="{{ item.id }}" data-self="1" hidden><i class="presence-dot" aria-hidden="true"></i><span class="presence-who"></span></span></h2></div>
+    <div class="card-body">
+      <dl class="kv">
+        <dt>საკადასტრო კოდი</dt><dd class="mono">{{ item.cadcode }} <span class="muted small">ბლოკი {{ item.block_key }}</span></dd>
+        <dt>ზონა / სექტორი</dt><dd>{{ item.zone or '—' }}{% if zone_name %} — {{ zone_name }}{% endif %}{% if item.sector %} · სექტორი {{ item.sector }}{% endif %}</dd>
+        <dt>ნახაზის შეტანა</dt><dd>{{ item.drawing_date|dt or '—' }}</dd>
+        {% if item.field_status %}<dt>საველე წარმოება</dt><dd>{{ item.field_status }}</dd>{% endif %}
+        {% if item.protocol_creator_name %}<dt>ოქმის შემდგენი</dt><dd>{{ item.protocol_creator_name }}</dd>{% endif %}
+        <dt>ამზომველები</dt><dd>{% for p in item.surveyors %}{{ p.display_name }}{% if p.is_primary %} <span class="muted small">(შემდგენი)</span>{% endif %}{% if not p.user_id %} <span class="tag" title="სახელი მომხმარებელს ვერ მიება — ადმინი ასწორებს">მიუბმელი</span>{% endif %}{% if not loop.last %}<br>{% endif %}{% else %}—{% endfor %}</dd>
+        <dt>საველე მენეჯერი</dt><dd>{% for p in item.managers %}{{ p.display_name }}{% if p.is_primary %} <span class="muted small">(პასუხისმგებელი)</span>{% else %} <span class="muted small">(CC)</span>{% endif %}{% if not loop.last %}<br>{% endif %}{% else %}{{ item.field_manager.full_name if item.field_manager else '—' }}{% endfor %}</dd>
+        <dt>QC ოპერატორი</dt><dd>{{ item.operator.full_name if item.operator else '—' }}{% if item.assigned_at %} <span class="muted small">· დაინიშნა {{ item.assigned_at|date }}</span>{% endif %}</dd>
+        <dt>შემოწმდა (D)</dt><dd>{{ item.checked_at|dt or '—' }}{% if item.first_sent_at and item.first_sent_at != item.checked_at %} <span class="muted small">· პირველად გაიგზავნა {{ item.first_sent_at|dt }}</span>{% endif %}</dd>
+        {% if item.sporadic_meta %}{% set m = item.sporadic_meta %}
+        <dt>დათვალიერება</dt><dd>{{ m.survey_day|date }}{% if m.survey_time %} {{ m.survey_time }}{% endif %}{% if m.tr_name %} · {{ m.tr_name }}{% endif %}{% if m.scheduler %} <span class="muted small">· დაგეგმა {{ m.scheduler }}</span>{% endif %}</dd>
+        {% endif %}
+      </dl>
+    </div>
+  </div>
+
+  {# ── QC შეფასება ───────────────────────────────────────────── #}
+  <div class="card">
+    <div class="card-head"><h2>QC შეფასება</h2>{% if item.corrected_confirmed %}<span class="chip c-green">M — გასწორება დადასტურებულია</span>{% endif %}</div>
+    <div class="card-body">
+    {% if 'save_review' in acts %}
+      <form method="post" action="/items/{{ item.id }}/action" enctype="multipart/form-data" id="review-form">
+        <input type="hidden" name="version" value="{{ item.version }}">
+        <input type="hidden" name="back" value="{{ back }}">
+        <div class="form-row">
+          <span class="label">ვერდიქტი</span>
+          <div class="verdicts">
+            {% for v, hint in [(D.POSITIVE, 'ველზე არ იგზავნება'), (D.NEGATIVE, 'ხარვეზი — გასასწორებელი'), (D.RECOMMENDATION, 'ველი წერს „გავითვალისწინებთ“'), (D.CLARIFICATION, 'კითხვა — სტატუსი პასუხის შემდეგ')] %}
+            <div class="verdict-opt {{ v }}"><input type="radio" id="v-{{ v }}" name="verdict" value="{{ v }}" {% if item.verdict == v %}checked{% endif %}><label for="v-{{ v }}">{{ VERDICT_LABELS[v] }}<small>{{ hint }}</small></label></div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="label" for="qc_comment">QC კომენტარი <span class="muted small" id="cmt-hint">(უარყოფით/რეკომენდაციაზე/დაზუსტებაზე სავალდებულო)</span></label>
+          <textarea id="qc_comment" name="qc_comment" data-classify="#codebox" placeholder="რა არის ხარვეზი, სად, რა უნდა გასწორდეს…">{{ item.qc_comment or '' }}</textarea>
+        </div>
+        {% include "items/_codes_field.html" %}
+        {% include "items/_surveyors_field.html" %}
+        <div class="form-row"><label class="label" for="files-r">ფოტო / ფაილი <span class="muted small">— ხარვეზის საჩვენებლად (JPG, PNG, PDF; ≤10 MB)</span></label><input id="files-r" type="file" name="files" multiple accept="image/*,application/pdf"></div>
+        <div class="form-actions">
+          <button class="btn btn-secondary" name="action" value="save_review" type="submit">შენახვა (გაგზავნის გარეშე)</button>
+          <button class="btn btn-primary" name="action" value="send" type="submit">✓ დადასტურება და გაგზავნა</button>
+          {% if queue %}<label class="check small"><input type="checkbox" name="go_next" value="1" id="go-next" checked> შემდეგი ოქმის ავტომატურად გახსნა</label>{% endif %}
+        </div>
+        <p class="hint">დღის რაოდენობაში და რეპორტში (D) ოქმი გაგზავნის მომენტიდან ითვლება — შენახვით არა.</p>
+      </form>
+    {% else %}
+      <dl class="kv">
+        <dt>ვერდიქტი</dt><dd>{{ verdict(item.verdict) }}{% if item.original_verdict and item.original_verdict != item.verdict %} <span class="muted small">(თავდაპირველად: {{ VERDICT_LABELS[item.original_verdict] }})</span>{% endif %}</dd>
+        <dt>კოდები</dt><dd>{% for c in item.codes %}{% set dc = catalog_map.get(c.code) %}<span class="code sev-{{ dc.severity if dc else '' }}" title="{{ dc.name if dc else '' }}">{{ c.code }}</span> <span class="small">{{ dc.name if dc else '' }}</span><br>{% else %}—{% endfor %}</dd>
+      </dl>
+      {% if item.qc_comment %}<div class="quote" style="margin-top:10px">{{ item.qc_comment }}</div>{% endif %}
+
+      {% if 'edit' in acts %}
+      <details class="edit-box">
+        <summary>კომენტარის, კოდების, ამზომველების ან ფოტოს შეცვლა</summary>
+        <form method="post" action="/items/{{ item.id }}/action" enctype="multipart/form-data" id="review-form">
+          <input type="hidden" name="version" value="{{ item.version }}"><input type="hidden" name="back" value="{{ back }}">
+          <div class="form-row"><label class="label" for="qc_comment">QC კომენტარი</label>
+            <textarea id="qc_comment" name="qc_comment" data-classify="#codebox">{{ item.qc_comment or '' }}</textarea></div>
+          {% include "items/_codes_field.html" %}
+          {% include "items/_surveyors_field.html" %}
+          <div class="form-row"><label class="label" for="files-e">ფოტო / ფაილი</label><input id="files-e" type="file" name="files" multiple accept="image/*,application/pdf"></div>
+          <button class="btn btn-secondary" name="action" value="edit" type="submit">ცვლილების შენახვა</button>
+          <span class="hint">სტატუსი აქ არ იცვლება.</span>
+        </form>
+      </details>
+      {% endif %}
+
+      {% if pending_req %}
+      <div class="notice warn" id="decide" style="margin-top:12px">
+        <b>მოთხოვნილია სტატუსის შეცვლა:</b> {{ verdict(pending_req.from_verdict) }} → {{ verdict(pending_req.to_verdict) }}
+        <span class="muted small">· {{ pending_req.requested_by.full_name if pending_req.requested_by else '' }}, {{ pending_req.requested_at|dt }}</span>
+        <div class="quote" style="margin-top:6px">{{ pending_req.comment }}</div>
+        {% if 'approve_verdict_change' in acts %}
+        <form method="post" action="/items/{{ item.id }}/action" style="margin-top:8px">
+          <input type="hidden" name="version" value="{{ item.version }}"><input type="hidden" name="back" value="{{ back }}">
+          <div class="form-row"><label class="label" for="c-vr">კომენტარი <span class="muted small">(უარზე სავალდებულო)</span></label><input id="c-vr" type="text" name="comment"></div>
+          <div class="form-actions">
+            <button class="btn btn-success" name="action" value="approve_verdict_change" type="submit">✓ დადასტურება</button>
+            <button class="btn btn-secondary" name="action" value="reject_verdict_change" type="submit">✗ უარი</button>
+          </div>
+        </form>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if 'request_verdict_change' in acts or 'change_verdict' in acts %}
+      <details class="edit-box">
+        <summary>{% if 'change_verdict' in acts %}სტატუსის შეცვლა (QC მენეჯერი){% else %}სტატუსის შეცვლის მოთხოვნა — QC მენეჯერის დადასტურებით{% endif %}</summary>
+        <form method="post" action="/items/{{ item.id }}/action">
+          <input type="hidden" name="version" value="{{ item.version }}"><input type="hidden" name="back" value="{{ back }}">
+          <div class="verdicts" style="margin:8px 0">
+            {% for v in D.VERDICTS if v != item.verdict %}
+            <div class="verdict-opt {{ v }}"><input type="radio" id="nv-{{ v }}" name="new_verdict" value="{{ v }}" required><label for="nv-{{ v }}">{{ VERDICT_LABELS[v] }}</label></div>
+            {% endfor %}
+          </div>
+          <div class="form-row"><label class="label" for="c-nv">მიზეზი (სავალდებულო)</label><textarea id="c-nv" name="comment" required style="min-height:60px"></textarea></div>
+          {% if 'change_verdict' in acts %}
+          <button class="btn btn-warning" name="action" value="change_verdict" type="submit" data-confirm="შეიცვალოს სტატუსი? D (შემოწმების დრო) არ შეიცვლება.">სტატუსის შეცვლა</button>
+          {% else %}
+          <button class="btn btn-secondary" name="action" value="request_verdict_change" type="submit">მოთხოვნის გაგზავნა QC მენეჯერთან</button>
+          {% endif %}
+          <span class="hint">„დადებითზე“ შეცვლისას ოქმი იხურება; სხვა სტატუსზე — ველზე თავიდან გადადის.</span>
+        </form>
+      </details>
+      {% endif %}
+    {% endif %}
+    </div>
+  </div>
+
+  {# ── ველის პასუხი ─────────────────────────────────────────── #}
+  {% if item.first_sent_at and item.verdict != D.POSITIVE or item.field_response or item.qcm_decision %}
+  <div class="card">
+    <div class="card-head"><h2>ველის პასუხი</h2>{% if item.field_responded_at %}<span class="muted small">{{ item.field_responded_at|dt }}</span>{% endif %}</div>
+    <div class="card-body">
+      {% if item.field_response %}
+        <p>{{ response(item.field_response, True) }}</p>
+        {% if item.field_comment %}<div class="quote field">{{ item.field_comment }}</div>{% endif %}
+      {% elif 'field_respond' not in acts %}
+        <p class="muted">პასუხი ჯერ არ გაგზავნილა.</p>
+      {% endif %}
+      {% if item.manager_visa_comment %}<p class="small" style="margin-top:10px"><b>მენეჯერის დადასტურება:</b></p><div class="quote qcm">{{ item.manager_visa_comment }}</div>{% endif %}
+      {% if item.qcm_explanation %}<p class="small" style="margin-top:10px"><b>QC მენეჯერის ახსნა{% if item.qcm_decision %} — {{ QCM_DECISION_LABELS[item.qcm_decision] }}{% endif %}:</b></p><div class="quote qcm">{{ item.qcm_explanation }}</div>{% endif %}
+      {% if item.returned_comment %}<p class="small" style="margin-top:10px"><b>{% if item.verdict == D.CLARIFICATION %}დამატებითი კითხვა (QC){% else %}QC-ის შენიშვნა — რა დარჩა გასასწორებელი{% endif %}:</b></p><div class="quote ret">{{ item.returned_comment }}</div>{% endif %}
+      {% if cc_only %}<div class="notice info" style="margin-top:10px">ეს ოქმი თქვენ CC-ში გიჩანთ (თქვენი ამზომველიც მონაწილეობდა). პასუხისმგებელია {{ item.field_manager.full_name if item.field_manager else 'შემდგენის მენეჯერი' }}.</div>{% endif %}
+
+      {% if 'field_respond' in acts %}
+      <form method="post" action="/items/{{ item.id }}/action" style="margin-top:12px">
+        <input type="hidden" name="version" value="{{ item.version }}"><input type="hidden" name="action" value="field_respond">
+        <div class="respond-opts big">
+          {% for r in responses %}<label class="ropt resp-{{ RESPONSE_STYLE[r] }}"><input type="radio" name="response" value="{{ r }}" required {% if loop.length == 1 %}checked{% endif %}> <b aria-hidden="true">{{ RESPONSE_ICONS[r] }}</b> {{ RESPONSE_LABELS[r] }}</label>{% endfor %}
+        </div>
+        <div class="form-row"><label class="label" for="c-f">კომენტარი {% if item.verdict == D.CLARIFICATION %}(პასუხი კითხვაზე — სავალდებულო){% else %}<span class="muted small">(„არ ვეთანხმები“-ზე სავალდებულო)</span>{% endif %}</label><textarea id="c-f" name="comment"></textarea></div>
+        <button class="btn btn-primary" type="submit">პასუხის გაგზავნა</button>
+        <span class="hint">„არ ვეთანხმები“ კონტროლის მენეჯერთან მხოლოდ საველე მენეჯერის დადასტურებით მიდის.</span>
+      </form>
+      {% endif %}
+
+      {% if 'manager_approve' in acts %}
+      <form method="post" action="/items/{{ item.id }}/action" style="margin-top:12px">
+        <input type="hidden" name="version" value="{{ item.version }}">
+        <div class="notice info">ამზომველი არ ეთანხმება კონტროლის გადაწყვეტილებას. თუ „არ ვეთანხმები“ მართლა ასე უნდა გაიგზავნოს — დაადასტურეთ და ის კონტროლის მენეჯერს მიუვა.</div>
+        <div class="form-row"><label class="label" for="c-m">მენეჯერის კომენტარი</label><textarea id="c-m" name="comment" placeholder="დასაბუთება / შენიშვნა"></textarea></div>
+        <div class="form-actions">
+          <button class="btn btn-primary" name="action" value="manager_approve" type="submit">✓ „არ ვეთანხმები“ — დადასტურება</button>
+          <button class="btn btn-secondary" name="action" value="manager_reject" type="submit">↩ ამზომველს დაბრუნება</button>
+        </div>
+      </form>
+      {% endif %}
+
+      {% if 'manager_respond' in acts %}
+      <form method="post" action="/items/{{ item.id }}/action" style="margin-top:12px">
+        <input type="hidden" name="version" value="{{ item.version }}"><input type="hidden" name="action" value="manager_respond">
+        <div class="notice info">შემთხვევა თქვენთანაა დაბრუნებული — პასუხს მხოლოდ საველე მენეჯერი აგზავნის (ამზომველები ხედავენ).</div>
+        <div class="respond-opts big">
+          {% for r in manager_responses %}<label class="ropt resp-{{ RESPONSE_STYLE[r] }}"><input type="radio" name="response" value="{{ r }}" required> <b aria-hidden="true">{{ RESPONSE_ICONS[r] }}</b> {{ RESPONSE_LABELS[r] }}</label>{% endfor %}
+        </div>
+        <div class="form-row"><label class="label" for="c-mr">კომენტარი</label><textarea id="c-mr" name="comment"></textarea></div>
+        <button class="btn btn-primary" type="submit">პასუხის გაგზავნა</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── QC გადამოწმება ───────────────────────────────────────── #}
+  {% if 'qc_confirm' in acts %}
+  <div class="card card-yellow">
+    <div class="card-head"><h2>QC გადამოწმება</h2>{{ response(item.field_response) }}</div>
+    <div class="card-body">
+      <form method="post" action="/items/{{ item.id }}/action" enctype="multipart/form-data">
+        <input type="hidden" name="version" value="{{ item.version }}"><input type="hidden" name="back" value="{{ back }}">
+        <div class="form-row"><label class="label" for="c-q">კომენტარი <span class="muted small">(დაბრუნებისას სავალდებულო — რა დარჩა გასასწორებელი)</span></label><textarea id="c-q" name="comment"></textarea></div>
+        <div class="form-row"><label class="label" for="files-q">ფოტო / ფაილი</label><input id="files-q" type="file" name="files" multiple accept="image/*,application/pdf"></div>
+        {% include "items/_return_flags.html" %}
+        <div class="form-actions">
+          <button class="btn btn-success" name="action" value="qc_confirm" type="submit">✓ {{ 'გასწორდა' if item.verdict == D.NEGATIVE else 'გათვალისწინებულია' }} — დადასტურება (M)</button>
+          <button class="btn btn-danger" name="action" value="qc_return" type="submit">✗ არ არის გასწორებული — დაბრუნება</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if 'resolve_clarification' in acts %}
+  <div class="card card-violet">
+    <div class="card-head"><h2>დაზუსტება — საბოლოო სტატუსი</h2>{{ response(item.field_response) }}</div>
+    <div class="card-body">
+      <p class="small">ამზომველმა უპასუხა კითხვას. მიანიჭეთ საბოლოო სტატუსი — რეპორტში (D) ამ მომენტიდან ჩაითვლება. „დაზუსტება“ თავად დადებითად არ ითვლება.</p>
+      <form method="post" action="/items/{{ item.id }}/action">
+        <input type="hidden" name="version" value="{{ item.version }}"><input type="hidden" name="back" value="{{ back }}">
+        <div class="verdicts" style="grid-template-columns:repeat(3,1fr);margin:8px 0">
+          {% for v in D.FINAL_VERDICTS %}<div class="verdict-opt {{ v }}"><input type="radio" id="rv-{{ v }}" name="new_verdict" value="{{ v }}" required><label for="rv-{{ v }}">{{ VERDICT_LABELS[v] }}</label></div>{% endfor %}
+        </div>
+        <div class="form-row"><label class="label" for="c-rc">QC კომენტარი <span class="muted small">(უარყოფითსა და რეკომენდაციაზე სავალდებულო; კოდები ავტომატურად მიენიჭება)</span></label><textarea id="c-rc" name="qc_comment">{{ item.qc_comment or '' }}</textarea></div>
+        <div class="form-actions">
+          <button class="btn btn-primary" name="action" value="resolve_clarification" type="submit">სტატუსის მინიჭება</button>
+        </div>
+      </form>
+      <form method="post" action="/items/{{ item.id }}/action" style="margin-top:14px">
+        <input type="hidden" name="version" value="{{ item.version }}"><input type="hidden" name="back" value="{{ back }}">
+        <div class="form-row"><label class="label" for="c-ca">დამატებითი კითხვა ამზომველს</label><textarea id="c-ca" name="comment" style="min-height:56px"></textarea></div>
+        <button class="btn btn-secondary" name="action" value="clarify_again" type="submit">? კითხვის გაგზავნა</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── QC მენეჯერის გადაწყვეტილება ─────────────────────────────── #}
+  {% if 'qcm_stand' in acts %}
+  <div class="card card-blue">
+    <div class="card-head"><h2>არ დათანხმებული — QC მენეჯერის გადაწყვეტილება</h2></div>
+    <div class="card-body">
+      <form method="post" action="/items/{{ item.id }}/action">
+        <input type="hidden" name="version" value="{{ item.version }}"><input type="hidden" name="back" value="{{ back }}">
+        <div class="form-row"><label class="label" for="c-qcm">ახსნა <span class="muted small">(„ხარვეზი რჩება“-ზე სავალდებულო — რატომ არის გასასწორებელი)</span></label><textarea id="c-qcm" name="comment" rows="5"></textarea></div>
+        <div class="decision-grid">
+          <div class="decision">
+            <h3>ხარვეზი რჩება</h3>
+            <p class="small muted">ახსნა მიდის ველზე. მონიშვნით — მხოლოდ საველე მენეჯერი პასუხობს.</p>
+            {% include "items/_return_flags.html" %}
+            <button class="btn btn-primary" name="action" value="qcm_stand" type="submit">ახსნის გაგზავნა</button>
+          </div>
+          <div class="decision">
+            <h3>ველი მართალია</h3>
+            <p class="small muted">ოქმი დადებითით იხურება; აღირიცხება ოპერატორის შეცდომად (ცალკე სტატისტიკა).</p>
+            <label class="check must"><input type="checkbox" name="confirm_field_right" value="on"> <span>ოქმი <b>დადებითად</b> ინიშნება (სავალდებულო)</span></label>
+            <button class="btn btn-warning" name="action" value="qcm_field_right" type="submit">ველი მართალია</button>
+          </div>
+          <div class="decision">
+            <h3>ორივე მართალია</h3>
+            <p class="small muted">ოქმი დადებითით იხურება; არც ველს და არც ოპერატორს არ ეთვლება.</p>
+            <label class="check must"><input type="checkbox" name="confirm_both_right" value="on"> <span>ოქმი <b>დადებითად</b> ინიშნება (სავალდებულო)</span></label>
+            <button class="btn btn-secondary" name="action" value="qcm_both_right" type="submit">ორივე მართალია</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── QC მენეჯერის შეფასება (შეზღუდული) ───────────────────────── #}
+  {% if 'review' in acts or (review and ctx.role == D.QC_OPERATOR) %}
+  <div class="card">
+    <div class="card-head"><h2>QC მენეჯერის შეფასება</h2>{% if review %}<span class="muted small">{{ review.reviewer.full_name if review.reviewer else ('ძველი ცხრილი (TYPE)' if review.source == 'legacy' else '') }} · {{ review.at|date }}</span>{% endif %}</div>
+    <div class="card-body">
+      {% if review %}<p>{% for m in review.marks %}<span class="mark mark-{{ m }}">{{ MARK_LABELS[m] }}</span> {% endfor %}</p>{% if review.comment %}<div class="quote">{{ review.comment }}</div>{% endif %}{% endif %}
+      {% if 'review' in acts %}
+      <form method="post" action="/items/{{ item.id }}/action" style="margin-top:8px">
+        <input type="hidden" name="version" value="{{ item.version }}"><input type="hidden" name="back" value="{{ back }}">
+        <div class="marks">
+          {% for m in D.REVIEW_MARKS %}<label class="check mark-opt mark-{{ m }}"><input type="checkbox" name="marks" value="{{ m }}" {% if review and m in review.marks %}checked{% endif %}> {{ MARK_LABELS[m] }}</label>{% endfor %}
+        </div>
+        <div class="form-row"><label class="label" for="c-rv">შენიშვნა ოპერატორისთვის</label><input id="c-rv" type="text" name="comment" value="{{ review.comment if review and review.comment else '' }}"></div>
+        <button class="btn btn-secondary" name="action" value="review" type="submit">შეფასების შენახვა</button>
+        <span class="hint">ჩანს ოპერატორის ბარათზე; სტატისტიკაში — მხოლოდ QC მენეჯერსა და ადმინს.</span>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if ('reassign' in acts and operators) or ('assign_manager' in acts and manager_options) %}
+  <div class="card">
+    <div class="card-head"><h2>გადანაწილება და მენეჯერი</h2></div>
+    <div class="card-body">
+      {% if 'reassign' in acts and operators %}
+      <form method="post" action="/items/{{ item.id }}/action" class="inline-form">
+        <input type="hidden" name="version" value="{{ item.version }}"><input type="hidden" name="action" value="reassign"><input type="hidden" name="back" value="{{ back }}">
+        <div class="field" style="min-width:240px"><label for="op-new">სხვა ოპერატორზე</label>
+          <select id="op-new" name="operator_id">{% for i, n in operators %}<option value="{{ i }}" {% if item.operator_id == i %}selected{% endif %}>{{ n }}</option>{% endfor %}</select></div>
+        <div class="field" style="flex:1;min-width:180px"><label for="c-ra">მიზეზი</label><input id="c-ra" type="text" name="comment"></div>
+        <button class="btn btn-secondary" type="submit">გადანაწილება</button>
+      </form>
+      {% endif %}
+      {% if 'assign_manager' in acts and manager_options %}
+      <form method="post" action="/items/{{ item.id }}/action" class="inline-form" style="margin-top:10px">
+        <input type="hidden" name="version" value="{{ item.version }}"><input type="hidden" name="action" value="assign_manager"><input type="hidden" name="back" value="{{ back }}">
+        <div class="field" style="min-width:240px"><label for="mg-new">პასუხისმგებელი მენეჯერი</label>
+          <select id="mg-new" name="manager_id"><option value="">—</option>{% for i, n in manager_options %}<option value="{{ i }}" {% if item.field_manager_id == i %}selected{% endif %}>{{ n }}</option>{% endfor %}</select></div>
+        <div class="field" style="flex:1;min-width:180px"><label for="c-am">მიზეზი</label><input id="c-am" type="text" name="comment"></div>
+        <button class="btn btn-secondary" type="submit">მინიჭება</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if 'comment' in acts %}
+  <div class="card">
+    <div class="card-head"><h2>კომუნიკაცია</h2><span class="muted small">კომენტარი სტატუსს არ ცვლის</span></div>
+    <div class="card-body">
+      <form method="post" action="/items/{{ item.id }}/action" enctype="multipart/form-data">
+        <input type="hidden" name="action" value="comment"><input type="hidden" name="back" value="{{ back }}">
+        <div class="form-row"><label class="sr" for="c-c">კომენტარი</label><textarea id="c-c" name="comment" placeholder="დაწერეთ შეტყობინება ამ შემთხვევაზე…" style="min-height:64px"></textarea></div>
+        <div class="form-actions">
+          {% if qc_side %}<input type="file" name="files" multiple accept="image/*,application/pdf" aria-label="ფაილი">{% endif %}
+          {% if qc_side and item.field_manager_id %}<label class="check small"><input type="checkbox" name="notify" value="on"> ✉ მენეჯერს მეილითაც</label>{% endif %}
+          <button class="btn btn-secondary" type="submit">გაგზავნა</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<div>
+  <div class="card">
+    <div class="card-head"><h2>ისტორია</h2><span class="muted small">{{ events|length }} ჩანაწერი</span></div>
+    <div class="card-body">
+      <ol class="timeline">
+      {% for e in events|reverse %}
+        <li class="tl a-{{ e.action }}">
+          <span class="dot"></span>
+          <div class="when">{{ e.at|dt }}{% if e.approx %} · <span title="ძველი ცხრილი სტატუსებსა და დროებს ზედ წერდა — ზუსტი ქრონოლოგია აღდგენადი არ არის">მიახლოებით</span>{% endif %}</div>
+          <div class="what">{{ EVENT_LABELS.get(e.action, e.action) }}
+            {% if e.data and e.data.response %} — {{ RESPONSE_LABELS.get(e.data.response, e.data.response) }}{% endif %}
+            {% if e.action in ('sent', 'clarification_resolved') and e.data and e.data.verdict %} — {{ VERDICT_LABELS[e.data.verdict] }}{% endif %}
+            {% if e.action in ('verdict_changed', 'verdict_change_requested', 'verdict_change_approved', 'verdict_change_rejected') and e.data %} — {{ VERDICT_LABELS.get(e.data.before or e.data.get('from'), '—') }} → {{ VERDICT_LABELS.get(e.data.verdict or e.data.get('to'), '—') }}{% endif %}
+            {% if e.action == 'qc_reviewed' and e.data %} — {% for m in e.data.marks or [] %}{{ MARK_LABELS.get(m, m) }}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}
+            {% if e.data and e.data.manager_required %} <span class="tag" title="პასუხობს მხოლოდ საველე მენეჯერი">მენეჯერის ჩართვით</span>{% endif %}
+          </div>
+          <div class="who">{{ e.actor.full_name if e.actor else 'სისტემა' }}{% if e.actor_role %} · {{ ROLE_SHORT.get(e.actor_role, e.actor_role) }}{% endif %}
+            {% if e.from_state and e.to_state and e.from_state != e.to_state %} · <span class="muted">{{ STATE_LABELS[e.from_state] }} → {{ STATE_LABELS[e.to_state] }}</span>{% endif %}</div>
+          {% if e.comment %}<div class="text quote" style="font-size:13px">{{ e.comment }}</div>{% endif %}
+          {% if e.action == 'legacy_import' and e.data and e.data.snapshot %}
+            {% set s = e.data.snapshot %}
+            <dl class="kv small" style="margin-top:6px;grid-template-columns:120px 1fr">
+              {% if s.added %}<dt>D სტატუსი</dt><dd>{{ s.added|dt }}</dd>{% endif %}
+              {% if s.status %}<dt>E</dt><dd>{{ s.status }}</dd>{% endif %}
+              {% if s.jstatus %}<dt>J ველი</dt><dd>{{ s.jstatus }}</dd>{% endif %}
+              {% if s.ldate %}<dt>L უკუკავშირი</dt><dd>{{ s.ldate|dt }}</dd>{% endif %}
+              {% if s.fixed %}<dt>M გასწორდა</dt><dd>{{ 'დიახ' if s.fixed in ('true', 'TRUE') else 'არა' }}</dd>{% endif %}
+              {% if s.qtime %}<dt>Q / S sync</dt><dd>{{ s.qtime|dt }}{% if s.stime %} / {{ s.stime|dt }}{% endif %}</dd>{% endif %}
+              {% if s.type and show_qc_error %}<dt>TYPE</dt><dd>{{ s.type }}</dd>{% endif %}
+            </dl>
+          {% endif %}
+          {% if atts.get(e.id) %}<div class="thumbs">{% for a in atts[e.id] %}<a href="/attachments/{{ a.id }}" target="_blank" title="{{ a.filename }}">{% if a.content_type.startswith('image/') %}<img src="/attachments/{{ a.id }}" alt="{{ a.filename }}" loading="lazy">{% else %}<span class="file">PDF</span>{% endif %}</a>{% endfor %}</div>{% endif %}
+          {% if emails.get(e.id) %}<div class="small muted">✉ მეილი: {% for m in emails[e.id] %}<a href="/admin/emails/{{ m.id }}" target="_blank">{{ m.to_user.full_name if m.to_user else m.to_email }}</a> ({{ EMAIL_STATUS.get(m.status, m.status) }}){% if not loop.last %}, {% endif %}{% endfor %}</div>{% endif %}
+        </li>
+      {% endfor %}
+      </ol>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/js/qc-rules.js?v={{ VERSION }}"></script><script src="/static/js/presence.js?v={{ VERSION }}"></script>{% endblock %}

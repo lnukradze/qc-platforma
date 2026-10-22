@@ -1,0 +1,15 @@
+{% autoescape false %}NAPR · ხარისხის კონტროლი
+{{ title }}
+
+{{ to.full_name }}, თქვენი გუნდის ოქმზე ახალი ინფორმაციაა.
+
+ოქმი {{ item.protocol_number }} · {{ item.cadcode }}
+{% if item.verdict %}სტატუსი: {{ D.VERDICT_LABELS[item.verdict] }}{% if item.code_list %} ({{ item.code_list|join(', ') }}){% endif %}
+{% endif %}{% if item.qc_comment %}QC კომენტარი: {{ item.qc_comment }}
+{% endif %}{% if event and event.comment %}
+{{ D.EVENT_LABELS.get(event.action, 'შენიშვნა') }} — {{ sender.full_name }}:
+{{ event.comment }}
+{% endif %}
+ოქმის გახსნა: {{ link }}
+
+გამომგზავნი: {{ sender.full_name }}. პასუხი გაეცით სისტემაში, ოქმის ბარათზე.{% endautoescape %}

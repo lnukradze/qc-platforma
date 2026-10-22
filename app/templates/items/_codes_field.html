@@ -1,0 +1,12 @@
+        <div class="form-row">
+          <span class="label">ხარვეზის კოდები <span class="muted small">— ავტომატურად კომენტარიდან (rules.gs); შეგიძლიათ შეცვალოთ</span></span>
+          <div class="codebox" id="codebox" data-initial="{{ item.code_list|join(',') }}" data-manual="{{ '1' if item.codes and item.codes[0].source in ('manual', 'legacy') else '' }}" data-source="{{ item.codes[0].source if item.codes else '' }}"></div>
+          <input type="hidden" name="codes" id="codes-input" value="{{ item.code_list|join(',') if item.codes and item.codes[0].source == 'manual' else '' }}">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select id="code-add" aria-label="კოდის დამატება" style="max-width:460px">
+              <option value="">+ კოდის დამატება…</option>
+              {% for c in catalog %}<option value="{{ c.code }}" data-sev="{{ c.severity }}">{{ c.code }} — {{ c.name }}</option>{% endfor %}
+            </select>
+            <button type="button" class="btn btn-ghost btn-sm" id="code-auto">↺ ავტომატურად</button>
+          </div>
+        </div>

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}დაუჯგუფებელი ოქმები{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>დაუჯგუფებელი ოქმები</h1>
+    <div class="sub">ამზომველი Field Group-შია (FIELD_GROUP_ALL), მაგრამ დღეს არცერთ გუნდში არ არის (FIELD_GROUP_272) და ოქმში მეორე ამზომველიც არ ჰყავს მოქმედ გუნდში. მოიძიეთ მენეჯერი და მიუწერეთ — ოქმები შემდეგ განაწილებაში ჩვეულებრივ შევა.</div>
+  </div>
+  {% if total %}<span class="chip c-orange">{{ total|num }} ოქმი</span>{% endif %}
+</div>
+{% include "distribution/_subnav.html" %}
+
+<div class="card"><div class="card-body">
+  <form class="filters" method="get" action="/distribution/unsorted">
+    <div class="field"><label for="u-from">პირველი ოქმი — დან</label><input id="u-from" type="date" name="date_from" value="{{ date_from }}"></div>
+    <div class="field"><label for="u-to">მდე</label><input id="u-to" type="date" name="date_to" value="{{ date_to }}"></div>
+    <div class="filters-actions"><button class="btn btn-primary" type="submit">ჩვენება</button></div>
+  </form>
+</div></div>
+
+{% if err %}<div class="notice err">{{ err }}</div>{% endif %}
+
+<div class="card">
+  <div class="card-head"><h2>ამზომველები მენეჯერის გარეშე</h2><span class="muted small">ბოლო ცნობილი მენეჯერი — FIELD_GROUP_ALL-იდან (მინიშნება)</span></div>
+  <div class="card-body flush table-wrap">
+    {% if people %}
+    <table class="data cards">
+      <thead><tr><th>ამზომველი</th><th class="num">ოქმი</th><th>ზონები</th><th>მაგალითები</th><th>ბოლო ცნობილი მენეჯერი</th><th>მენეჯერის მინიჭება</th></tr></thead>
+      <tbody>
+      {% for p in people %}
+      <tr>
+        <td data-label="ამზომველი"><b>{{ p.name }}</b></td>
+        <td data-label="ოქმი" class="num">{{ p.count|num }}</td>
+        <td data-label="ზონები">{{ p.zones|join(', ') }}</td>
+        <td data-label="მაგალითები" class="small mono">{% for s in p.samples %}{{ s.protocol }} · {{ s.date|date }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td>
+        <td data-label="ბოლო მენეჯერი">{{ p.last_manager or '—' }}</td>
+        <td data-label="მინიჭება">
+          <form method="post" action="/distribution/unsorted/assign" class="inline-form">
+            <input type="hidden" name="person_name" value="{{ p.name }}">
+            <input type="hidden" name="back" value="/distribution/unsorted?date_from={{ date_from }}&date_to={{ date_to }}">
+            <select name="manager_id" aria-label="მენეჯერი — {{ p.name }}" required><option value="">— აირჩიეთ —</option>
+              {% for i, n in managers %}<option value="{{ i }}">{{ n }}{% if p.last_manager_id == i %} (ბოლო ცნობილი){% endif %}</option>{% endfor %}</select>
+            <button class="btn btn-secondary btn-sm" type="submit">მინიჭება</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="empty">ამ პერიოდში დაუჯგუფებელი ოქმი არ არის.</div>{% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h2>ხელით მინიჭებული მენეჯერები</h2><span class="muted small">მოქმედებს ყველა შემდეგ განაწილებაზე</span></div>
+  <div class="card-body flush table-wrap">
+    {% if overrides %}
+    <table class="data compact"><thead><tr><th>ამზომველი</th><th>მენეჯერი</th><th>ვინ მიანიჭა</th><th>როდის</th><th></th></tr></thead><tbody>
+    {% for o in overrides %}<tr><td>{{ o.person_name }}</td><td>{{ o.manager.full_name }}</td><td>{{ o.set_by.full_name if o.set_by else '—' }}</td><td>{{ o.set_at|dt }}</td>
+      <td><form method="post" action="/distribution/overrides/{{ o.id }}/delete"><button class="btn btn-ghost btn-sm" type="submit" data-confirm="წაიშალოს მინიჭება „{{ o.person_name }}“-ზე?">წაშლა</button></form></td></tr>{% endfor %}
+    </tbody></table>
+    {% else %}<div class="empty">ჯერ არცერთი.</div>{% endif %}
+  </div>
+</div>
+{% endblock %}

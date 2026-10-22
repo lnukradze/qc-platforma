@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ u.full_name }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><div class="small"><a href="/admin">← მომხმარებლები</a></div><h1>{{ u.full_name }}</h1><div class="sub">წყარო: {{ u.source }} · შეიქმნა {{ u.created_at|date }}</div></div></div>
+{% include "admin/_nav.html" %}
+<form method="post" action="/admin/users/{{ u.id }}">
+<div class="grid-2">
+  <div class="card">
+    <div class="card-head"><h2>ვინაობა და შესვლა</h2></div>
+    <div class="card-body">
+      <div class="form-row"><label class="label" for="fn">სახელი, გვარი</label><input id="fn" type="text" name="full_name" value="{{ u.full_name }}"></div>
+      <div class="form-row"><label class="label" for="em">ელფოსტა — Google ანგარიში, რომლითაც შევა</label><input id="em" type="email" name="email" value="{{ u.email or '' }}" placeholder="name@gmail.com"><span class="hint">ელფოსტის გარეშე შესვლა შეუძლებელია (საწარმოო ვერსიაში).</span></div>
+      <div class="form-row"><span class="label">პირადი ნომერი</span><span class="mono">{{ u.personal_id|mask_pid or '—' }}</span><span class="hint">ინახება მხოლოდ ვინაობის შესადარებლად (Pre-QC ხელმოწერა ↔ მომხმარებელი); სრულად არსად ჩანს.</span></div>
+      <label class="check"><input type="checkbox" name="active" {% if u.active %}checked{% endif %}> აქტიური (წასულ თანამშრომელს წვდომა მაშინვე ეხსნება)</label>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>როლები და გუნდი</h2></div>
+    <div class="card-body">
+      <div class="form-row">
+        {% for r in D.ROLES %}<label class="check"><input type="checkbox" name="roles" value="{{ r }}" {% if r in u.role_set %}checked{% endif %}> {{ ROLE_LABELS[r] }}</label>{% endfor %}
+        <span class="hint">ერთ ადამიანს შეიძლება რამდენიმე როლი ჰქონდეს (მაგ. ოპერატორი + ადმინი) — ზედა ზოლში გადაირთვება.</span>
+      </div>
+      <div class="form-row"><label class="label" for="tm">საველე გუნდი (მენეჯერი)</label>
+        <select id="tm" name="team_id"><option value="">—</option>{% for t in teams %}<option value="{{ t.id }}" {% if current_team and current_team.team_id == t.id %}selected{% endif %}>{{ t.name }}</option>{% endfor %}</select>
+        <span class="hint">გუნდის შეცვლისას ძველი წევრობა თარიღით იხურება — ისტორიული სტატისტიკა არ იცვლება.</span></div>
+    </div>
+  </div>
+</div>
+<div class="form-actions"><button class="btn btn-primary" type="submit">შენახვა</button><a class="btn btn-ghost" href="/admin">გაუქმება</a></div>
+</form>
+{% endblock %}

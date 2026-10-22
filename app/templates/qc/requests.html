@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "_macros.html" import verdict %}
+{% block title %}სტატუსის შეცვლის მოთხოვნები{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>სტატუსის შეცვლის მოთხოვნები</h1>
+    <div class="sub">გაგზავნილ ოქმზე სტატუსს ოპერატორი მხოლოდ QC მენეჯერის დადასტურებით ცვლის. D (შემოწმების დრო) ცვლილებით არ იცვლება.</div>
+  </div>
+  <span class="chip c-blue">{{ pending|length }} განსახილველი</span>
+</div>
+<div class="card">
+  <div class="card-head"><h2>განსახილველი</h2></div>
+  <div class="card-body flush table-wrap">
+    {% if pending %}
+    <table class="data cards">
+      <thead><tr><th>ოქმი</th><th>ოპერატორი</th><th>იყო → უნდა</th><th>მიზეზი</th><th>როდის</th><th></th></tr></thead>
+      <tbody>
+      {% for r in pending %}
+      <tr>
+        <td data-label="ოქმი" class="mono"><a href="/items/{{ r.item_id }}?back=/qc/requests">{{ r.item.protocol_number }}</a><div class="cad small muted">{{ r.item.cadcode }}</div></td>
+        <td data-label="ოპერატორი">{{ r.requested_by.full_name if r.requested_by else '—' }}</td>
+        <td data-label="ცვლილება">{{ verdict(r.from_verdict) }} → {{ verdict(r.to_verdict) }}</td>
+        <td data-label="მიზეზი">{{ r.comment }}</td>
+        <td data-label="როდის" class="nowrap">{{ r.requested_at|dt }}</td>
+        <td data-label=""><a class="btn btn-primary btn-sm" href="/items/{{ r.item_id }}?back=/qc/requests#decide">განხილვა →</a></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="empty">განსახილველი მოთხოვნა არ არის.</div>{% endif %}
+  </div>
+</div>
+{% if recent %}
+<div class="card">
+  <div class="card-head"><h2>ბოლო გადაწყვეტილებები</h2></div>
+  <div class="card-body flush table-wrap">
+    <table class="data compact">
+      <thead><tr><th>ოქმი</th><th>ოპერატორი</th><th>ცვლილება</th><th>გადაწყვეტილება</th><th>ვინ</th><th>როდის</th></tr></thead>
+      <tbody>
+      {% for r in recent %}
+      <tr><td class="mono"><a href="/items/{{ r.item_id }}">{{ r.item.protocol_number }}</a></td><td>{{ r.requested_by.full_name if r.requested_by else '—' }}</td>
+        <td>{{ verdict(r.from_verdict) }} → {{ verdict(r.to_verdict) }}</td>
+        <td>{% if r.status == 'approved' %}<span class="resp resp-ok"><b>✔</b> დადასტურდა</span>{% else %}<span class="resp resp-bad"><b>✖</b> უარყოფილია</span>{% endif %}{% if r.decision_comment %}<div class="small muted">{{ r.decision_comment }}</div>{% endif %}</td>
+        <td>{{ r.decided_by.full_name if r.decided_by else '—' }}</td><td class="nowrap">{{ r.decided_at|dt }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

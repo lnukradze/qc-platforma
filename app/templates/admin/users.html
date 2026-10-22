@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pager %}
+{% block title %}ადმინისტრირება{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>ადმინისტრირება</h1><div class="sub">წვდომა ელფოსტით — მენეჯერები აგროვებენ სახელს, გვარს და პირად Gmail-ს, ადმინი ანიჭებს როლს</div></div></div>
+{% include "admin/_nav.html" %}
+<div class="kpis">
+  <div class="kpi accent-info"><div class="k">აქტიური მომხმარებელი</div><div class="v">{{ stats.active|num }}</div></div>
+  <div class="kpi accent-warn"><div class="k">ელფოსტის გარეშე</div><div class="v">{{ stats.no_email|num }}</div><div class="s"><a href="/admin?email=missing">სიის ნახვა</a> — ვერ შევლენ, სანამ ელფოსტა არ ექნებათ</div></div>
+  {% for r in D.ROLES %}<div class="kpi"><div class="k">{{ ROLE_SHORT[r] }}</div><div class="v">{{ stats.by_role.get(r, 0)|num }}</div><a class="stretch" href="/admin?role={{ r }}" aria-label="{{ ROLE_LABELS[r] }}"></a></div>{% endfor %}
+</div>
+<div class="card"><div class="card-body">
+  <form class="filters" method="get" action="/admin">
+    <div class="field"><label for="u-q">სახელი / ელფოსტა</label><input id="u-q" type="search" name="q" value="{{ p.q or '' }}"></div>
+    <div class="field"><label for="u-r">როლი</label><select id="u-r" name="role"><option value="">— ყველა —</option>{% for r in D.ROLES %}<option value="{{ r }}" {% if p.role == r %}selected{% endif %}>{{ ROLE_LABELS[r] }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="u-s">სტატუსი</label><select id="u-s" name="status"><option value="">— ყველა —</option><option value="active" {% if p.status == 'active' %}selected{% endif %}>აქტიური</option><option value="inactive" {% if p.status == 'inactive' %}selected{% endif %}>არააქტიური (წასული)</option></select></div>
+    <div class="field"><label for="u-e">ელფოსტა</label><select id="u-e" name="email"><option value="">— ყველა —</option><option value="missing" {% if p.email == 'missing' %}selected{% endif %}>აკლია</option></select></div>
+    <div class="filters-actions"><a class="btn btn-ghost" href="/admin">გასუფთავება</a><button class="btn btn-primary">ძებნა</button></div>
+  </form>
+</div></div>
+<div class="card">
+  <div class="card-body flush table-wrap">
+    <table class="data cards">
+      <thead><tr><th>სახელი, გვარი</th><th>ელფოსტა (შესვლა)</th><th>როლები</th><th>გუნდი</th><th>წყარო</th><th>სტატუსი</th><th></th></tr></thead>
+      <tbody>
+      {% for u in rows %}
+      <tr class="clickable" data-href="/admin/users/{{ u.id }}">
+        <td data-label="სახელი">{{ u.full_name }}{% if u.is_demo %} <span class="tag demo">დემო</span>{% endif %}</td>
+        <td data-label="ელფოსტა">{{ u.email or '' }}{% if not u.email %}<span class="muted small">— არ არის</span>{% endif %}</td>
+        <td data-label="როლები">{% for r in D.ROLES if r in u.role_set %}<span class="tag">{{ ROLE_SHORT[r] }}</span> {% endfor %}</td>
+        <td data-label="გუნდი">{{ team_of.get(u.id, '') }}</td>
+        <td data-label="წყარო" class="small muted">{{ {'field_group': 'Field Group', 'field_group_full': 'Field Group (სრული)', 'control_sheet': 'კონტროლის ცხრილი', 'demo': 'დემო', 'admin': 'ადმინი'}.get(u.source, u.source) }}</td>
+        <td data-label="სტატუსი">{% if u.active %}<span class="chip c-green">აქტიური</span>{% else %}<span class="chip c-gray">არააქტიური</span>{% endif %}</td>
+        <td><a class="btn btn-ghost btn-sm" href="/admin/users/{{ u.id }}">რედაქტირება</a></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {{ pager(page, pages, total, qs) }}
+</div>
+<div class="card">
+  <div class="card-head"><h2>ახალი მომხმარებელი</h2></div>
+  <div class="card-body">
+    <form class="filters" method="post" action="/admin/users">
+      <div class="field"><label for="n-name">სახელი, გვარი</label><input id="n-name" type="text" name="full_name" required></div>
+      <div class="field"><label for="n-email">ელფოსტა (Gmail)</label><input id="n-email" type="email" name="email"></div>
+      <div class="field"><label for="n-role">როლი</label><select id="n-role" name="role">{% for r in D.ROLES %}<option value="{{ r }}">{{ ROLE_LABELS[r] }}</option>{% endfor %}</select></div>
+      <div class="filters-actions"><button class="btn btn-primary">დამატება</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

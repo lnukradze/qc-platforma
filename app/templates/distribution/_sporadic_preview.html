@@ -1,0 +1,48 @@
+{% if err %}
+<div class="notice err">⚠ {{ err }}</div>
+{% elif pv %}
+{% set c = pv.counts %}
+<div class="card" style="border-color:#9fc9d1">
+  <div class="card-head" style="background:#f1fafb"><h2>სპორადული — გადახედვა</h2><span class="muted small">{{ pv.seconds }} წმ · გუშინ = {{ pv.yesterday|date }}</span></div>
+  <div class="card-body">
+    <div class="funnel">
+      <div class="f"><div class="small muted">ფაილის ჩანაწერი</div><div class="n">{{ c.rows|num }}</div><div class="small muted">დღით {{ c.with_day|num }}</div></div>
+      <span class="arrow">→</span>
+      <div class="f"><div class="small muted">დათვალიერების დღე შესაბამისი</div><div class="n">{{ c.day_ok|num }}</div></div>
+      <span class="arrow">→</span>
+      {% if c.call_status %}<div class="f minus"><div class="small muted">დათვალიერება არ დასრულებულა</div><div class="n">−{{ c.call_status|num }}</div></div>{% endif %}
+      {% if c.open_status %}<div class="f minus"><div class="small muted">ღია საველე სტატუსი</div><div class="n">−{{ c.open_status|num }}</div></div>{% endif %}
+      {% if c.already %}<div class="f minus"><div class="small muted">უკვე კონტროლშია</div><div class="n">−{{ c.already|num }}</div></div>{% endif %}
+      {% if c.missing %}<div class="f minus"><div class="small muted">REGFIELDALL-ში ვერ მოიძებნა</div><div class="n">−{{ c.missing|num }}</div></div>{% endif %}
+      {% if c.not_field %}<div class="f minus" title="REGFIELDALL-ის MOXAZ_CREATOR Field Group-ში არ არის — მაგ. ნახაზი ჯერ არ შეუტანიათ"><div class="small muted">ამზომველი ვერ დადგინდა</div><div class="n">−{{ c.not_field|num }}</div></div>{% endif %}
+      {% if c.unsorted %}<div class="f minus warnbox"><div class="small muted">დაუჯგუფებელი</div><div class="n">−{{ c.unsorted|num }}</div><div class="small"><a href="/distribution/unsorted" target="_blank">მინიჭება →</a></div></div>{% endif %}
+      <span class="arrow">→</span>
+      <div class="f final"><div class="small muted">განაწილდება</div><div class="n">{{ c.assigned|num }}</div>{% if c.convert %}<div class="small muted">მათ შორის {{ c.convert }} სისტემურიდან გადმოვა</div>{% endif %}</div>
+    </div>
+    {% if c.overflow %}<div class="notice demo" style="margin-top:10px">⚠ {{ c.overflow }} ოქმი ოპერატორების რაოდენობაში ვერ ჩაეტია.</div>{% endif %}
+    <p class="hint" style="margin-top:10px">დღეები: {% for d, n in pv.days %}{{ d|date }} — {{ n }}{% if not loop.last %} · {% endif %}{% else %}შესაბამისი დღე ფაილში არ არის{% endfor %}</p>
+    {% if pv.tr_names %}<p class="hint">სამუშაოს ტიპი: {% for t, n in pv.tr_names %}{{ t or '—' }} ({{ n }}){% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+    {% if pv.unsorted_top %}<p class="hint">დაუჯგუფებელი ამზომველები: {% for n, k in pv.unsorted_top %}{{ n }} ({{ k }}){% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+  </div>
+</div>
+<div class="grid-2">
+  <div class="card"><div class="card-head"><h2>ოპერატორები</h2></div><div class="card-body flush">
+    <table class="data compact"><thead><tr><th>ოპერატორი</th><th class="num">მაქსიმუმი</th><th class="num">ოქმი</th></tr></thead><tbody>
+    {% for o in pv.operators %}<tr><td>{{ o.operator }}</td><td class="num">{{ o.quota|num }}</td><td class="num"><b>{{ o.protocols|num }}</b></td></tr>{% endfor %}
+    </tbody></table></div></div>
+  <div class="card"><div class="card-head"><h2>ჩანაწერები</h2><span class="muted small">{{ pv.rows|length|num }}</span></div>
+    <div class="card-body flush table-wrap" style="max-height:360px;overflow:auto">
+    <table class="data compact"><thead><tr><th>დათვალიერება</th><th>ოქმი</th><th>საკადასტრო</th><th>ამზომველი</th><th>მენეჯერი</th><th>ოპერატორი</th></tr></thead><tbody>
+    {% for r in pv.rows[:200] %}<tr><td class="nowrap">{{ r.survey_day|date }}</td><td class="mono">{{ r.protocol }}{% if r.convert_item_id %} <span class="tag" title="სისტემურში გაუვლელი იყო — სპორადულში გადადის">⇄</span>{% endif %}</td><td class="cad">{{ r.cadcode }}</td><td>{{ r.creator }}</td><td>{{ r.manager }}</td><td>{{ r.operator }}</td></tr>{% endfor %}
+    </tbody></table></div></div>
+</div>
+{% if pv.rows %}
+<div class="card"><div class="card-body" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+  <form method="post" action="/distribution/sporadic/confirm" style="display:inline">
+    <input type="hidden" name="token" value="{{ pv.token }}">
+    <button class="btn btn-primary" type="submit" data-confirm="განაწილდეს {{ c.assigned }} სპორადული ოქმი? (მხოლოდ ლოკალურ ბაზაში)">✓ დადასტურება და განაწილება</button>
+  </form>
+  <a class="btn btn-secondary" href="/distribution/export/{{ pv.token }}">Excel-ად ჩამოტვირთვა</a>
+</div></div>
+{% endif %}
+{% endif %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}გავლილი ოქმები{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>კონტროლის გავლილი ოქმები</h1>
+    <div class="sub">მხოლოდ ნახვით — რედაქტირების უფლება არ არის. სტატისტიკა: მენიუ „სტატისტიკა“.</div>
+  </div>
+</div>
+<div class="card">
+  <div class="card-body">
+    <form class="filters" method="get" action="/checked">
+      <div class="field"><label for="f-protocol">ოქმის#</label><input id="f-protocol" type="text" name="protocol" value="{{ p.protocol or '' }}" inputmode="numeric"></div>
+      <div class="field"><label for="f-cad">საკ. კოდი</label><input id="f-cad" type="text" name="cad" value="{{ p.cad or '' }}" placeholder="202.51.…"></div>
+      <div class="field"><label for="f-kind">სახეობა</label><select id="f-kind" name="kind"><option value="">— ორივე —</option><option value="{{ D.SYSTEMATIC }}" {% if p.kind == D.SYSTEMATIC %}selected{% endif %}>სისტემური</option><option value="{{ D.SPORADIC }}" {% if p.kind == D.SPORADIC %}selected{% endif %}>სპორადული</option></select></div>
+      <div class="field"><label for="f-mgr">საველე მენეჯერი</label>
+        <select id="f-mgr" name="manager"><option value="">— ყველა —</option>{% for i, n in managers %}<option value="{{ i }}" {% if p.manager == i|string %}selected{% endif %}>{{ n }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="f-op">ოპერატორი</label>
+        <select id="f-op" name="operator"><option value="">— ყველა —</option>{% for i, n in operators %}<option value="{{ i }}" {% if p.operator == i|string %}selected{% endif %}>{{ n }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="f-verdict">ვერდიქტი</label>
+        <select id="f-verdict" name="verdict"><option value="">— ყველა —</option>{% for v in D.VERDICTS %}<option value="{{ v }}" {% if p.verdict == v %}selected{% endif %}>{{ VERDICT_LABELS[v] }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="f-zone">ზონა</label><input id="f-zone" type="text" name="zone" value="{{ p.zone or '' }}" placeholder="51" inputmode="numeric"></div>
+      <div class="filters-actions"><a class="btn btn-ghost" href="/checked">გასუფთავება</a><button class="btn btn-primary" type="submit">ძებნა</button></div>
+    </form>
+  </div>
+</div>
+{% include "qc/_table.html" %}
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}პარამეტრები{% endblock %}
+{% block content %}
+{% set ar = s.get('allowed_responses', {}) %}
+<div class="page-head"><div><h1>პარამეტრები</h1><div class="sub">ბიზნეს-წესები, რომლებიც კოდის შეცვლის გარეშე უნდა იცვლებოდეს</div></div></div>
+{% include "admin/_nav.html" %}
+<form method="post" action="/admin/settings">
+<div class="grid-2">
+  <div class="card">
+    <div class="card-head"><h2>ველის დაშვებული პასუხები</h2></div>
+    <div class="card-body">
+      {% for v in (D.NEGATIVE, D.RECOMMENDATION, D.CLARIFICATION) %}
+      <div class="form-row"><span class="label">{{ VERDICT_LABELS[v] }}</span>
+        <div class="respond-opts">{% for r in (D.R_CORRECTED, D.R_DISAGREE, D.R_ACKNOWLEDGE, D.R_ANSWER) %}<label><input type="checkbox" name="resp_{{ v }}" value="{{ r }}" {% if r in ar.get(v, []) %}checked{% endif %}> {{ RESPONSE_LABELS[r] }}</label>{% endfor %}</div></div>
+      {% endfor %}
+      <p class="hint">ნაგულისხმევი (თქვენი წესი): უარყოფითზე — შესწორდა / არ ვეთანხმები; რეკომენდაციაზე — გავითვალისწინებთ / არ ვეთანხმები; დაზუსტებაზე — პასუხი. „არ ვეთანხმები“ QC მენეჯერთან მხოლოდ საველე მენეჯერის დადასტურებით მიდის.</p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>განაწილება და Pre-QC</h2></div>
+    <div class="card-body">
+      {% set dd = s.get('distribution_defaults', {}) %}
+      <div class="form-row" style="display:flex;gap:10px;align-items:center"><label class="label" for="dp" style="margin:0">ნაგულისხმევი დაფარვა — ყველა არეალიდან</label><input id="dp" type="number" name="default_pct" min="0" max="100" step="5" value="{{ dd.get('default_pct', 70) }}" style="width:90px"> %</div>
+      <div class="form-row" style="display:flex;gap:10px;align-items:center"><label class="label" for="po" style="margin:0">ოპერატორის ნაგულისხმევი მაქსიმუმი</label><input id="po" type="number" name="per_operator" min="1" value="{{ dd.get('per_operator', 450) }}" style="width:90px"></div>
+      <p class="hint">მენეჯერი — ოქმის ამზომველების დღევანდელი გუნდით (FIELD_GROUP_272); სხვადასხვა გუნდზე — ყველა მენეჯერი, პასუხისმგებელი — შემდგენის მენეჯერი. „ველი მართალია“ და „ორივე მართალია“ ოქმს სავალდებულოდ დადებითად ნიშნავს.</p>
+      <div class="form-row"><label class="label" for="lag">Pre-QC — რამდენი დღის წინანდელი ოქმები მოწმდება</label><input id="lag" type="number" name="preqc_lag_days" min="0" max="10" value="{{ s.get('preqc_lag_days', 2) }}" style="width:100px"><span class="hint">2 = მე-3 დღეს პირველი დღის ოქმები (თქვენი წესი)</span></div>
+    </div>
+  </div>
+</div>
+<div class="form-actions"><button class="btn btn-primary" type="submit">შენახვა</button></div>
+</form>
+{% endblock %}

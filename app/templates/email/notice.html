@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ka">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ title }}</title></head>
+<body style="margin:0;padding:0;background:#eef1f5;">
+{%- set vcol = {'positive': '#2e7d32', 'negative': '#c62828', 'recommendation': '#a15c00', 'clarification': '#6b3fb5'} -%}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef1f5;padding:24px 12px;">
+  <tr><td align="center">
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden;font-family:'Noto Sans Georgian','Sylfaen',Arial,sans-serif;color:#1f2933;">
+      <tr><td style="background:#2f3640;padding:18px 24px;">
+        <span style="display:inline-block;background:#4c8fe0;color:#fff;font-weight:700;border-radius:6px;padding:4px 8px;font-size:13px;">QC</span>
+        <span style="color:#7fb2f0;font-weight:700;font-size:16px;margin-left:8px;">NAPR</span>
+        <span style="color:#c7d0db;font-size:13px;margin-left:6px;">ხარისხის კონტროლი</span>
+      </td></tr>
+      <tr><td style="height:4px;background:#17a2b8;line-height:4px;font-size:0;">&nbsp;</td></tr>
+      <tr><td style="padding:22px 24px 6px;">
+        <div style="font-size:19px;font-weight:700;line-height:1.35;">{{ title }}</div>
+        <div style="font-size:14px;color:#5b6775;margin-top:6px;">{{ to.full_name }}, თქვენი გუნდის ოქმზე ახალი ინფორმაციაა.</div>
+      </td></tr>
+      <tr><td style="padding:12px 24px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #dde3ea;border-radius:8px;">
+          <tr><td style="padding:14px 16px;font-size:14px;line-height:1.6;">
+            <div style="font-size:16px;font-weight:700;">ოქმი {{ item.protocol_number }} · {{ item.cadcode }}</div>
+            <div style="color:#5b6775;">{{ D.KIND_LABELS.get(item.kind, '') }}{% if item.zone %} · ზონა {{ item.zone }}{% endif %}{% if item.surveyor_names %} · {{ item.surveyor_names|join(', ') }}{% endif %}</div>
+            {% if item.verdict %}<div style="margin-top:8px;"><span style="display:inline-block;border:1px solid {{ vcol.get(item.verdict, '#5b6775') }};color:{{ vcol.get(item.verdict, '#5b6775') }};border-radius:12px;padding:1px 10px;font-weight:600;font-size:13px;">{{ D.VERDICT_LABELS[item.verdict] }}</span>
+              {% for c in item.code_list %}<span style="display:inline-block;background:#eef1f5;border-left:3px solid #9aa7b6;padding:1px 6px;margin-left:4px;font-size:12px;font-weight:600;">{{ c }}</span>{% endfor %}</div>{% endif %}
+            {% if item.qc_comment %}<div style="margin-top:10px;background:#f6f8fa;border-left:3px solid #9aa7b6;padding:8px 10px;">{{ item.qc_comment }}</div>{% endif %}
+          </td></tr>
+        </table>
+      </td></tr>
+      {% if event and event.comment %}
+      <tr><td style="padding:4px 24px 8px;">
+        <div style="font-size:13px;font-weight:700;color:#2a3340;">{{ D.EVENT_LABELS.get(event.action, 'შენიშვნა') }} — {{ sender.full_name }}</div>
+        <div style="margin-top:6px;background:#fff8e6;border-left:3px solid #e29b00;padding:10px 12px;font-size:14px;line-height:1.55;">{{ event.comment }}</div>
+      </td></tr>
+      {% endif %}
+      <tr><td style="padding:14px 24px 22px;">
+        <a href="{{ link }}" style="display:inline-block;background:#1f5f99;color:#ffffff;text-decoration:none;font-weight:700;padding:10px 18px;border-radius:6px;font-size:14px;">ოქმის გახსნა →</a>
+      </td></tr>
+      <tr><td style="background:#f6f8fa;padding:12px 24px;font-size:12px;color:#7a8794;line-height:1.5;">
+        გამომგზავნი: {{ sender.full_name }}. ეს შეტყობინება ავტომატურად შეიქმნა NAPR-ის ხარისხის კონტროლის პლატფორმაზე — პასუხი გაეცით სისტემაში, ოქმის ბარათზე.
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>
