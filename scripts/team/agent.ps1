@@ -2,9 +2,10 @@
 # ASCII only: Windows PowerShell 5.1 misreads UTF-8 files without BOM.
 #
 #   scripts\team\agent.bat lead
-#   scripts\team\agent.bat backend salome-1
-#   scripts\team\agent.bat ui      salome-2
+#   scripts\team\agent.bat ui      salome-1
+#   scripts\team\agent.bat backend salome-2
 #   scripts\team\agent.bat qa
+# Or in VS Code: Terminal > Run Task > (.vscode\tasks.json).
 #
 # Account: a Claude role with an account name gets its own login folder
 # (%USERPROFILE%\.claude-profiles\<name>); the first run needs /login there.
@@ -67,8 +68,9 @@ function Find-Agent([string]$Name, [string]$ExtensionPattern) {
 if ($Role -eq 'qa') { $agent = Find-Agent 'codex' 'openai.chatgpt-*' }
 else { $agent = Find-Agent 'claude' 'anthropic.claude-code-*' }
 
-$prompt = "Session role: $Role. Read AGENTS.md and docs/team/roles/$Role.md and follow them for the whole session. " +
-          "Then run git fetch, read the latest tasks (git show origin/main:docs/TASKS.md, or docs/TASKS.md if there is no origin) " +
+$prompt = "Session role: $Role. Read AGENTS.md and docs/team/roles/$Role.md (ui and qa: also DESIGN.md) and follow them for the whole session. " +
+          "Then run git fetch, read the task list (git show origin/main:docs/TASKS.md, or docs/TASKS.md if there is no origin) " +
+          "and the status line of the open task files in docs/tasks/, " +
           "and tell me in Georgian, in one or two sentences, your role and the open tasks for this role."
 
 Set-Location $dir

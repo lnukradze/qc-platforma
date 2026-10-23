@@ -1,0 +1,48 @@
+{
+  // Terminal → Run Task… → „სალომე: სამივე აგენტი“ (ან ცალ-ცალკე). დეტალები: docs/team/SALOME.md
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "აგენტი: ui — აწყობა (salome-1)",
+      "type": "process",
+      "command": "cmd.exe",
+      "args": ["/d", "/c", "scripts\\team\\agent.bat", "ui", "salome-1"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "panel": "dedicated", "focus": false, "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "აგენტი: backend — ფუნქციონალი (salome-2)",
+      "type": "process",
+      "command": "cmd.exe",
+      "args": ["/d", "/c", "scripts\\team\\agent.bat", "backend", "salome-2"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "panel": "dedicated", "focus": false, "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "აგენტი: qa — Codex",
+      "type": "process",
+      "command": "cmd.exe",
+      "args": ["/d", "/c", "scripts\\team\\agent.bat", "qa"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "panel": "dedicated", "focus": false, "clear": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "სალომე: სამივე აგენტი",
+      "dependsOn": ["აგენტი: ui — აწყობა (salome-1)", "აგენტი: backend — ფუნქციონალი (salome-2)", "აგენტი: qa — Codex"],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    },
+    {
+      "label": "ლუკა: lead (ტერმინალში)",
+      "type": "process",
+      "command": "cmd.exe",
+      "args": ["/d", "/c", "scripts\\team\\agent.bat", "lead"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "panel": "dedicated", "focus": true, "clear": true },
+      "problemMatcher": []
+    }
+  ]
+}

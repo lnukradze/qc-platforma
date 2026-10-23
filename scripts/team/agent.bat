@@ -2,7 +2,7 @@
 rem Start a team AI agent:  agent.bat ^<lead^|backend^|ui^|qa^> [claude-account-name]
 rem ASCII only: cmd.exe misreads UTF-8 batch files. Details: docs\team\README.md
 if "%~1"=="" (
-  echo Usage: agent.bat lead ^| backend salome-1 ^| ui salome-2 ^| qa
+  echo Usage: agent.bat lead ^| ui salome-1 ^| backend salome-2 ^| qa
   pause
   exit /b 1
 )
