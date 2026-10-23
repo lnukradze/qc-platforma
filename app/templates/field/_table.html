@@ -1,5 +1,6 @@
 {% from "_macros.html" import state_chip, verdict, response, codes, pager, legend, surveyors, presence %}
-<div class="card">
+{% from "_icons.html" import icon %}
+<div class="card" data-board="field" data-total="{{ total }}" data-page="{{ page }}" data-pages="{{ pages }}">
   <div class="card-head">{{ legend('field') }}<span class="muted small">{{ total|num }} შემთხვევა</span></div>
   <div class="card-body flush table-wrap">
     {% if rows %}
@@ -8,7 +9,7 @@
       <tbody>
       {% for i in rows %}
         <tr class="clickable r-{{ field_color(i.state) }}" data-id="{{ i.id }}" data-href="/items/{{ i.id }}?back={{ ('/field?' ~ qs())|urlencode }}">
-          <td data-label="ოქმის#" class="mono">{{ presence(i) }}<a href="/items/{{ i.id }}?back={{ ('/field?' ~ qs())|urlencode }}">{{ i.protocol_number }}</a>{% if i.kind == D.SPORADIC %} <span class="tag kind-sporadic">სპორ.</span>{% endif %}</td>
+          <td data-label="ოქმის#" class="mono">{{ presence(i) }}<a href="/items/{{ i.id }}?back={{ ('/field?' ~ qs())|urlencode }}">{{ i.protocol_number }}</a><button type="button" class="peek" data-peek="/items/{{ i.id }}" aria-label="სწრაფი ნახვა — {{ i.protocol_number }}" title="სწრაფი ნახვა">{{ icon('eye', 15) }}</button>{% if i.kind == D.SPORADIC %} <span class="tag kind-sporadic">სპორ.</span>{% endif %}</td>
           <td data-label="საკ. კოდი" class="cad">{{ i.cadcode }}</td>
           <td data-label="ვერდიქტი">{{ verdict(i.verdict) }}</td>
           <td data-label="კომენტარი"><div class="clip" title="{{ i.qc_comment or '' }}">{{ i.qc_comment or '—' }}</div></td>

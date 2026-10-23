@@ -30,8 +30,8 @@
     <span class="small muted">ოპერატორი: <b>{{ i.operator.full_name if i.operator else '—' }}</b> · მენეჯერი: <b>{{ i.field_manager.full_name if i.field_manager else '—' }}</b>{% if i.dispute_count > 1 %} · <span class="tag">{{ i.dispute_count }}-ე ჯერ</span>{% endif %}{% if i.is_legacy %} · <span class="tag legacy">ძველი ცხრილიდან</span>{% endif %}</span>
   </div>
   <div class="card-body">
-    <div class="grid-3">
-      <div><div class="label">QC — {{ verdict(i.verdict) }} {{ codes(i) }}</div><div class="quote" style="margin-top:6px">{{ i.qc_comment or '—' }}</div></div>
+    <div class="grid-3 dispute-trio">
+      <div><div class="label">QC —{{ verdict(i.verdict) }} {{ codes(i) }}</div><div class="quote" style="margin-top:6px">{{ i.qc_comment or '—' }}</div></div>
       <div><div class="label">ველის პასუხი — {{ response(i.field_response) }}</div><div class="quote field" style="margin-top:6px">{{ i.field_comment or '—' }}</div></div>
       <div><div class="label">მენეჯერის დადასტურება / წინა ახსნა</div><div class="quote qcm" style="margin-top:6px">{{ i.manager_visa_comment or i.qcm_explanation or '—' }}</div></div>
     </div>

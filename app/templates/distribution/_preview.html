@@ -2,8 +2,8 @@
 <div class="notice err">⚠ {{ err }}</div>
 {% elif pv %}
 {% set c = pv.counts %}
-<div class="card" style="border-color:#9fc9d1">
-  <div class="card-head" style="background:#f1fafb"><h2>გადახედვა — ჯერ არაფერი ჩაწერილა</h2><span class="muted small">{{ pv.seconds }} წმ · seed {{ pv.seed }}</span></div>
+<div class="card card-tint">
+  <div class="card-head"><h2>გადახედვა — ჯერ არაფერი ჩაწერილა</h2><span class="muted small">{{ pv.seconds }} წმ · seed {{ pv.seed }}</span></div>
   <div class="card-body">
     <div class="funnel">
       <div class="f"><div class="small muted">დიაპაზონის კოდები</div><div class="n">{{ c.pool|num }}</div>{% if c.backlog %}<div class="small muted">+ ნაშთი {{ c.backlog|num }}</div>{% endif %}</div>

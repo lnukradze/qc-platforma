@@ -9,7 +9,7 @@
   <div class="form-actions"><a class="btn btn-secondary" id="xlsx" href="/stats/export.xlsx">Excel-ად ჩამოტვირთვა</a></div>
 </div>
 
-<div class="card">
+<div class="card filterbar">
   <div class="card-body">
     <form id="stats-filters" class="filters">
       <div class="field"><label for="s-range">პერიოდი (D — შემოწმების თარიღი)</label>
@@ -41,41 +41,101 @@
       <div class="field"><label for="s-proto">ოქმის#</label><input id="s-proto" type="text" name="protocol" inputmode="numeric"></div>
       <div class="filters-actions"><button class="btn btn-ghost" type="reset">გასუფთავება</button><button class="btn btn-primary" type="submit">განახლება</button></div>
     </form>
+    <p class="hint" id="stats-scope" style="margin-top:12px" aria-live="polite"></p>
   </div>
 </div>
 
 <div id="stats-root" aria-live="polite">
-  <div class="kpis" id="kpis"></div>
+  <div id="kpis"></div>
 
-  <div class="grid-2" data-sec="trend">
-    <div class="card"><div class="card-head"><h2>შემოწმებული კვირების მიხედვით</h2><span class="legend" id="trend-legend"></span></div><div class="card-body"><div class="chart" id="ch-trend" role="img" aria-label="შემოწმებული ოქმები კვირების მიხედვით"></div></div></div>
-    <div class="card"><div class="card-head"><h2>ხარვეზის % კვირების მიხედვით</h2><span class="muted small">უარყოფითი ÷ შემოწმებული · კვირა &lt;30 შემოწმებით არ ისახება</span></div><div class="card-body"><div class="chart" id="ch-rate" role="img" aria-label="ხარვეზის პროცენტი კვირების მიხედვით"></div></div></div>
-  </div>
+  <section class="sec" data-sec="trend">
+    <div class="sec-head">
+      <h2><span class="sec-num">დიაგრამა 1</span> შემოწმების შედეგები კვირების მიხედვით
+        <span class="sec-tools"><span class="seg" id="trend-mode" role="group" aria-label="ჩვენების ერთეული"><button type="button" data-mode="pct" aria-pressed="true">პროცენტი</button><button type="button" data-mode="cnt" aria-pressed="false">რაოდენობა</button></span></span></h2>
+      <p>ყოველ კვირაში — დადებითი, რეკომენდაცია და უარყოფითი ოქმების წილი. პროცენტულ ხედში კვირა &lt;30 შემოწმებით არ ისახება — მცირე შერჩევა მასშტაბს ამახინჯებს.</p>
+    </div>
+    <div class="grid-2">
+      <div class="card chart-card"><div class="chart" id="ch-trend" role="img" aria-label="შემოწმებული ოქმები კვირების მიხედვით"></div></div>
+      <div class="card chart-card"><div class="card-head" style="padding:4px 4px 10px;border:0"><h2>ხარვეზის % კვირების მიხედვით</h2><span class="muted small">უარყოფითი ÷ შემოწმებული · წყვეტილი ხაზი — საშუალო</span></div><div class="chart" id="ch-rate" role="img" aria-label="ხარვეზის პროცენტი კვირების მიხედვით"></div></div>
+    </div>
+  </section>
 
-  <div class="card" data-sec="operators"><div class="card-head"><h2>QC ოპერატორები</h2><span class="muted small">გავლილი = გაგზავნილი (დაზუსტების კითხვის ჩათვლით) · დღიური საშუალო = შემოწმებული ÷ აქტიური დღე</span></div><div class="card-body flush table-wrap" id="t-operators"></div></div>
-  <div class="card" data-sec="managers"><div class="card-head"><h2>საველე მენეჯერები</h2><span class="muted small">პასუხის დრო — გაგზავნიდან ველის პასუხამდე (მედიანა, დღე)</span></div><div class="card-body flush table-wrap" id="t-managers"></div></div>
-  <div class="card" data-sec="surveyors"><div class="card-head"><h2>ამზომველები</h2><div style="display:flex;gap:8px;align-items:center"><span class="muted small">ოქმის ყველა ამზომველი იღებს შემთხვევას; მენეჯერები სიაში არ შედიან</span><input type="search" id="surv-q" placeholder="ძებნა…" style="width:180px"></div></div><div class="card-body flush table-wrap" id="t-surveyors" style="max-height:520px;overflow:auto"></div></div>
+  <section class="sec" data-sec="managers">
+    <div class="sec-head">
+      <h2><span class="sec-num">დიაგრამა 2</span> ხარვეზის მაჩვენებელი საველე მენეჯერების მიხედვით</h2>
+      <p>უარყოფითი ოქმების წილი მენეჯერის გუნდის შემოწმებულ ოქმებში. წყვეტილი ხაზი — საერთო საშუალო; საშუალოზე მაღალი წითლად ჩანს. პასუხის დრო — გაგზავნიდან ველის პასუხამდე (მედიანა, დღე).</p>
+    </div>
+    <div class="card chart-card"><div class="chart" id="ch-managers" role="img" aria-label="ხარვეზის პროცენტი მენეჯერების მიხედვით"></div></div>
+    <div class="card"><div class="card-body flush table-wrap" id="t-managers"></div></div>
+  </section>
 
-  <div class="grid-2">
-    <div class="card" data-sec="codes"><div class="card-head"><h2>ყველაზე ხშირი ხარვეზები</h2><span class="legend"><span><i class="sw" style="background:#d03b3b"></i>კრიტიკული</span><span><i class="sw" style="background:#eda100"></i>მნიშვნელოვანი</span></span></div><div class="card-body"><div class="chart tall" id="ch-codes" role="img" aria-label="ხარვეზის კოდების სიხშირე"></div></div></div>
-    <div class="card" data-sec="zones"><div class="card-head"><h2>ზონები — ხარვეზის %</h2><span class="muted small">ზონა = ადმინისტრაციული ერთეული</span></div><div class="card-body"><div class="chart tall" id="ch-map" role="img" aria-label="ზონების რუკა ხარვეზის პროცენტით"></div></div></div>
-  </div>
-  <div class="grid-2">
-    <div class="card" data-sec="codes"><div class="card-head"><h2>კოდები — ცხრილი</h2></div><div class="card-body flush table-wrap" id="t-codes" style="max-height:420px;overflow:auto"></div></div>
-    <div class="card" data-sec="zones"><div class="card-head"><h2>ზონები — ცხრილი</h2></div><div class="card-body flush table-wrap" id="t-zones" style="max-height:420px;overflow:auto"></div></div>
-  </div>
+  <section class="sec" data-sec="operators">
+    <div class="sec-head">
+      <h2><span class="sec-num">ცხრილი 3</span> QC ოპერატორები</h2>
+      <p>გავლილი = გაგზავნილი (დაზუსტების კითხვის ჩათვლით) · დღიური საშუალო = შემოწმებული ÷ აქტიური დღე. სათაურზე დაწკაპუნება ალაგებს.</p>
+    </div>
+    <div class="card"><div class="card-body flush table-wrap" id="t-operators"></div></div>
+  </section>
+
+  <section class="sec" data-sec="surveyors">
+    <div class="sec-head">
+      <h2><span class="sec-num">ცხრილი 4</span> ამზომველები
+        <span class="sec-tools"><input type="search" id="surv-q" placeholder="ამზომველის ძებნა…" aria-label="ამზომველის ძებნა" style="width:220px"></span></h2>
+      <p>ოქმის ყველა ამზომველი იღებს შემთხვევას; მენეჯერები სიაში არ შედიან.</p>
+    </div>
+    <div class="card"><div class="card-body flush table-wrap" id="t-surveyors" style="max-height:520px;overflow:auto"></div></div>
+  </section>
+
+  <section class="sec" data-sec="codes">
+    <div class="sec-head">
+      <h2><span class="sec-num">დიაგრამა 5</span> ხარვეზების განაწილება კოდების მიხედვით</h2>
+      <p>წილი = კოდის რაოდენობა უარყოფით ოქმებში ÷ ყველა კოდის ჯამი. წითელი — კრიტიკული, ნარინჯისფერი — მნიშვნელოვანი. ერთი კოდი ერთ ოქმზე ერთხელ ითვლება.</p>
+    </div>
+    <div class="split-codes">
+      <div class="card chart-card"><div class="chart" id="ch-codes" role="img" aria-label="ხარვეზის კოდების სიხშირე"></div></div>
+      <div class="card"><div class="card-body flush table-wrap" id="t-codes" style="max-height:560px;overflow:auto"></div></div>
+    </div>
+  </section>
+
+  <section class="sec" data-sec="zones">
+    <div class="sec-head">
+      <h2><span class="sec-num">დიაგრამა 6</span> ხარვეზების რუკა — ზონები</h2>
+      <p>ფერი ასახავს ხარვეზიანი ოქმების წილს (ყვითელი → წითელი). ზონა &lt;10 შემოწმებით ფერს არ იღებს. რეიტინგში ზონაზე დაწკაპუნება რუკაზე ანათებს მას; რუკის მასშტაბი — ბორბლით.</p>
+    </div>
+    <div class="mapgrid">
+      <div class="card chart-card"><div class="chart tall" id="ch-map" role="img" aria-label="ზონების რუკა ხარვეზის პროცენტით"></div></div>
+      <aside class="card mappanel" id="zone-rank" aria-label="ზონების რეიტინგი"></aside>
+    </div>
+    <details class="card edit-box" style="padding:0 22px 4px;margin-top:0">
+      <summary style="padding:14px 0">ზონები — სრული ცხრილი</summary>
+      <div class="table-wrap" id="t-zones" style="max-height:420px;overflow:auto;margin:0 -22px"></div>
+    </details>
+  </section>
 
   {% if restricted or false_fix %}
-  <div class="card" data-sec="restricted" style="border-color:#e6b4ae">
-    <div class="card-head" style="background:#fdf5f4"><h2>შეზღუდული სტატისტიკა</h2><span class="muted small">საერთო სტატისტიკაში არ შედის · ხედავს: {% if restricted %}QC მენეჯერი, ადმინისტრატორი{% else %}საველე მენეჯერი (საკუთარი გუნდი), QC მენეჯერი, ადმინისტრატორი{% endif %}</span></div>
-    <div class="card-body">
-      <div class="grid-2">
-        {% if restricted %}<div style="grid-column:1/-1"><h3 style="font-size:14px;margin-bottom:8px">ოპერატორის შეცდომები — „ველი მართალია“ + QC მენეჯერის შეფასებები</h3><div class="table-wrap" id="t-qcerr"></div><p class="hint" id="legacy-flags"></p></div>{% endif %}
-        <div><h3 style="font-size:14px;margin-bottom:8px">„შესწორდა“ — მაგრამ QC-მ გაუსწორებელი ნახა</h3><div class="table-wrap" id="t-falsefix"></div></div>
+  <section class="sec" data-sec="restricted">
+    <div class="sec-head">
+      <h2><span class="sec-num">შეზღუდული</span> შეზღუდული სტატისტიკა</h2>
+      <p>საერთო სტატისტიკაში არ შედის · ხედავს: {% if restricted %}QC მენეჯერი, ადმინისტრატორი{% else %}საველე მენეჯერი (საკუთარი გუნდი), QC მენეჯერი, ადმინისტრატორი{% endif %}</p>
+    </div>
+    <div class="card card-tint card-restricted">
+      <div class="card-body">
+        <div class="grid-2">
+          {% if restricted %}<div style="grid-column:1/-1"><h3 style="font-size:14px;margin-bottom:8px">ოპერატორის შეცდომები — „ველი მართალია“ + QC მენეჯერის შეფასებები</h3><div class="table-wrap" id="t-qcerr"></div><p class="hint" id="legacy-flags"></p></div>{% endif %}
+          <div><h3 style="font-size:14px;margin-bottom:8px">„შესწორდა“ — მაგრამ QC-მ გაუსწორებელი ნახა</h3><div class="table-wrap" id="t-falsefix"></div></div>
+        </div>
       </div>
     </div>
-  </div>
+  </section>
   {% endif %}
+
+  <section class="sec">
+    <div class="sec-head">
+      <h2>შეჯამება და დასკვნები</h2>
+      <p>გამოთვლილია ზემოთ არჩეული ჭრილისთვის — იგივე მონაცემიდან, რასაც დიაგრამები აჩვენებს.</p>
+    </div>
+    <div class="insights" id="insights"></div>
+  </section>
 </div>
 {% endblock %}
 {% block scripts %}

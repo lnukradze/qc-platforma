@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_macros.html" import state_chip, verdict, response %}
+{% from "_icons.html" import icon %}
 {% block title %}{{ item.protocol_number }} · {{ item.cadcode }}{% endblock %}
 {% block content %}
 {%- set qc_side = ctx.role in (D.QC_OPERATOR, D.QC_MANAGER, D.ADMIN) -%}
@@ -7,7 +8,8 @@
 <div class="page-head">
   <div>
     <div class="small"><a href="{{ back }}">← უკან სიაში</a>{% if next_id %} · <a href="/items/{{ next_id }}?back={{ back|urlencode }}&queue=1">შემდეგი ოქმი →</a>{% endif %}</div>
-    <h1 class="mono">ოქმი {{ item.protocol_number }} <span class="muted">·</span> {{ item.cadcode }}</h1>
+    <h1 class="mono">ოქმი {{ item.protocol_number }}</h1>
+    <div class="ws-cad" title="საკადასტრო კოდი" style="margin-top:8px">{% for part in (item.cadcode or '').split('.') %}<span>{{ part }}</span>{% endfor %}</div>
     <div class="sub" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px">
       {{ state_chip(item.state, view, item.close_reason, item.is_draft) }}
       <span class="tag {% if item.kind == D.SPORADIC %}kind-sporadic{% endif %}">{{ KIND_LABELS[item.kind] }}</span>
@@ -25,6 +27,36 @@
     <span class="counter" title="ერთდროული ცვლილებისგან დაცვა">ვერსია {{ item.version }}</span>
   </div>
 </div>
+
+{# ── სამუშაო პროცესის ნაბიჯები — მხოლოდ item.state-დან (ლოგიკა არ იცვლება) ── #}
+{%- set st_idx = {D.PENDING: 0, D.AWAITING_FIELD: 1, D.AWAITING_MANAGER: 2, D.AWAITING_QCM: 2, D.RETURNED_TO_MANAGER: 2, D.AWAITING_QC: 3, D.CLOSED: 4}.get(item.state, 0) -%}
+{%- set wf_steps = [('QC შეფასება', 'ვერდიქტი და კოდები'), ('ველზე', 'ამზომველის პასუხი'), ('განხილვა', 'მენეჯერი / QC მენეჯერი'), ('გადამოწმება', 'QC ამოწმებს პასუხს'), ('დახურული', CLOSE_REASON_LABELS[item.close_reason] if item.close_reason else 'დასრულება')] -%}
+{#- რომელი ნაბიჯი შედგა სინამდვილეში — ისტორიიდან. არასავალდებულო ნაბიჯი, რომელიც არ შედგა,
+    „გამოტოვებულია“ და არა „შესრულებული“ (მაგ. „განხილვა“ დავის გარეშე, „ველზე“ დადებით ვერდიქტზე). -#}
+{%- set ev_actions = events|map(attribute='action')|list -%}
+{%- set review_acts = ['manager_approved', 'manager_rejected', 'manager_responded', 'qcm_stand', 'qcm_field_right', 'qcm_both_right'] -%}
+{%- set verify_acts = ['qc_confirmed', 'qc_returned', 'clarification_resolved'] -%}
+{%- set wf = namespace(review=((item.dispute_count or 0) > 0 or st_idx == 2), verify=(st_idx == 3)) -%}
+{%- for a in ev_actions -%}
+  {%- if a in review_acts %}{% set wf.review = true %}{% endif -%}
+  {%- if a in verify_acts %}{% set wf.verify = true %}{% endif -%}
+{%- endfor -%}
+{%- set wf_field = st_idx in (1, 2, 3) or item.field_response or (item.first_sent_at and item.verdict != D.POSITIVE) or wf.review or wf.verify -%}
+{%- set wf_happened = [true, wf_field, wf.review, wf.verify or item.close_reason in (D.CR_CORRECTED, D.CR_ACKNOWLEDGED), item.state == D.CLOSED] -%}
+<ol class="stepper" aria-label="სამუშაო პროცესი">
+  {% for t, h in wf_steps %}
+  {%- set i = loop.index0 -%}
+  {%- set is_now = i == st_idx and item.state != D.CLOSED -%}
+  {%- set is_past = i < st_idx or item.state == D.CLOSED -%}
+  {%- set is_done = is_past and wf_happened[i] -%}
+  {%- set is_skip = is_past and not wf_happened[i] -%}
+  <li class="step-i {% if is_done %}done{% elif is_skip %}skipped{% elif is_now %}now{% endif %}"{% if is_now %} aria-current="step"{% endif %}>
+    <span class="dot" aria-hidden="true">{% if is_done %}✓{% elif is_skip %}–{% else %}{{ loop.index }}{% endif %}</span>
+    <span class="lbl">{{ t }}</span>
+    <span class="hint">{% if is_now %}{{ STATE_LABELS[item.state] }}{% elif is_skip %}გამოტოვებული — არ დასჭირდა{% else %}{{ h }}{% endif %}</span>
+  </li>
+  {% endfor %}
+</ol>
 
 {% if item.field_response %}
 <div class="resp-banner resp-{{ RESPONSE_STYLE[item.field_response] }}">
@@ -89,7 +121,7 @@
     {% else %}
       <dl class="kv">
         <dt>ვერდიქტი</dt><dd>{{ verdict(item.verdict) }}{% if item.original_verdict and item.original_verdict != item.verdict %} <span class="muted small">(თავდაპირველად: {{ VERDICT_LABELS[item.original_verdict] }})</span>{% endif %}</dd>
-        <dt>კოდები</dt><dd>{% for c in item.codes %}{% set dc = catalog_map.get(c.code) %}<span class="code sev-{{ dc.severity if dc else '' }}" title="{{ dc.name if dc else '' }}">{{ c.code }}</span> <span class="small">{{ dc.name if dc else '' }}</span><br>{% else %}—{% endfor %}</dd>
+        <dt>კოდები</dt><dd>{% if item.codes %}<div class="defects">{% for c in item.codes %}{% set dc = catalog_map.get(c.code) %}<div class="defect sev-{{ dc.severity if dc else '' }}"><span class="code sev-{{ dc.severity if dc else '' }}" title="{{ dc.name if dc else '' }}">{{ c.code }}</span><span class="d-name">{{ dc.name if dc else '' }}</span>{% if dc %}<span class="d-sev">{{ SEVERITY_LABELS.get(dc.severity, '') }}</span>{% endif %}</div>{% endfor %}</div>{% else %}—{% endif %}</dd>
       </dl>
       {% if item.qc_comment %}<div class="quote" style="margin-top:10px">{{ item.qc_comment }}</div>{% endif %}
 
@@ -347,7 +379,13 @@
   {% endif %}
 </div>
 
-<div>
+<div class="ws-side">
+  {% if item.zone %}
+  <div class="card">
+    <div class="card-head"><h2>{{ icon('map', 16) }} ზონა რუკაზე</h2><span class="muted small">{{ item.zone }}{% if zone_name %} — {{ zone_name }}{% endif %}</span></div>
+    <div class="card-body"><div class="zone-map" data-zone="{{ item.zone }}" role="img" aria-label="ზონა {{ item.zone }} საქართველოს რუკაზე"></div></div>
+  </div>
+  {% endif %}
   <div class="card">
     <div class="card-head"><h2>ისტორია</h2><span class="muted small">{{ events|length }} ჩანაწერი</span></div>
     <div class="card-body">

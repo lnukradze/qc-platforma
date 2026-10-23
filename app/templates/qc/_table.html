@@ -1,6 +1,7 @@
 {% from "_macros.html" import state_chip, verdict, response, codes, pager, legend, surveyors, managers, presence %}
+{% from "_icons.html" import icon %}
 {%- set base = list_url|default('/qc') -%}
-<div class="card">
+<div class="card" data-board="qc" data-total="{{ total }}" data-page="{{ page }}" data-pages="{{ pages }}">
   <div class="card-head">
     {{ legend('qc') }}
     <span class="muted small">{{ total|num }} ჩანაწერი</span>
@@ -20,7 +21,7 @@
         {% for i in rows %}
           <tr class="clickable r-{{ operator_color(i.state, i.is_draft) }}" data-id="{{ i.id }}" data-href="/items/{{ i.id }}?back={{ (base ~ '?' ~ qs())|urlencode }}{% if tab == 'todo' %}&queue=1{% endif %}">
             {% if tab == 'todo' %}<td data-label="">{% if i.state == D.PENDING %}<input type="checkbox" name="ids" value="{{ i.id }}" {% if not i.verdict %}disabled title="ჯერ მიანიჭეთ ვერდიქტი და შეინახეთ"{% endif %} aria-label="მონიშვნა">{% endif %}</td>{% endif %}
-            <td data-label="ოქმის#" class="mono">{{ presence(i) }}<a href="/items/{{ i.id }}?back={{ (base ~ '?' ~ qs())|urlencode }}">{{ i.protocol_number }}</a>{% if i.kind == D.SPORADIC %} <span class="tag kind-sporadic">სპორ.</span>{% endif %}</td>
+            <td data-label="ოქმის#" class="mono">{{ presence(i) }}<a href="/items/{{ i.id }}?back={{ (base ~ '?' ~ qs())|urlencode }}">{{ i.protocol_number }}</a><button type="button" class="peek" data-peek="/items/{{ i.id }}" aria-label="სწრაფი ნახვა — {{ i.protocol_number }}" title="სწრაფი ნახვა">{{ icon('eye', 15) }}</button>{% if i.kind == D.SPORADIC %} <span class="tag kind-sporadic">სპორ.</span>{% endif %}</td>
             <td data-label="საკ. კოდი" class="cad">{{ i.cadcode }}</td>
             <td data-label="ნახაზი" class="nowrap">{{ i.drawing_date|date }}</td>
             <td data-label="ამზომველი">{{ surveyors(i) }}</td>

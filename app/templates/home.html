@@ -1,159 +1,227 @@
 {% extends "base.html" %}
 {% from "_macros.html" import state_chip %}
+{% from "_icons.html" import icon %}
 {% block title %}მთავარი{% endblock %}
 {% block content %}
 {% set r = ctx.role %}
 {% set k = data.kpi %}
-<div class="page-head">
+{# ── ბრიფინგი: „დღეს რა მელოდება?“ — მხოლოდ რეალური რიცხვები, როლის მიხედვით ── #}
+<section class="brief" aria-label="დღის მიმოხილვა">
+  <svg class="brief-contour" viewBox="0 0 640 260" fill="none" stroke="currentColor" aria-hidden="true">{% for i in range(9) %}<ellipse cx="470" cy="150" rx="{{ 40 + i * 34 }}" ry="{{ 22 + i * 17 }}" transform="rotate({{ -8 + i }} 470 150)" stroke-width="{{ 1.3 if i == 3 else 0.7 }}" opacity="{{ 1 - i * 0.09 }}"/>{% endfor %}</svg>
   <div>
-    <h1>გამარჯობა, {{ ctx.user.full_name.split(' ')[0] }}</h1>
-    <div class="sub">{{ ROLE_LABELS[r] }} · {{ now()|date }}</div>
-  </div>
-</div>
-
-<div class="sections">
-  <section class="section-card">
-    <h2><span class="ico preqc">P</span>პრე ხარვეზები</h2>
-    <div class="muted small">პროგრამის მიერ ავტომატურად შემოწმებული ოქმები (გაგზავნამდე)</div>
-    {% if r in (D.SURVEYOR, D.FIELD_MANAGER) and data.preqc %}
-      <div class="rows">
-        <div class="row"><span>შემოწმებული ოქმი</span><b>{{ data.preqc[0]|num }}</b></div>
-        <div class="row"><span>გასასწორებელი (კრიტიკული)</span><b class="v-negative">{{ (data.preqc[1] or 0)|num }}</b></div>
-      </div>
-      <a class="btn btn-secondary btn-sm" href="/preqc">Pre-QC ხარვეზები →</a>
-    {% elif r in (D.QC_OPERATOR, D.QC_MANAGER) %}
-      <p class="disabled">ეს განყოფილება კონტროლს განზრახ არ უჩანს — QC-ის შეფასება დამოუკიდებელი უნდა დარჩეს.</p>
-    {% else %}
-      <p class="disabled">Pre-QC მხოლოდ საველე მენეჯერს და ამზომველებს უჩანს. საჩვენებლად შედით „საველე მენეჯერი (დემო)“-თი.</p>
-    {% endif %}
-  </section>
-
-  <section class="section-card">
-    <h2><span class="ico qc">Q</span>ხარისხის კონტროლის ხარვეზები</h2>
+    <div class="eyebrow">{{ ROLE_LABELS[r] }} · {{ now()|date }}</div>
+    <h1 class="brief-title">გამარჯობა, {{ ctx.user.full_name.split(' ')[0] }}</h1>
     {% if r == D.QC_OPERATOR %}
-      <div class="day-mini"><span class="day-num">{{ data.daily.today|num }}</span><span>დღეს გავლილი<br><small class="muted">გუშინ {{ data.daily.yesterday|num }} · ამ კვირაში {{ data.daily.week|num }}</small></span></div>
-      <div class="rows">
-        <div class="row"><span><span class="sw gray"></span> გასავლელი</span><b>{{ data.colors.gray|num }}</b></div>
-        <div class="row"><span><span class="sw draft"></span> შენახული — გასაგზავნი</span><b>{{ data.colors.draft|num }}</b></div>
-        <div class="row"><span><span class="sw yellow"></span> უკან მობრუნებული პასუხი</span><b>{{ data.colors.yellow|num }}</b></div>
-        <div class="row"><span><span class="sw lightgreen"></span> გაგზავნილი, ველზე</span><b>{{ data.colors.lightgreen|num }}</b></div>
-        <div class="row"><span><span class="sw green"></span> დასრულებული</span><b>{{ data.colors.green|num }}</b></div>
-      </div>
-      <div class="form-actions"><a class="btn btn-primary btn-sm" href="/qc/next">▶ შემდეგი ოქმი</a><a class="btn btn-secondary btn-sm" href="/qc?tab=returned">უკან მობრუნებული ({{ data.colors.yellow }})</a></div>
+      <p class="brief-lead">დღეს გავლილი გაქვთ <b>{{ data.daily.today|num }}</b> ოქმი. რიგში გელოდებათ <b>{{ data.colors.gray|num }}</b> გასავლელი{% if data.colors.yellow %} და <b>{{ data.colors.yellow|num }}</b> უკან მობრუნებული პასუხი{% endif %}.</p>
+      <div class="brief-actions"><a class="btn btn-primary btn-lg" href="/qc/next">▶ შემდეგი ოქმი</a><a class="btn btn-secondary btn-lg" href="/qc">ჩემი სია</a></div>
     {% elif r in (D.QC_MANAGER, D.ADMIN) %}
-      <div class="rows">
-        <div class="row"><span>გასავლელი (ყველა ოპერატორი)</span><b>{{ data.colors.gray|num }}</b></div>
-        <div class="row"><span>გადასამოწმებელი პასუხი</span><b>{{ data.colors.yellow|num }}</b></div>
-        <div class="row"><span>არ დათანხმებული — გადასაწყვეტი</span><b class="v-negative">{{ data.disputes|num }}</b></div>
-        <div class="row"><span>სტატუსის შეცვლის მოთხოვნა</span><b>{{ data.requests|num }}</b></div>
-      </div>
-      <div class="form-actions"><a class="btn btn-primary btn-sm" href="/qc/disagreements">არ დათანხმებულები →</a><a class="btn btn-secondary btn-sm" href="/qc/requests">მოთხოვნები</a><a class="btn btn-secondary btn-sm" href="/distribution">განაწილება</a></div>
+      <p class="brief-lead">გადასაწყვეტია <b class="v-negative">{{ data.disputes|num }}</b> არ დათანხმებული და <b>{{ data.requests|num }}</b> სტატუსის მოთხოვნა. ოპერატორებთან გასავლელია <b>{{ data.colors.gray|num }}</b> ოქმი, გადასამოწმებელი პასუხი — <b>{{ data.colors.yellow|num }}</b>.</p>
+      <div class="brief-actions"><a class="btn btn-primary btn-lg" href="/qc/disagreements">არ დათანხმებულები →</a><a class="btn btn-secondary btn-lg" href="/distribution">განაწილება</a></div>
     {% elif r in (D.FIELD_MANAGER, D.SURVEYOR) %}
-      {% set fs = data.field %}
-      <div class="rows">
-        <div class="row"><span><span class="sw orange"></span> პასუხი სჭირდება</span><b>{{ (fs.get(D.AWAITING_FIELD, 0))|num }}</b></div>
-        {% if r == D.FIELD_MANAGER %}
-        <div class="row"><span><span class="sw blue"></span> ჩემი დადასტურების მოლოდინში („არ ვეთანხმები“)</span><b>{{ (fs.get(D.AWAITING_MANAGER, 0))|num }}</b></div>
-        {% endif %}
-        <div class="row"><span><span class="sw blue"></span> მენეჯერთან დაბრუნებული</span><b>{{ (fs.get(D.RETURNED_TO_MANAGER, 0))|num }}</b></div>
-        <div class="row"><span><span class="sw lightgreen"></span> QC-ის გადამოწმებაზე</span><b>{{ (fs.get(D.AWAITING_QC, 0) + fs.get(D.AWAITING_QCM, 0))|num }}</b></div>
-      </div>
-      <a class="btn btn-primary btn-sm" href="/field">ველის შემთხვევები →</a>
-    {% else %}
+      <p class="brief-lead">პასუხი სჭირდება <b>{{ (data.field.get(D.AWAITING_FIELD, 0))|num }}</b> შემთხვევას{% if r == D.FIELD_MANAGER and data.field.get(D.AWAITING_MANAGER, 0) %}, თქვენს დადასტურებას ელოდება <b>{{ data.field.get(D.AWAITING_MANAGER, 0)|num }}</b>{% endif %}. ნარინჯისფერი ნიშნავს: პასუხი თქვენზეა.</p>
+      <div class="brief-actions"><a class="btn btn-primary btn-lg" href="/field">ველის შემთხვევები →</a>{% if data.preqc %}<a class="btn btn-secondary btn-lg" href="/preqc">Pre-QC ხარვეზები</a>{% endif %}</div>
+    {% elif k %}
+      <p class="brief-lead">სისტემაში შემოწმებულია <b>{{ k.checked|num }}</b> ოქმი; ხარვეზის წილი — <b>{{ k.defect_rate }}%</b>, ველზე ღიაა <b>{{ k.in_field|num }}</b>.</p>
+      <div class="brief-actions"><a class="btn btn-primary btn-lg" href="/stats">სტატისტიკა →</a>{% if r == D.COORDINATOR %}<a class="btn btn-secondary btn-lg" href="/checked">გავლილი ოქმები</a>{% endif %}</div>
+    {% endif %}
+  </div>
+  <div class="brief-figure" aria-hidden="true">
+    {% if r == D.QC_OPERATOR %}<span class="n">{{ data.daily.today|num }}</span><span class="l">დღეს გავლილი · გუშინ {{ data.daily.yesterday|num }} · კვირაში {{ data.daily.week|num }}</span>
+    {% elif r in (D.QC_MANAGER, D.ADMIN) %}<span class="n v-negative">{{ data.disputes|num }}</span><span class="l">არ დათანხმებული — გადასაწყვეტი</span>
+    {% elif r in (D.FIELD_MANAGER, D.SURVEYOR) %}<span class="n">{{ (data.field.get(D.AWAITING_FIELD, 0))|num }}</span><span class="l">პასუხი სჭირდება</span>
+    {% elif k %}<span class="n">{{ k.defect_rate }}%</span><span class="l">ხარვეზის წილი</span>{% endif %}
+  </div>
+</section>
+
+<div class="bento">
+<div class="bento-main">
+  {# ── ნაკადი: ოქმები ფერის (მდგომარეობის) მიხედვით — ის ფერები, რაც QC სიაშია ── #}
+  {% if data.colors %}{% set c = data.colors %}{% set ctot = c.gray + c.draft + c.yellow + c.lightgreen + c.green %}
+  {% if ctot %}
+  <section class="card flow" aria-label="ოქმები მდგომარეობის მიხედვით">
+    <div class="flow-head"><h2>{% if r == D.QC_OPERATOR %}ჩემი ოქმები{% else %}ყველა ოპერატორის ოქმები{% endif %} — სად არის ახლა</h2><span class="muted small">სულ {{ ctot|num }}</span></div>
+    {% set segs = [('gray', 'გასავლელი', 'todo'), ('draft', 'შენახული — გასაგზავნი', 'todo'), ('yellow', 'ველმა უპასუხა', 'returned'), ('lightgreen', 'გაგზავნილი, ველზე', 'sent'), ('green', 'დასრულებული', 'closed')] %}
+    <div class="flow-bar" role="img" aria-label="{% for key, lbl, _t in segs %}{{ lbl }}: {{ c[key] }}{% if not loop.last %}, {% endif %}{% endfor %}">
+      {% for key, lbl, _t in segs if c[key] %}<span class="flow-seg c-{{ key }}" style="flex:{{ c[key] }} 1 0;animation-delay:{{ loop.index0 * 70 }}ms" title="{{ lbl }}: {{ c[key]|num }}"></span>{% endfor %}
+    </div>
+    <div class="flow-legend">
+      {% for key, lbl, t in segs %}
+      <a class="flow-item c-{{ key }}" href="/qc?tab={{ t }}"><span class="flow-name"><i class="sw {{ key }}"></i>{{ lbl }}</span><span class="flow-num">{{ c[key]|num }}</span><span class="muted small">{{ (100 * c[key] / ctot)|round(1) }}%</span></a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}{% endif %}
+
+  {% if r in (D.QC_MANAGER, D.ADMIN) and data.operators %}
+  <div class="card">
+    <div class="card-head"><h2>ოპერატორების დატვირთვა ახლა</h2><span class="muted small">{% if data.last_run %}ბოლო განაწილება: {{ data.last_run.created_at|dt }} · {{ data.last_run.item_count|num }} ოქმი{% endif %}</span></div>
+    <div class="card-body flush table-wrap">
+      <table class="data compact">
+        <thead><tr><th>ოპერატორი</th><th class="num">გასავლელი</th><th class="num">უკან მობრუნებული</th><th class="num">ველზე / მენეჯერებთან</th><th class="num">დასრულებული</th><th style="width:30%">განაწილება</th></tr></thead>
+        <tbody>
+        {% for o in data.operators %}
+          {% set tot = o.gray + o.yellow + o.lightgreen + o.green %}
+          <tr>
+            <td>{{ o.name }}</td>
+            <td class="num">{{ o.gray|num }}</td><td class="num">{{ o.yellow|num }}</td>
+            <td class="num">{{ o.lightgreen|num }}</td><td class="num">{{ o.green|num }}</td>
+            <td><div class="loadbar" title="ნაცრისფერი/ყვითელი/ღია მწვანე/მწვანე">
+              {% if tot %}<span class="c-gray" style="width:{{ 100*o.gray/tot }}%"></span><span class="c-yellow" style="width:{{ 100*o.yellow/tot }}%"></span><span class="c-lightgreen" style="width:{{ 100*o.lightgreen/tot }}%"></span><span class="c-green" style="width:{{ 100*o.green/tot }}%"></span>{% endif %}
+            </div>{% if tot %}<div class="small muted" style="margin-top:4px">დასრულებული {{ (100 * o.green / tot)|round|int }}%</div>{% endif %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="sections">
+    <section class="section-card">
+      <h2><span class="ico preqc">P</span>პრე ხარვეზები</h2>
+      <div class="muted small">პროგრამის მიერ ავტომატურად შემოწმებული ოქმები (გაგზავნამდე)</div>
+      {% if r in (D.SURVEYOR, D.FIELD_MANAGER) and data.preqc %}
+        <div class="rows">
+          <div class="row"><span>შემოწმებული ოქმი</span><b>{{ data.preqc[0]|num }}</b></div>
+          <div class="row"><span>გასასწორებელი (კრიტიკული)</span><b class="v-negative">{{ (data.preqc[1] or 0)|num }}</b></div>
+        </div>
+        <a class="btn btn-secondary btn-sm" href="/preqc">Pre-QC ხარვეზები →</a>
+      {% elif r in (D.QC_OPERATOR, D.QC_MANAGER) %}
+        <p class="disabled">ეს განყოფილება კონტროლს განზრახ არ უჩანს — QC-ის შეფასება დამოუკიდებელი უნდა დარჩეს.</p>
+      {% else %}
+        <p class="disabled">Pre-QC მხოლოდ საველე მენეჯერს და ამზომველებს უჩანს. საჩვენებლად შედით „საველე მენეჯერი (დემო)“-თი.</p>
+      {% endif %}
+    </section>
+
+    <section class="section-card">
+      <h2><span class="ico qc">Q</span>ხარისხის კონტროლის ხარვეზები</h2>
+      {% if r == D.QC_OPERATOR %}
+        <div class="day-mini"><span class="day-num">{{ data.daily.today|num }}</span><span>დღეს გავლილი<br><small class="muted">გუშინ {{ data.daily.yesterday|num }} · ამ კვირაში {{ data.daily.week|num }}</small></span></div>
+        <div class="rows">
+          <div class="row"><span><span class="sw gray"></span> გასავლელი</span><b>{{ data.colors.gray|num }}</b></div>
+          <div class="row"><span><span class="sw draft"></span> შენახული — გასაგზავნი</span><b>{{ data.colors.draft|num }}</b></div>
+          <div class="row"><span><span class="sw yellow"></span> უკან მობრუნებული პასუხი</span><b>{{ data.colors.yellow|num }}</b></div>
+          <div class="row"><span><span class="sw lightgreen"></span> გაგზავნილი, ველზე</span><b>{{ data.colors.lightgreen|num }}</b></div>
+          <div class="row"><span><span class="sw green"></span> დასრულებული</span><b>{{ data.colors.green|num }}</b></div>
+        </div>
+        <div class="form-actions"><a class="btn btn-primary btn-sm" href="/qc/next">▶ შემდეგი ოქმი</a><a class="btn btn-secondary btn-sm" href="/qc?tab=returned">უკან მობრუნებული ({{ data.colors.yellow }})</a></div>
+      {% elif r in (D.QC_MANAGER, D.ADMIN) %}
+        <div class="rows">
+          <div class="row"><span>გასავლელი (ყველა ოპერატორი)</span><b>{{ data.colors.gray|num }}</b></div>
+          <div class="row"><span>გადასამოწმებელი პასუხი</span><b>{{ data.colors.yellow|num }}</b></div>
+          <div class="row"><span>არ დათანხმებული — გადასაწყვეტი</span><b class="v-negative">{{ data.disputes|num }}</b></div>
+          <div class="row"><span>სტატუსის შეცვლის მოთხოვნა</span><b>{{ data.requests|num }}</b></div>
+        </div>
+        <div class="form-actions"><a class="btn btn-primary btn-sm" href="/qc/disagreements">არ დათანხმებულები →</a><a class="btn btn-secondary btn-sm" href="/qc/requests">მოთხოვნები</a><a class="btn btn-secondary btn-sm" href="/distribution">განაწილება</a></div>
+      {% elif r in (D.FIELD_MANAGER, D.SURVEYOR) %}
+        {% set fs = data.field %}
+        <div class="rows">
+          <div class="row"><span><span class="sw orange"></span> პასუხი სჭირდება</span><b>{{ (fs.get(D.AWAITING_FIELD, 0))|num }}</b></div>
+          {% if r == D.FIELD_MANAGER %}
+          <div class="row"><span><span class="sw blue"></span> ჩემი დადასტურების მოლოდინში („არ ვეთანხმები“)</span><b>{{ (fs.get(D.AWAITING_MANAGER, 0))|num }}</b></div>
+          {% endif %}
+          <div class="row"><span><span class="sw blue"></span> მენეჯერთან დაბრუნებული</span><b>{{ (fs.get(D.RETURNED_TO_MANAGER, 0))|num }}</b></div>
+          <div class="row"><span><span class="sw lightgreen"></span> QC-ის გადამოწმებაზე</span><b>{{ (fs.get(D.AWAITING_QC, 0) + fs.get(D.AWAITING_QCM, 0))|num }}</b></div>
+        </div>
+        <a class="btn btn-primary btn-sm" href="/field">ველის შემთხვევები →</a>
+      {% else %}
+        <div class="rows">
+          <div class="row"><span>შემოწმებული</span><b>{{ k.checked|num }}</b></div>
+          <div class="row"><span>ველზე ღია</span><b>{{ k.in_field|num }}</b></div>
+          <div class="row"><span>არ დათანხმებული</span><b>{{ k.awaiting_qcm|num }}</b></div>
+          <div class="row"><span>დაზუსტების პროცესში</span><b>{{ k.in_clarification|num }}</b></div>
+        </div>
+        {% if r == D.COORDINATOR %}<a class="btn btn-secondary btn-sm" href="/checked">გავლილი ოქმები →</a>{% endif %}
+      {% endif %}
+    </section>
+
+    <section class="section-card">
+      <h2><span class="ico st">%</span>ხარვეზების სტატისტიკა</h2>
+      {% if k %}
       <div class="rows">
         <div class="row"><span>შემოწმებული</span><b>{{ k.checked|num }}</b></div>
-        <div class="row"><span>ველზე ღია</span><b>{{ k.in_field|num }}</b></div>
-        <div class="row"><span>არ დათანხმებული</span><b>{{ k.awaiting_qcm|num }}</b></div>
-        <div class="row"><span>დაზუსტების პროცესში</span><b>{{ k.in_clarification|num }}</b></div>
+        <div class="row"><span>ხარვეზი (უარყოფითი)</span><b class="v-negative">{{ k.defect_rate }}%</b></div>
+        <div class="row"><span>კრიტიკული ხარვეზი</span><b>{{ k.critical_rate }}%</b></div>
+        <div class="row"><span>უარყოფითიდან გასწორდა</span><b class="v-positive">{{ k.corrected_rate }}%</b></div>
       </div>
-      {% if r == D.COORDINATOR %}<a class="btn btn-secondary btn-sm" href="/checked">გავლილი ოქმები →</a>{% endif %}
-    {% endif %}
-  </section>
-
-  <section class="section-card">
-    <h2><span class="ico st">%</span>ხარვეზების სტატისტიკა</h2>
-    {% if k %}
-    <div class="rows">
-      <div class="row"><span>შემოწმებული</span><b>{{ k.checked|num }}</b></div>
-      <div class="row"><span>ხარვეზი (უარყოფითი)</span><b class="v-negative">{{ k.defect_rate }}%</b></div>
-      <div class="row"><span>კრიტიკული ხარვეზი</span><b>{{ k.critical_rate }}%</b></div>
-      <div class="row"><span>უარყოფითიდან გასწორდა</span><b class="v-positive">{{ k.corrected_rate }}%</b></div>
-    </div>
-    {% endif %}
-    <a class="btn btn-secondary btn-sm" href="/stats">სტატისტიკა →</a>
-  </section>
-</div>
-
-{% if r in (D.QC_MANAGER, D.ADMIN) and data.operators %}
-<div class="card">
-  <div class="card-head"><h2>ოპერატორების დატვირთვა ახლა</h2><span class="muted small">{% if data.last_run %}ბოლო განაწილება: {{ data.last_run.created_at|dt }} · {{ data.last_run.item_count|num }} ოქმი{% endif %}</span></div>
-  <div class="card-body flush table-wrap">
-    <table class="data compact">
-      <thead><tr><th>ოპერატორი</th><th class="num">გასავლელი</th><th class="num">უკან მობრუნებული</th><th class="num">ველზე / მენეჯერებთან</th><th class="num">დასრულებული</th><th style="width:30%">განაწილება</th></tr></thead>
-      <tbody>
-      {% for o in data.operators %}
-        {% set tot = o.gray + o.yellow + o.lightgreen + o.green %}
-        <tr>
-          <td>{{ o.name }}</td>
-          <td class="num">{{ o.gray|num }}</td><td class="num">{{ o.yellow|num }}</td>
-          <td class="num">{{ o.lightgreen|num }}</td><td class="num">{{ o.green|num }}</td>
-          <td><div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#eef1f5" title="ნაცრისფერი/ყვითელი/ღია მწვანე/მწვანე">
-            {% if tot %}<span style="width:{{ 100*o.gray/tot }}%;background:#b9c1cb"></span><span style="width:{{ 100*o.yellow/tot }}%;background:#f3d14c"></span><span style="width:{{ 100*o.lightgreen/tot }}%;background:#a8d996"></span><span style="width:{{ 100*o.green/tot }}%;background:#5bb35f"></span>{% endif %}
-          </div></td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
-{% endif %}
-
-{% if r == D.ADMIN %}
-<div class="grid-2">
-  <div class="card">
-    <div class="card-head"><h2>მონაცემთა წყაროები</h2></div>
-    <div class="card-body">
-      <dl class="kv">
-        <dt>კონტროლის ცხრილი</dt><dd>{% if data.import %}{{ data.import.item_count|num }} ჩანაწერი · წამოღებულია {{ data.import.report.fetched_at|dt }}{% endif %}</dd>
-        <dt>განაწილების წყარო</dt><dd>{% if data.source.ok %}{{ data.source.gdb_name }} · {{ data.source.rows|num }} ჩანაწერი{% else %}<span class="v-negative">{{ data.source.error }}</span>{% endif %}</dd>
-        <dt>მომხმარებლები</dt><dd>{{ data.users|num }} აქტიური · <a href="/admin?email=missing">{{ data.no_email|num }} — ელფოსტის გარეშე</a></dd>
-        <dt>Pre-QC</dt><dd><span class="tag demo">ფიქსირებული სადემონსტრაციო მონაცემი</span></dd>
-      </dl>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-head"><h2>გადმოტანის შედეგი</h2><a class="small" href="/admin/import">დეტალურად →</a></div>
-    <div class="card-body">
-      {% if data.import %}{% set rep = data.import.report %}
-      <dl class="kv">
-        <dt>წყაროს მწკრივები</dt><dd>{{ rep.source_rows|num }}</dd>
-        <dt>უნიკალური ოქმი+კოდი</dt><dd>{{ rep.unique_items|num }} <span class="muted">(დუბლიკატი მოცილდა: {{ rep.duplicates|num }})</span></dd>
-        <dt>ამზომველების მიბმა</dt><dd>{{ rep.planner_links.linked|num }} მიბმული · {{ rep.planner_links.unlinked|num }} მიუბმელი</dd>
-      </dl>
       {% endif %}
+      <a class="btn btn-secondary btn-sm" href="/stats">სტატისტიკა →</a>
+    </section>
+  </div>
+
+  {% if r == D.ADMIN %}
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-head"><h2>მონაცემთა წყაროები</h2></div>
+      <div class="card-body">
+        <dl class="kv">
+          <dt>კონტროლის ცხრილი</dt><dd>{% if data.import %}{{ data.import.item_count|num }} ჩანაწერი · წამოღებულია {{ data.import.report.fetched_at|dt }}{% endif %}</dd>
+          <dt>განაწილების წყარო</dt><dd>{% if data.source.ok %}{{ data.source.gdb_name }} · {{ data.source.rows|num }} ჩანაწერი{% else %}<span class="v-negative">{{ data.source.error }}</span>{% endif %}</dd>
+          <dt>მომხმარებლები</dt><dd>{{ data.users|num }} აქტიური · <a href="/admin?email=missing">{{ data.no_email|num }} — ელფოსტის გარეშე</a></dd>
+          <dt>Pre-QC</dt><dd><span class="tag demo">ფიქსირებული სადემონსტრაციო მონაცემი</span></dd>
+        </dl>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>გადმოტანის შედეგი</h2><a class="small" href="/admin/import">დეტალურად →</a></div>
+      <div class="card-body">
+        {% if data.import %}{% set rep = data.import.report %}
+        <dl class="kv">
+          <dt>წყაროს მწკრივები</dt><dd>{{ rep.source_rows|num }}</dd>
+          <dt>უნიკალური ოქმი+კოდი</dt><dd>{{ rep.unique_items|num }} <span class="muted">(დუბლიკატი მოცილდა: {{ rep.duplicates|num }})</span></dd>
+          <dt>ამზომველების მიბმა</dt><dd>{{ rep.planner_links.linked|num }} მიბმული · {{ rep.planner_links.unlinked|num }} მიუბმელი</dd>
+        </dl>
+        {% endif %}
+      </div>
     </div>
   </div>
+  {% endif %}
 </div>
-{% endif %}
 
-{% if recent %}
-<div class="card">
-  <div class="card-head"><h2>ბოლო მოქმედებები</h2></div>
-  <div class="card-body flush table-wrap">
-    <table class="data compact">
-      <thead><tr><th>დრო</th><th>მოქმედება</th><th>ოქმი / კოდი</th><th>ვინ</th><th>მდგომარეობა</th></tr></thead>
-      <tbody>
-      {% for e in recent %}
-      <tr class="clickable" data-href="/items/{{ e.item_id }}">
-        <td class="nowrap">{{ e.at|dt }}</td><td>{{ EVENT_LABELS.get(e.action, e.action) }}</td>
-        <td class="cad">{{ e.item.protocol_number }} · {{ e.item.cadcode }}</td>
-        <td>{{ e.actor.full_name if e.actor else '—' }}{% if e.actor_role %} <span class="muted small">({{ ROLE_SHORT.get(e.actor_role, e.actor_role) }})</span>{% endif %}</td>
-        <td>{% if e.to_state %}{{ state_chip(e.to_state) }}{% endif %}</td>
-      </tr>
-      {% endfor %}
-      </tbody>
-    </table>
+<aside class="bento-side" aria-label="ყურადღება და ბოლო მოქმედებები">
+  {# ── ყურადღება: რა მოითხოვს მოქმედებას — ყოველი ბარათი რეალურ სიაზე გადადის ── #}
+  <div class="panel-title">ყურადღება</div>
+  <div class="attention">
+    {% if r == D.QC_OPERATOR %}
+      <a class="att att--go" href="/qc/next"><span class="att__v">{{ data.colors.gray|num }}</span><span class="att__t">გასავლელი რიგში</span><span class="att__h">„შემდეგი ოქმი“ — რიგის მიხედვით</span><span class="att__go">{{ icon('arrow', 16) }}</span></a>
+      <a class="att att--warn" href="/qc?tab=returned"><span class="att__v">{{ data.colors.yellow|num }}</span><span class="att__t">ველმა უპასუხა</span><span class="att__h">გადასამოწმებელი პასუხები</span><span class="att__go">{{ icon('arrow', 16) }}</span></a>
+      <a class="att att--qcm" href="/qc?tab=todo"><span class="att__v">{{ data.colors.draft|num }}</span><span class="att__t">შენახული — გასაგზავნი</span><span class="att__h">მონიშნეთ და გაგზავნეთ ერთად</span><span class="att__go">{{ icon('arrow', 16) }}</span></a>
+    {% elif r in (D.QC_MANAGER, D.ADMIN) %}
+      <a class="att att--crit" href="/qc/disagreements"><span class="att__v">{{ data.disputes|num }}</span><span class="att__t">არ დათანხმებული</span><span class="att__h">QC მენეჯერის გადაწყვეტილება</span><span class="att__go">{{ icon('arrow', 16) }}</span></a>
+      <a class="att att--qcm" href="/qc/requests"><span class="att__v">{{ data.requests|num }}</span><span class="att__t">სტატუსის მოთხოვნა</span><span class="att__h">ოპერატორების მოთხოვნები</span><span class="att__go">{{ icon('arrow', 16) }}</span></a>
+      <a class="att att--warn" href="/qc?tab=returned"><span class="att__v">{{ data.colors.yellow|num }}</span><span class="att__t">გადასამოწმებელი პასუხი</span><span class="att__h">ველმა უპასუხა</span><span class="att__go">{{ icon('arrow', 16) }}</span></a>
+      <a class="att att--go" href="/distribution"><span class="att__v">{{ data.colors.gray|num }}</span><span class="att__t">გასავლელი ოპერატორებთან</span><span class="att__h">განაწილება და დატვირთვა</span><span class="att__go">{{ icon('arrow', 16) }}</span></a>
+    {% elif r in (D.FIELD_MANAGER, D.SURVEYOR) %}
+      {% set fs = data.field %}
+      <a class="att att--crit" href="/field"><span class="att__v">{{ (fs.get(D.AWAITING_FIELD, 0))|num }}</span><span class="att__t">პასუხი სჭირდება</span><span class="att__h">ხარვეზი, რეკომენდაცია ან კითხვა</span><span class="att__go">{{ icon('arrow', 16) }}</span></a>
+      {% if r == D.FIELD_MANAGER %}<a class="att att--qcm" href="/field?tab=manager"><span class="att__v">{{ (fs.get(D.AWAITING_MANAGER, 0))|num }}</span><span class="att__t">ჩემს დადასტურებას ელოდება</span><span class="att__h">„არ ვეთანხმები“ ამზომველისგან</span><span class="att__go">{{ icon('arrow', 16) }}</span></a>{% endif %}
+      <a class="att att--warn" href="/field?tab=manager"><span class="att__v">{{ (fs.get(D.RETURNED_TO_MANAGER, 0))|num }}</span><span class="att__t">მენეჯერთან დაბრუნებული</span><span class="att__h">პასუხს მენეჯერი აგზავნის</span><span class="att__go">{{ icon('arrow', 16) }}</span></a>
+      <a class="att att--ok" href="/field"><span class="att__v">{{ (fs.get(D.AWAITING_QC, 0) + fs.get(D.AWAITING_QCM, 0))|num }}</span><span class="att__t">QC-ის გადამოწმებაზე</span><span class="att__h">პასუხი გაგზავნილია</span><span class="att__go">{{ icon('arrow', 16) }}</span></a>
+    {% elif k %}
+      <a class="att att--warn" href="/stats"><span class="att__v">{{ k.in_field|num }}</span><span class="att__t">ველზე ღია</span><span class="att__h">პასუხის მოლოდინში</span><span class="att__go">{{ icon('arrow', 16) }}</span></a>
+      <a class="att att--crit" href="/stats"><span class="att__v">{{ k.awaiting_qcm|num }}</span><span class="att__t">არ დათანხმებული</span><span class="att__h">QC მენეჯერთან</span><span class="att__go">{{ icon('arrow', 16) }}</span></a>
+      <a class="att att--qcm" href="/stats"><span class="att__v">{{ k.in_clarification|num }}</span><span class="att__t">დაზუსტების პროცესში</span><span class="att__h">კითხვა გაგზავნილია</span><span class="att__go">{{ icon('arrow', 16) }}</span></a>
+      {% if r == D.COORDINATOR %}<a class="att att--go" href="/checked"><span class="att__v">{{ k.checked|num }}</span><span class="att__t">გავლილი ოქმები</span><span class="att__h">სრული სია</span><span class="att__go">{{ icon('arrow', 16) }}</span></a>{% endif %}
+    {% endif %}
   </div>
+
+  {% if recent %}
+  <div class="card">
+    <div class="card-head"><h2>ბოლო მოქმედებები</h2><span class="muted small">{{ recent|length }}</span></div>
+    <ul class="feed">
+      {% for e in recent %}
+      <li class="c-{{ operator_color(e.to_state) if e.to_state else 'gray' }}">
+        <a class="f-link" href="/items/{{ e.item_id }}">
+          <div class="f-what">{{ EVENT_LABELS.get(e.action, e.action) }}</div>
+          <div class="f-id">{{ e.item.protocol_number }} · {{ e.item.cadcode }}</div>
+          <div class="f-meta">{{ e.at|dt }} · {{ e.actor.full_name if e.actor else '—' }}{% if e.actor_role %} ({{ ROLE_SHORT.get(e.actor_role, e.actor_role) }}){% endif %}</div>
+          {% if e.to_state %}<div style="margin-top:6px">{{ state_chip(e.to_state) }}</div>{% endif %}
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+</aside>
 </div>
-{% endif %}
 {% endblock %}
