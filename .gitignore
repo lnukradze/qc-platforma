@@ -1,5 +1,5 @@
 # 🔐 მონაცემი (სახელები, ოქმები, ფოტოები) — არასოდეს ვერსიირდება
-data/
+/data/
 .venv/
 __pycache__/
 *.pyc
@@ -11,6 +11,10 @@ __pycache__/
 # 🔐 შემთხვევით რომ არ მოხვდეს: ცხრილები და ბაზები data\-ს გარეთ
 *.xlsx
 *.sqlite
+# პორტატული პაკეტი (scripts\build_portable.py) — შეიძლება რეალურ ბაზას შეიცავდეს
+dist/
+# Hallmark-ის აუდიტის დროებითი ფაილები (tools\hallmark)
+.hallmark/
 # AI აგენტები — თითოეულის პირადი პარამეტრები
 .claude/settings.local.json
 CLAUDE.local.md
