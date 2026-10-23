@@ -44,6 +44,9 @@ async def security_headers(request: Request, call_next):
     resp.headers.setdefault("Referrer-Policy", "same-origin")
     if request.url.path.startswith("/api/") or request.url.path.startswith("/items/"):
         resp.headers.setdefault("Cache-Control", "no-store")
+    elif request.url.path.startswith("/static/"):
+        # ბრაუზერი ფაილს ყოველთვის გადაამოწმებს (ETag → 304) — ფონტები და CSS-ის @import-ებიც
+        resp.headers.setdefault("Cache-Control", "no-cache")
     return resp
 
 

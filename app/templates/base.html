@@ -6,7 +6,7 @@
   <title>{% block title %}ხარისხის კონტროლი{% endblock %} · NAPR</title>
   {# თემა ჩაიტვირთოს „ციმციმის“ გარეშე — არჩევანი მხოლოდ ამ ბრაუზერში ინახება #}
   <script>try{var t=localStorage.getItem('qcp.theme');if(t)document.documentElement.dataset.theme=t;if(localStorage.getItem('qcp.rail')==='1')document.documentElement.classList.add('rail-collapsed');}catch(e){}</script>
-  <link rel="stylesheet" href="/static/css/app.css?v={{ VERSION }}">
+  <link rel="stylesheet" href="/static/css/app.css?v={{ ASSET_V }}">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%232a55d9'/%3E%3Cpath d='M6 21c4-3 7 1 10-1s7-4 10-1M6 15c4-3 7 1 10-1s7-4 10-1M6 9c4-3 7 1 10-1s7-4 10-1' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E">
   {% block head %}{% endblock %}
 </head>
@@ -77,7 +77,7 @@
 </div>
 </div>
 <script src="/static/vendor/htmx.min.js"></script>
-<script src="/static/js/app.js?v={{ VERSION }}"></script>
+<script src="/static/js/app.js?v={{ ASSET_V }}"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

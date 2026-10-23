@@ -13,6 +13,13 @@ from .config import APP_DIR
 templates = Jinja2Templates(directory=str(APP_DIR / "templates"))
 env = templates.env
 
+
+def _asset_version():
+    """?v= CSS/JS-ზე — სტატიკური ფაილების ბოლო ცვლილების დრო: დიზაინის განახლების შემდეგ
+    ბრაუზერი ძველ ფაილს მეხსიერებიდან აღარ იღებს (პროგრამის ვერსია ამ დროს არ იცვლება)."""
+    newest = max((p.stat().st_mtime_ns for p in (APP_DIR / "static").rglob("*") if p.is_file()), default=0)
+    return f"{__version__}.{newest // 10**9:x}"
+
 MONTHS = ["იანვ.", "თებ.", "მარტი", "აპრ.", "მაისი", "ივნ.", "ივლ.", "აგვ.", "სექტ.", "ოქტ.", "ნოემ.", "დეკ."]
 
 
@@ -72,7 +79,7 @@ def tojson_attr(v):
 env.filters.update(dt=fmt_dt, date=fmt_date, num=num, mask_pid=mask_pid, ago=ago,
                    tojson_attr=tojson_attr)
 env.globals.update(
-    D=D, VERSION=__version__,
+    D=D, VERSION=__version__, ASSET_V=_asset_version(),
     ROLE_LABELS=D.ROLE_LABELS, ROLE_SHORT=D.ROLE_SHORT,
     VERDICT_LABELS=D.VERDICT_LABELS, STATE_LABELS=D.STATE_LABELS,
     RESPONSE_LABELS=D.RESPONSE_LABELS, CLOSE_REASON_LABELS=D.CLOSE_REASON_LABELS,
