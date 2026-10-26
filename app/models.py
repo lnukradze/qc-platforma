@@ -601,11 +601,11 @@ class CadProtocolCount(Base):
 class ReportAdjustment(Base):
     """
     ოპერატორის დღის რეპორტის ხელით კორექცია. **არ იშლება** — გაუქმება `revoked_*`-ით,
-    რომ ჩანდეს, ვინ რა შეცვალა. შვებულება — თითო დღეზე თითო ჩანაწერი.
+    რომ ჩანდეს, ვინ რა შეცვალა. სტატუსი (შვებულება და სხვ.) — თითო დღეზე თითო ჩანაწერი.
+    `kind` ∈ `D.REPORT_ADJ_KINDS` — მოწმდება კოდში და არა CHECK-ით, რომ ახალი სახე ბაზის შეცვლას არ ითხოვდეს.
     """
     __tablename__ = "report_adjustments"
-    __table_args__ = (CheckConstraint(_in("kind", D.REPORT_ADJ_KINDS), name="ck_report_adj_kind"),
-                      Index("ix_report_adj_day_operator", "day", "operator_id"))
+    __table_args__ = (Index("ix_report_adj_day_operator", "day", "operator_id"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     operator_id: Mapped[int] = mapped_column(ForeignKey("users.id"))

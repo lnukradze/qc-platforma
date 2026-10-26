@@ -15,7 +15,7 @@
 
 გადაწყვეტილებები — `docs/OPEN_QUESTIONS.md` („მიღებული გადაწყვეტილებები“, 2026-10-26). საერთო კონტრაქტი lead-მა უკვე შეცვალა
 (`domain.py`: `QC_ANON_LABEL`, `PAGE_SIZE_*`, `ADJ_*`; `models.py`: `CadProtocolCount`, `ReportAdjustment`).
-**რიგი:** backend — T-011 → T-015 → T-013 → T-017; ui — T-012 (ნაწილი ა ახლავე) → T-016 → T-014 (backend-ის შესაბამისი ამოცანის ჩაბარების შემდეგ).
+**რიგი:** backend — T-011 → T-015 → T-013 → T-017; ui — T-012 (ნაწილი ა ახლავე) → T-016 → T-014 → T-018 (backend-ის შესაბამისი ამოცანის ჩაბარების შემდეგ).
 ეტაპი 1-ის მიმდინარე ამოცანები (T-007, T-008, T-009) ჯერ სრულდება; T-005 — ეტაპი 2-ის შემდეგ.
 
 | ID | ამოცანა | შემსრულებელი | ფაილი |
@@ -24,8 +24,9 @@
 | T-012 | სიები: ფილტრის ორი ხაზი, checkbox / დაფა / ძებნა — არა, „სტატუსი“ / „თარიღი“ | ui | [docs/tasks/T-012-lists-ui.md](tasks/T-012-lists-ui.md) |
 | T-015 | კონტროლის ანონიმურობა ველისთვის, კომენტარის ცვლილების ლოგი | backend | [docs/tasks/T-015-anon-comment-log-backend.md](tasks/T-015-anon-comment-log-backend.md) |
 | T-016 | ოქმის ბარათი: ინფორმაცია, QC შეფასება, კოდები-ჩანართები, რედაქტირება | ui | [docs/tasks/T-016-item-card-ui.md](tasks/T-016-item-card-ui.md) |
-| T-013 | ოპერატორების დღის / კვირის რეპორტი, ხელით შესწორება, Excel | backend | [docs/tasks/T-013-operator-report-backend.md](tasks/T-013-operator-report-backend.md) |
+| T-013 | ოპერატორების რეპორტი: დღე, კვირა, კვირები, ხელით შესწორება და სტატუსები, Excel | backend | [docs/tasks/T-013-operator-report-backend.md](tasks/T-013-operator-report-backend.md) |
 | T-014 | QC მენეჯერისა და ადმინის მთავარი გვერდი | ui | [docs/tasks/T-014-qcm-home-ui.md](tasks/T-014-qcm-home-ui.md) |
+| T-018 | ოპერატორების რეპორტის გვერდი: „კვირა“ და „კვირები“ | ui | [docs/tasks/T-018-operator-report-ui.md](tasks/T-018-operator-report-ui.md) |
 | T-017 | ოქმების რაოდენობა საკადასტრო კოდზე (განაწილებისას) | backend | [docs/tasks/T-017-protocol-count-backend.md](tasks/T-017-protocol-count-backend.md) |
 
 ## ღია — ეტაპი 1
