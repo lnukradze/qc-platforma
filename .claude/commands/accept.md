@@ -11,7 +11,8 @@ argument-hint: T-NNN
 3. შესამოწმებლად ცალკე საქაღალდე — მთავარ საქაღალდეს და ლუკას `run.bat`-ს არ ეხება:
    - `git worktree add --detach ..\qc-platforma-review origin/<ბრენჩი>`
      (უკვე არსებობს → `git -C ..\qc-platforma-review switch --detach origin/<ბრენჩი>`);
-   - იქ, ამ გარემოთი: `$env:QCP_DATA_DIR = "<მთავარი>\data"; $env:QCP_PORT = "8209"`,
+   - იქ, ამ გარემოთი: `$env:QCP_DATA_DIR = "<მთავარის მშობელი>\qc-demo-data"; $env:QCP_PORT = "8209"` — **დემო ბაზა**, არა `data\`
+     (AGENTS.md → 🔐; არ არის → `scripts\build_demo_db.py`; T-006-მდე სერვერის ნაწილი გამოტოვე),
      Python — `"<მთავარი>\.venv\Scripts\python.exe"`: `-m pytest -q`, შემდეგ `scripts\run_local.py --no-browser` (ფონზე)
      და `scripts\smoke_pages.py`.
 4. `docs/team/checklists/security.md` — სათითაოდ, diff-ის მიხედვით.
