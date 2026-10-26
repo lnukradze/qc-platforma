@@ -19,8 +19,15 @@ PORT = int(os.environ.get("QCP_PORT", "8200"))
 
 
 def main():
-    from app.config import DATA_DIR
+    from app.config import DATA_DIR, RAW_DIR
     os.chdir(ROOT)
+    if not (DATA_DIR / "platform.db").exists() and not RAW_DIR.exists():
+        # რეალური წყარო (data\raw) არ არის — build_db.py-ს არ ვიძახებთ (T-006)
+        print()
+        print(f"  ბაზა ვერ მოიძებნა: {DATA_DIR / 'platform.db'}")
+        print("  სადემონსტრაციო ბაზისთვის გაუშვი scripts\\build_demo_db.py")
+        print()
+        return
     print()
     print("  NAPR — ხარისხის კონტროლის ერთიანი პლატფორმა (პროტოტიპი)")
     print("  ─────────────────────────────────────────────")
