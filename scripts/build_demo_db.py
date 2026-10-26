@@ -17,9 +17,15 @@ AI აგენტები მუშაობენ მხოლოდ ამ �
   & $env:QCP_PY scripts\\build_demo_db.py --items 45000    # სიჩქარის შესამოწმებლად
   & $env:QCP_PY scripts\\build_demo_db.py --force          # არსებული დემო ბაზის გადაწერა
   & $env:QCP_PY scripts\\build_demo_db.py --out <საქაღალდე>
+  & $env:QCP_PY scripts\\build_demo_db.py --today 2026-11-30  # სხვა საბაზო თარიღი
+
+განმეორებადობა: შემთხვევითობა ფიქსირებული seed-ითაა, თარიღები — საბაზო თარიღიდან
+(`--today`, ნაგულისხმევი ფიქსირებულია) და არა მიმდინარე დროიდან: ერთნაირი პარამეტრები →
+ერთნაირი შიგთავსი. სპორადულის გადახედვაში „დღევანდელი თარიღი“ = საბაზო თარიღი.
 
 🔐 სკრიპტი უარს ამბობს, თუ სამიზნე პროექტის `data`/`data-real`-ია, `raw`-ს შეიცავს, git-ის
-   საქაღალდეშია, ან მასში უკვე არის ბაზა, რომელიც დემოდ არ არის მონიშნული.
+   საქაღალდეშია, მასში უკვე არის ბაზა, რომელიც დემოდ არ არის მონიშნული, ან გენერატორის
+   ფაილები ბაზის გარეშე (მათი წარმომავლობა ვერ დასტურდება).
 """
 import argparse
 import datetime as dt
@@ -48,6 +54,9 @@ MARKER_KEY = "demo_dataset"
 GENERATOR = "scripts/build_demo_db.py"
 MARKER_VERSION = 1
 SEED = 20261026
+# საბაზო თარიღი: ყველა თარიღი მისგან ითვლება და არა მიმდინარე დროიდან — ერთნაირი
+# პარამეტრებით ერთნაირი ბაზა. ახალი თარიღებისთვის: --today YYYY-MM-DD
+DEMO_TODAY = dt.date(2026, 10, 26)
 DEFAULT_ITEMS = 400
 FORBIDDEN_PARTS = {"data", "data-real", "raw"}
 
@@ -152,6 +161,7 @@ def read_marker(db_file: Path):
 
 def prepare_target(out: Path, force: bool):
     db_file = out / DB_NAME
+    present = [n for n in ARTIFACTS if (out / n).exists()]
     if db_file.exists():
         if not force:
             raise Refused(f"დემო ბაზა უკვე არსებობს: {db_file}\n"
@@ -159,6 +169,11 @@ def prepare_target(out: Path, force: bool):
         if read_marker(db_file) is None:
             raise Refused(f"„{db_file}“ დემოდ მონიშნული არ არის (ან დაზიანებულია) — არ ვეხები, "
                           "--force-ითაც. აირჩიეთ სხვა საქაღალდე.")
+    elif present:
+        # ბაზა (და მასში მონიშვნა) არ არის — ვერ დავადასტურებთ, რომ ეს ფაილები დემოსია
+        raise Refused(f"საქაღალდეში უკვე არის ფაილები ({', '.join(present)}), მაგრამ დემო ბაზა "
+                      f"({DB_NAME}) არ არის — ვერ დავადასტურებ, რომ ისინი დემოსია. არაფერს ვცვლი "
+                      "(--force-ითაც). აირჩიეთ ცარიელი საქაღალდე.")
     out.mkdir(parents=True, exist_ok=True)
     for name in ARTIFACTS:
         f = out / name
@@ -177,8 +192,9 @@ def isolate_env(out: Path):
         "QCP_QC_WORKBOOK": str(out / "no-workbook.xlsx"),
         "QCP_SMTP_HOST": "", "QCP_SMTP_USER": "", "QCP_SMTP_PASSWORD": "",
         "QCP_GOOGLE_CLIENT_ID": "", "QCP_GOOGLE_CLIENT_SECRET": "", "QCP_BASE_URL": "",
+        # აწყობას სესია არ სჭირდება — შემთხვევითი .session_secret არ იქმნება (სერვერი შექმნის)
+        "QCP_SESSION_SECRET": "demo-build-only",
     })
-    os.environ.pop("QCP_SESSION_SECRET", None)
 
 
 def min_items() -> int:
@@ -334,7 +350,7 @@ FILL_WEIGHTS = {"positive": 30, "corrected_confirmed": 16, "acknowledged_confirm
 # ══════════════════════════════════════════════════════════════════════
 #  აწყობა
 # ══════════════════════════════════════════════════════════════════════
-def build(out: Path, n_items: int, seed: int):
+def build(out: Path, n_items: int, seed: int, today: dt.date = DEMO_TODAY):
     # app — მხოლოდ გარემოს დაყენების შემდეგ (config.py იმპორტისას ქმნის საქაღალდეებს)
     from sqlalchemy import func, select
 
@@ -355,10 +371,10 @@ def build(out: Path, n_items: int, seed: int):
         raise Refused("აპლიკაციის კონფიგურაცია დემო საქაღალდეზე ვერ გადავიდა — ვჩერდები.")
 
     rnd = random.Random(seed)
-    today = dt.date.today()
-    real_now = dt.datetime.now().replace(microsecond=0)
+    real_now = dt.datetime.combine(today, dt.time(18, 0))      # „ახლა" = საბაზო დღის საღამო
 
-    # ── საათი: workflow-ის დრო ოქმის „ცხოვრების" მიხედვით (ისტორია და სტატისტიკა თარიღებით) ──
+    # ── საათი: workflow-ისა და მოდელების ნაგულისხმევი დრო (created_at, requested_at, …) —
+    #    ოქმის „ცხოვრების" მიხედვით, არასოდეს მიმდინარე დრო ──
     clock = types.SimpleNamespace(t=real_now)
 
     class _Clock(dt.datetime):
@@ -366,8 +382,9 @@ def build(out: Path, n_items: int, seed: int):
         def now(cls, tz=None):
             return clock.t
 
-    real_dt = workflow.dt
-    workflow.dt = types.SimpleNamespace(datetime=_Clock, date=dt.date, timedelta=dt.timedelta)
+    fake_dt = types.SimpleNamespace(datetime=_Clock, date=dt.date, timedelta=dt.timedelta)
+    real_dt = (workflow.dt, M.dt)
+    workflow.dt = M.dt = fake_dt
 
     Base.metadata.create_all(engine)
     db = SessionLocal()
@@ -375,11 +392,11 @@ def build(out: Path, n_items: int, seed: int):
         # მონიშვნა — პირველივე ჩანაწერი (შეწყვეტილი აწყობაც დემოდ რჩება და --force-ით გადაიწერება)
         db.add(M.Setting(key=MARKER_KEY, value={
             "generator": GENERATOR, "version": MARKER_VERSION, "seed": seed, "items": n_items,
-            "built_at": real_now.isoformat()}))
+            "today": today.isoformat()}))
         db.commit()
 
         codes = _seed_reference(db, config.SEED_DIR, DEFAULT_SETTINGS, M)
-        world = _people(db, M, D, name_key)
+        world = _people(db, M, D, name_key, today)
         db.commit()
 
         run = M.DistributionRun(created_by_id=world.qcms[0].id, seed=seed, item_count=0,
@@ -414,6 +431,7 @@ def build(out: Path, n_items: int, seed: int):
                                    .where(M.QcItem.distribution_run_id == run.id))
         db.commit()
 
+        clock.t = real_now
         _extras(db, M, D, world, real_now, today)
         db.commit()
 
@@ -427,7 +445,7 @@ def build(out: Path, n_items: int, seed: int):
         report = _verify(db, M, D, name_key)
         report.update(stats, preqc=demo["checks"])
     finally:
-        workflow.dt = real_dt
+        workflow.dt, M.dt = real_dt
         db.close()
         engine.dispose()
 
@@ -440,6 +458,7 @@ def build(out: Path, n_items: int, seed: int):
     users = _source_names(db_file)
     report["source"] = build_source(out / SOURCE_NAME, users, rnd, today)
     report["sporadic_file"] = build_sporadic_file(out / SPORADIC_NAME, users, rnd, today)
+    report["today"] = today.isoformat()
     return report
 
 
@@ -467,7 +486,7 @@ class World(types.SimpleNamespace):
     pass
 
 
-def _people(db, M, D, name_key):
+def _people(db, M, D, name_key, today):
     """7 როლი; 4 საველე გუნდი; 6 ოპერატორი + ადმინი (ორი როლით); 2 QC მენეჯერი."""
     from app.services.preqc_demo import DEMO_MANAGER, DEMO_SURVEYORS
     n = [0]
@@ -519,7 +538,7 @@ def _people(db, M, D, name_key):
     for k, t in ((90, w.teams[0]), (91, w.teams[1]), (92, w.teams[2])):
         u = user(f"ამზომველი {k} (წასული)", D.SURVEYOR, active=False)
         db.add(M.TeamMember(team_id=t.team.id, user_id=u.id, source="demo",
-                            valid_to=dt.date.today() - dt.timedelta(days=40)))
+                            valid_to=today - dt.timedelta(days=40)))
         w.departed.append(u)
     db.add(M.ManagerOverride(person_key=w.departed[2].name_key, person_name=w.departed[2].full_name,
                              manager_id=w.managers[2].id, set_by_id=w.qcms[0].id,
@@ -745,8 +764,7 @@ def build_source(path: Path, names, rnd, today):
                          rnd.choice(names["active"]), NORMAL_STATUS))
         con.executemany("INSERT INTO parcels VALUES (?, ?, ?, ?, ?, ?)", rows)
         con.execute("INSERT INTO import_meta (gdb_name, imported_at, feature_count) VALUES (?, ?, ?)",
-                    ("DEMO_REGFIELDALL (გამოგონილი)", dt.datetime.now().isoformat(timespec="seconds"),
-                     len(rows)))
+                    ("DEMO_REGFIELDALL (გამოგონილი)", f"{today.isoformat()}T06:00:00", len(rows)))
         con.commit()
     finally:
         con.close()
@@ -771,6 +789,7 @@ def build_sporadic_file(path: Path, names, rnd, today):
                    f"{10 + k % 8}:00", call, NORMAL_STATUS, rnd.choice(TR_NAMES),
                    f"დამგეგმავი {1 + k % 3:02d} (დემო)", f"D-{k:05d}", day.isoformat()])
         n += 1
+    wb.properties.created = wb.properties.modified = dt.datetime.combine(today, dt.time(6, 0))
     wb.save(path)
     return n
 
@@ -781,6 +800,8 @@ def main(argv=None):
     ap.add_argument("--out", help="საქაღალდე (ნაგულისხმევი: <მთავარის მშობელი>\\qc-demo-data)")
     ap.add_argument("--items", type=int, default=DEFAULT_ITEMS, help=f"ოქმების რაოდენობა (≈{DEFAULT_ITEMS})")
     ap.add_argument("--force", action="store_true", help="არსებული დემო ბაზის გადაწერა")
+    ap.add_argument("--today", type=dt.date.fromisoformat, default=DEMO_TODAY,
+                    help=f"საბაზო თარიღი YYYY-MM-DD (ნაგულისხმევი {DEMO_TODAY}) — თარიღები მისგან ითვლება")
     ap.add_argument("--seed", type=int, default=SEED, help=argparse.SUPPRESS)
     args = ap.parse_args(argv)
     t0 = time.time()
@@ -791,12 +812,12 @@ def main(argv=None):
         out = check_target(Path(args.out) if args.out else default_out())
         prepare_target(out, args.force)
         isolate_env(out)
-        report = build(out, args.items, args.seed)
+        report = build(out, args.items, args.seed, args.today)
     except Refused as e:
         print(f"✗ უარი: {e}", file=sys.stderr)
         return 2
     print(f"✓ დემო ბაზა მზადაა — {time.time() - t0:.1f} წმ")
-    print(f"  საქაღალდე: {out}")
+    print(f"  საქაღალდე: {out} · საბაზო თარიღი: {report['today']}")
     print(f"  ოქმები: {report['items']} {report['kinds']} · მომხმარებლები: {report['users']} · "
           f"ისტორია: {report['events']} · მეილები: {report['emails']} · Pre-QC: {report['preqc']}")
     print("  მდგომარეობები:", json.dumps(report["states"], ensure_ascii=False))

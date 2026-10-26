@@ -156,6 +156,62 @@ def test_refuses_raw(tmp_path, sub):
     assert not any(p.is_file() for p in tmp_path.rglob("*"))
 
 
+@pytest.mark.parametrize("force", [False, True])
+@pytest.mark.parametrize("names", [("distributor.sqlite", "sporadic_demo.xlsx", ".session_secret"),
+                                   ("platform.db-wal",), ("sporadic_demo.xlsx",)])
+def test_keeps_helper_files_when_database_is_missing(tmp_path, names, force):
+    """ბაზა (და მონიშვნა) არ არის → ფაილების წარმომავლობა ვერ დასტურდება; არაფერი იცვლება."""
+    out = tmp_path / "half"
+    out.mkdir()
+    for n in names:
+        (out / n).write_bytes(f"sentinel {n}".encode())
+    before = snapshot(out)
+    r = run("--out", str(out), "--items", ITEMS, *(["--force"] if force else []))
+    assert r.returncode == 2 and "არაფერს ვცვლი" in r.stderr
+    assert snapshot(out) == before
+
+
+def dump(folder: Path):
+    """შიგთავსი (და არა ბაიტები): ბაზები SQL-ად, xlsx — უჯრების მნიშვნელობებით."""
+    import openpyxl
+    out = {}
+    for name in ("platform.db", "distributor.sqlite"):
+        con = sqlite3.connect(folder / name)
+        try:
+            out[name] = sorted(con.iterdump())    # CREATE INDEX-ის რიგი hash-ზეა დამოკიდებული
+        finally:
+            con.close()
+    wb = openpyxl.load_workbook(folder / "sporadic_demo.xlsx", read_only=True)
+    try:
+        out["xlsx"] = [list(r) for r in wb.worksheets[0].iter_rows(values_only=True)]
+    finally:
+        wb.close()
+    out["files"] = sorted(p.name for p in folder.iterdir())
+    return out
+
+
+def test_same_parameters_same_content(built, tmp_path):
+    """ფიქსირებული seed და საბაზო თარიღი: მიმდინარე დრო შედეგს არ ცვლის."""
+    first, _, _ = built
+    second = tmp_path / "again"
+    assert run("--out", str(second), "--items", ITEMS).returncode == 0
+    a, b = dump(first), dump(second)
+    assert a.keys() == b.keys()
+    for k in a:
+        assert a[k] == b[k], k
+    assert not (second / ".session_secret").exists()      # აწყობა შემთხვევით გასაღებს არ ქმნის
+
+
+def test_today_moves_dates(tmp_path):
+    out = tmp_path / "later"
+    assert run("--out", str(out), "--items", ITEMS, "--today", "2027-03-15").returncode == 0
+    (mx,) = query(out / "platform.db", "SELECT MAX(at) FROM qc_events")[0]
+    assert mx.startswith("2027-03") or mx.startswith("2027-02")
+    marker = json.loads(query(out / "platform.db",
+                              "SELECT value FROM settings WHERE key = 'demo_dataset'")[0][0])
+    assert marker["today"] == "2027-03-15"
+
+
 def test_refuses_too_few_items(tmp_path):
     r = run("--out", str(tmp_path / "demo"), "--items", "5")
     assert r.returncode == 2 and "--items" in r.stderr
