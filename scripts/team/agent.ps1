@@ -43,11 +43,27 @@ if ($Role -eq 'lead') {
     }
 }
 
-# Worktrees share the main folder's Python env and local data (data\ is never in git)
+# Worktrees share the main folder's Python env.
+# AI agents ALWAYS use the shared demo data (fictional only, T-006) - never the real data\,
+# even when data\platform.db exists. Real data is checked by people (run.bat).
 $env:QCP_PY = Join-Path $main '.venv\Scripts\python.exe'
-$env:QCP_DATA_DIR = Join-Path $main 'data'
+$demo = Join-Path (Split-Path $main -Parent) 'qc-demo-data'
+$env:QCP_DATA_DIR = $demo
+$env:QCP_DISTRIBUTOR_DB = Join-Path $demo 'distributor.sqlite'
+$env:QCP_QC_WORKBOOK = Join-Path $demo 'no-workbook.xlsx'
+$env:QCP_DEMO_LOGIN = '1'
+# Inherited settings must not lead outside the demo: database URL, mail, Google login
+foreach ($name in 'QCP_DATABASE_URL', 'QCP_SESSION_SECRET', 'QCP_BASE_URL', 'QCP_SMTP_HOST',
+                  'QCP_SMTP_USER', 'QCP_SMTP_PASSWORD', 'QCP_GOOGLE_CLIENT_ID', 'QCP_GOOGLE_CLIENT_SECRET') {
+    Remove-Item "Env:$name" -ErrorAction SilentlyContinue
+}
 $env:QCP_PORT = $ports[$Role]
 if (-not (Test-Path $env:QCP_PY)) { Write-Warning "No .venv in $main - run setup.bat there first." }
+Write-Host "DEMO data: $demo"
+if (-not (Test-Path (Join-Path $demo 'platform.db'))) {
+    Write-Host 'No demo database yet. Create it (fictional data only):'
+    Write-Host '  & $env:QCP_PY scripts\build_demo_db.py'
+}
 
 if ($Account -and $Role -ne 'qa') {
     $env:CLAUDE_CONFIG_DIR = Join-Path $env:USERPROFILE ('.claude-profiles\' + $Account)
