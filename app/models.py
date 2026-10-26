@@ -584,3 +584,40 @@ class AuditLog(Base):
     ip: Mapped[str | None] = mapped_column(String(64))
 
     actor: Mapped[User | None] = relationship()
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  საკადასტრო კოდის ოქმები და ოპერატორების რეპორტი (2026-10-26)
+# ══════════════════════════════════════════════════════════════════════
+class CadProtocolCount(Base):
+    """რამდენი ოქმია შედგენილი საკადასტრო კოდზე — განაწილებისას, წყაროდან (ბარათზე „ოქმების რაოდენობა“)."""
+    __tablename__ = "cad_protocol_counts"
+
+    cadcode: Mapped[str] = mapped_column(String(64), primary_key=True)
+    count: Mapped[int] = mapped_column(Integer)
+    updated_at: Mapped[dt.datetime] = mapped_column(DateTime, default=_now, onupdate=_now)
+
+
+class ReportAdjustment(Base):
+    """
+    ოპერატორის დღის რეპორტის ხელით კორექცია. **არ იშლება** — გაუქმება `revoked_*`-ით,
+    რომ ჩანდეს, ვინ რა შეცვალა. შვებულება — თითო დღეზე თითო ჩანაწერი.
+    """
+    __tablename__ = "report_adjustments"
+    __table_args__ = (CheckConstraint(_in("kind", D.REPORT_ADJ_KINDS), name="ck_report_adj_kind"),
+                      Index("ix_report_adj_day_operator", "day", "operator_id"))
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    operator_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    day: Mapped[dt.date] = mapped_column(Date)
+    kind: Mapped[str] = mapped_column(String(16))
+    delta: Mapped[int] = mapped_column(Integer, default=0)          # მხოლოდ D.ADJ_COUNT-ზე: +N / −N
+    note: Mapped[str | None] = mapped_column(String(300))
+    created_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=_now)
+    revoked_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+    revoked_at: Mapped[dt.datetime | None] = mapped_column(DateTime)
+
+    operator: Mapped[User] = relationship(foreign_keys=[operator_id])
+    created_by: Mapped[User | None] = relationship(foreign_keys=[created_by_id])
+    revoked_by: Mapped[User | None] = relationship(foreign_keys=[revoked_by_id])
