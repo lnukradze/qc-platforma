@@ -22,7 +22,7 @@ def test_operator_sees_only_own(db, people, item):
 def test_field_sees_nothing_before_send_and_nothing_positive(db, people, item):
     sv = ctx(people["sv"], D.SURVEYOR)
     assert not scope.can_view(sv, item)                       # ჯერ არ გაგზავნილა
-    apply(db, item, people["op"], D.QC_OPERATOR, "send", {"verdict": D.POSITIVE})
+    apply(db, item, people["op"], D.QC_OPERATOR, "send", {"version": item.version, "verdict": D.POSITIVE})
     db.commit()
     assert not scope.can_view(sv, item)                       # დადებითი ველზე არ მიდის
     assert item.id not in _ids(db, sv)
@@ -30,7 +30,7 @@ def test_field_sees_nothing_before_send_and_nothing_positive(db, people, item):
 
 def test_all_surveyors_and_all_managers_see_negative(db, people):
     it = make_item(db, people, managers=("mgr", "mgr2"))
-    apply(db, it, people["op"], D.QC_OPERATOR, "send", {"verdict": D.NEGATIVE, "qc_comment": "ფოტო აკლია"})
+    apply(db, it, people["op"], D.QC_OPERATOR, "send", {"version": it.version, "verdict": D.NEGATIVE, "qc_comment": "ფოტო აკლია"})
     db.commit()
     assert scope.can_view(ctx(people["sv"], D.SURVEYOR), it)
     assert scope.can_view(ctx(people["sv2"], D.SURVEYOR), it)
@@ -43,7 +43,7 @@ def test_coordinator_reads_checked_items_head_sees_stats_only(db, people, item):
     c = ctx(people["coord"], D.COORDINATOR)
     h = ctx(people["head"], D.HEAD_OF_SERVICE)
     assert not scope.can_view(c, item)                         # ჯერ არ გავლილა
-    apply(db, item, people["op"], D.QC_OPERATOR, "send", {"verdict": D.NEGATIVE, "qc_comment": "x"})
+    apply(db, item, people["op"], D.QC_OPERATOR, "send", {"version": item.version, "verdict": D.NEGATIVE, "qc_comment": "x"})
     db.commit()
     assert scope.can_view(c, item) and item.id in _ids(db, c)
     assert not scope.can_view(h, item) and _ids(db, h) == set()
@@ -72,9 +72,9 @@ def test_restricted_stats(db, people):
 def test_field_does_not_see_qc_internal_history(db, people, item):
     """დანიშვნა, გაუგზავნელი სამუშაო ვერსია, მოთხოვნები, შეფასება — QC-ს შიდა საქმეა."""
     apply(db, item, people["op"], D.QC_OPERATOR, "save_review",
-          {"verdict": D.POSITIVE, "qc_comment": ""})
+          {"version": item.version, "verdict": D.POSITIVE, "qc_comment": ""})
     apply(db, item, people["op"], D.QC_OPERATOR, "send",
-          {"verdict": D.NEGATIVE, "qc_comment": "ფოტო აკლია"})
+          {"version": item.version, "verdict": D.NEGATIVE, "qc_comment": "ფოტო აკლია"})
     apply(db, item, people["qcm"], D.QC_MANAGER, "review", {"marks": [D.MARK_CORRECT]})
     db.commit()
     q = select(QcEvent.action).join(QcItem).where(QcEvent.item_id == item.id)
