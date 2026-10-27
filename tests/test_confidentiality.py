@@ -6,6 +6,7 @@ T-015 — კონტროლი ველისთვის ანონი�
 """
 import datetime as dt
 import io
+import re
 
 import pytest
 from fastapi.testclient import TestClient
@@ -256,8 +257,6 @@ def test_detail_context_qc_manager(db, w):
 
 
 # ── 6. HTML ზედაპირები — შაბლონები T-016 / T-014-ში ────────────────────
-@pytest.mark.xfail(strict=True, reason="T-016: items/detail.html ჯერ item.operator.full_name / "
-                   "e.actor.full_name / pending_req.requested_by-ს ბეჭდავს — show_operator და actor_name გამოიყენოს")
 @pytest.mark.parametrize("who,role", FIELD)
 def test_detail_html_field_no_qc_names(db, w, who, role):
     r = client(w["p"][who], role).get(f"/items/{w['a'].id}")
@@ -265,13 +264,45 @@ def test_detail_html_field_no_qc_names(db, w, who, role):
     assert_no_qc_names(w, r.text, "/items/{id}")
 
 
-@pytest.mark.xfail(strict=True, reason="T-014: home.html „ბოლო მოქმედებები“ ჯერ e.actor.full_name-ს ბეჭდავს "
-                   "— actor_name გამოიყენოს")
 @pytest.mark.parametrize("who,role", FIELD)
 def test_home_html_field_no_qc_names(db, w, who, role):
     r = client(w["p"][who], role).get("/")
     assert r.status_code == 200
     assert_no_qc_names(w, r.text, "/")
+
+
+# T-029 ნაწ. 4: ველს QC-ის როლის აღნიშვნაც არ უჩანს (QC მენეჯერი 1–2 ადამიანია — როლი ვინაობას ამხელს)
+QC_SHORT = [D.ROLE_SHORT[r] for r in D.QC_ROLES]
+# ავტორის ხაზი: ბარათის ისტორია (.who) და მთავარის „ბოლო მოქმედებები“ (.f-meta)
+ACTOR_LINE = re.compile(r'<div class="(?:who|f-meta)">(.*?)</div>', re.S)
+
+
+def actor_lines(html):
+    lines = [" ".join(m.split()) for m in ACTOR_LINE.findall(html)]
+    assert lines, "ავტორის ხაზი HTML-ში ვერ მოიძებნა"
+    return lines
+
+
+@pytest.mark.parametrize("path", ["/items/{a}", "/"])
+@pytest.mark.parametrize("who,role", FIELD)
+def test_html_field_no_qc_role_labels(db, w, who, role, path):
+    r = client(w["p"][who], role).get(path.format(a=w["a"].id))
+    assert r.status_code == 200
+    lines = actor_lines(r.text)
+    assert any(D.QC_ANON_LABEL in ln for ln in lines)
+    leaked = [ln for ln in lines if any(s in ln for s in QC_SHORT)]
+    assert not leaked, f"{path}: ველის მნახველს QC-ის როლი უჩანს: {leaked}"
+
+
+@pytest.mark.parametrize("path", ["/items/{a}", "/"])
+def test_html_qc_manager_keeps_role_labels(db, w, path):
+    r = client(w["p"]["qcm"], D.QC_MANAGER).get(path.format(a=w["a"].id))
+    assert r.status_code == 200
+    text = " | ".join(actor_lines(r.text))
+    for name, role in [("Tamar Qcop-Alpha", D.QC_OPERATOR), ("Levan Qcm-Gamma", D.QC_MANAGER),
+                       ("Irakli Admin-Delta", D.ADMIN)]:
+        assert name in text and D.ROLE_SHORT[role] in text, f"{path}: QC მენეჯერს {name} / {role} არ უჩანს"
+    assert D.QC_ANON_LABEL not in text
 
 
 @pytest.mark.parametrize("who,role", FIELD)

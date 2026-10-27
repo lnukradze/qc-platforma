@@ -214,7 +214,8 @@
         <a class="f-link" href="/items/{{ e.item_id }}">
           <div class="f-what">{{ EVENT_LABELS.get(e.action, e.action) }}</div>
           <div class="f-id">{{ e.item.protocol_number }} · {{ e.item.cadcode }}</div>
-          <div class="f-meta">{{ e.at|dt }} · {{ e.actor.full_name if e.actor else '—' }}{% if e.actor_role %} ({{ ROLE_SHORT.get(e.actor_role, e.actor_role) }}){% endif %}</div>
+          {% set who = actor_name(e.actor, e.actor_role) if e.actor else '—' %}
+          <div class="f-meta">{{ e.at|dt }} · {{ who }}{% if e.actor_role and who != D.QC_ANON_LABEL %} ({{ ROLE_SHORT.get(e.actor_role, e.actor_role) }}){% endif %}</div>
           {% if e.to_state %}<div style="margin-top:6px">{{ state_chip(e.to_state) }}</div>{% endif %}
         </a>
       </li>
