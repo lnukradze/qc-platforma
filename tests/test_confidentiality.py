@@ -256,8 +256,6 @@ def test_detail_context_qc_manager(db, w):
 
 
 # ── 6. HTML ზედაპირები — შაბლონები T-016 / T-014-ში ────────────────────
-@pytest.mark.xfail(strict=True, reason="T-016: items/detail.html ჯერ item.operator.full_name / "
-                   "e.actor.full_name / pending_req.requested_by-ს ბეჭდავს — show_operator და actor_name გამოიყენოს")
 @pytest.mark.parametrize("who,role", FIELD)
 def test_detail_html_field_no_qc_names(db, w, who, role):
     r = client(w["p"][who], role).get(f"/items/{w['a'].id}")
@@ -265,8 +263,6 @@ def test_detail_html_field_no_qc_names(db, w, who, role):
     assert_no_qc_names(w, r.text, "/items/{id}")
 
 
-@pytest.mark.xfail(strict=True, reason="T-014: home.html „ბოლო მოქმედებები“ ჯერ e.actor.full_name-ს ბეჭდავს "
-                   "— actor_name გამოიყენოს")
 @pytest.mark.parametrize("who,role", FIELD)
 def test_home_html_field_no_qc_names(db, w, who, role):
     r = client(w["p"][who], role).get("/")
