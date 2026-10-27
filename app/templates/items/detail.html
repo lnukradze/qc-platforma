@@ -7,7 +7,7 @@
 {%- set field_side = ctx.role in (D.FIELD_MANAGER, D.SURVEYOR) -%}
 <div class="page-head">
   <div>
-    <div class="small"><a href="{{ back }}">← უკან სიაში</a>{% if next_id %} · <a href="/items/{{ next_id }}?back={{ back|urlencode }}&queue=1">შემდეგი ოქმი →</a>{% endif %}</div>
+    <div class="small head-links"><a href="{{ back }}">← უკან სიაში</a>{% if next_id %} · <a href="/items/{{ next_id }}?back={{ back|urlencode }}&queue=1">შემდეგი ოქმი →</a>{% endif %}</div>
     <h1 class="mono">ოქმი {{ item.protocol_number }}</h1>
     <div class="ws-cad" title="საკადასტრო კოდი" style="margin-top:8px">{% for part in (item.cadcode or '').split('.') %}<span>{{ part }}</span>{% endfor %}</div>
     <div class="sub" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px">

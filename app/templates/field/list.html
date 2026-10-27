@@ -11,12 +11,12 @@
   </div>
 </div>
 
-<div class="wtabs" role="tablist">
-  <a class="wtab {% if tab == 'systematic' %}active{% endif %}" href="/field?tab=systematic">სისტემური <span class="cnt {% if counts.systematic %}hot{% endif %}" title="პასუხი სჭირდება">{{ counts.systematic|num }}</span></a>
-  <a class="wtab {% if tab == 'sporadic' %}active{% endif %}" href="/field?tab=sporadic">სპორადული <span class="cnt {% if counts.sporadic %}hot{% endif %}" title="პასუხი სჭირდება">{{ counts.sporadic|num }}</span></a>
-  <a class="wtab {% if tab == 'manager' %}active{% endif %}" href="/field?tab=manager">მენეჯერზე მიწერილი / დაბრუნებული <span class="cnt {% if counts.manager and ctx.role != D.SURVEYOR %}hot{% endif %}">{{ counts.manager|num }}</span></a>
-  {% if ctx.role == D.FIELD_MANAGER and counts.cc %}<a class="wtab {% if tab == 'cc' %}active{% endif %}" href="/field?tab=cc" title="სხვა გუნდის ოქმი, სადაც თქვენი ამზომველიც მონაწილეობდა — ხედავთ, პასუხისმგებელი სხვაა">CC — ინფორმაციისთვის <span class="cnt">{{ counts.cc|num }}</span></a>{% endif %}
-</div>
+<nav class="wtabs" aria-label="ოქმების ჩანართები">
+  <a class="wtab {% if tab == 'systematic' %}active{% endif %}"{% if tab == 'systematic' %} aria-current="page"{% endif %} href="/field?tab=systematic">სისტემური <span class="cnt {% if counts.systematic %}hot{% endif %}" title="პასუხი სჭირდება">{{ counts.systematic|num }}</span></a>
+  <a class="wtab {% if tab == 'sporadic' %}active{% endif %}"{% if tab == 'sporadic' %} aria-current="page"{% endif %} href="/field?tab=sporadic">სპორადული <span class="cnt {% if counts.sporadic %}hot{% endif %}" title="პასუხი სჭირდება">{{ counts.sporadic|num }}</span></a>
+  <a class="wtab {% if tab == 'manager' %}active{% endif %}"{% if tab == 'manager' %} aria-current="page"{% endif %} href="/field?tab=manager">მენეჯერზე მიწერილი / დაბრუნებული <span class="cnt {% if counts.manager and ctx.role != D.SURVEYOR %}hot{% endif %}">{{ counts.manager|num }}</span></a>
+  {% if ctx.role == D.FIELD_MANAGER and counts.cc %}<a class="wtab {% if tab == 'cc' %}active{% endif %}"{% if tab == 'cc' %} aria-current="page"{% endif %} href="/field?tab=cc" title="სხვა გუნდის ოქმი, სადაც თქვენი ამზომველიც მონაწილეობდა — ხედავთ, პასუხისმგებელი სხვაა">CC — ინფორმაციისთვის <span class="cnt">{{ counts.cc|num }}</span></a>{% endif %}
+</nav>
 {% if tab == 'manager' %}
 <div class="notice info">
   {% if ctx.role == D.SURVEYOR %}ამ შემთხვევებზე პასუხს მხოლოდ საველე მენეჯერი აგზავნის — თქვენ ხედავთ ისტორიას და კომენტარებს.
