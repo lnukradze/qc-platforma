@@ -50,19 +50,19 @@
           {% for i, n in operators %}<option value="{{ i }}" {% if p.operator == i|string %}selected{% endif %}>{{ n }}</option>{% endfor %}
         </select></div>
       {% endif %}
-      <div class="field"><label for="f-verdict">ვერდიქტი</label>
+      <div class="field"><label for="f-verdict">სტატუსი</label>
         <select id="f-verdict" name="verdict"><option value="">— ყველა —</option>
           {% for v in D.VERDICTS %}<option value="{{ v }}" {% if p.verdict == v %}selected{% endif %}>{{ VERDICT_LABELS[v] }}</option>{% endfor %}
         </select></div>
       {% if tab != 'todo' %}
-      <div class="field"><label for="f-resp">ველის პასუხი</label>
+      <div class="field"><label for="f-resp">ველის სტატუსი</label>
         <select id="f-resp" name="response"><option value="">— ყველა —</option>
           {% for r, lbl in RESPONSE_LABELS.items() %}<option value="{{ r }}" {% if p.response == r %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
         </select></div>
       {% endif %}
       <div class="field"><label for="f-zone">ზონა</label><input id="f-zone" type="text" name="zone" value="{{ p.zone or '' }}" placeholder="51" inputmode="numeric"></div>
-      <div class="field"><label for="f-df">ნახაზი — დან</label><input id="f-df" type="date" name="date_from" value="{{ p.date_from or '' }}"></div>
-      <div class="field"><label for="f-dt">ნახაზი — მდე</label><input id="f-dt" type="date" name="date_to" value="{{ p.date_to or '' }}"></div>
+      <div class="field"><label for="f-df">თარიღი — დან</label><input id="f-df" type="date" name="date_from" value="{{ p.date_from or '' }}"></div>
+      <div class="field"><label for="f-dt">თარიღი — მდე</label><input id="f-dt" type="date" name="date_to" value="{{ p.date_to or '' }}"></div>
       {% endif %}
       <div class="filters-actions"><a class="btn btn-ghost" href="/qc?tab={{ tab }}">გასუფთავება</a><button class="btn btn-primary" type="submit">ძებნა</button></div>
     </form>

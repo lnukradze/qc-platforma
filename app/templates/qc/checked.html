@@ -17,7 +17,7 @@
         <select id="f-mgr" name="manager"><option value="">— ყველა —</option>{% for i, n in managers %}<option value="{{ i }}" {% if p.manager == i|string %}selected{% endif %}>{{ n }}</option>{% endfor %}</select></div>
       <div class="field"><label for="f-op">ოპერატორი</label>
         <select id="f-op" name="operator"><option value="">— ყველა —</option>{% for i, n in operators %}<option value="{{ i }}" {% if p.operator == i|string %}selected{% endif %}>{{ n }}</option>{% endfor %}</select></div>
-      <div class="field"><label for="f-verdict">ვერდიქტი</label>
+      <div class="field"><label for="f-verdict">სტატუსი</label>
         <select id="f-verdict" name="verdict"><option value="">— ყველა —</option>{% for v in D.VERDICTS %}<option value="{{ v }}" {% if p.verdict == v %}selected{% endif %}>{{ VERDICT_LABELS[v] }}</option>{% endfor %}</select></div>
       <div class="field"><label for="f-zone">ზონა</label><input id="f-zone" type="text" name="zone" value="{{ p.zone or '' }}" placeholder="51" inputmode="numeric"></div>
       <div class="filters-actions"><a class="btn btn-ghost" href="/checked">გასუფთავება</a><button class="btn btn-primary" type="submit">ძებნა</button></div>
