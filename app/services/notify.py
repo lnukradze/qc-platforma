@@ -9,6 +9,7 @@
     და ჩანს: ადმინისტრირება → მეილები (პროტოტიპში ასეა).
 """
 import datetime as dt
+import logging
 import smtplib
 from email.message import EmailMessage as MimeMessage
 from email.utils import formataddr, parseaddr
@@ -18,7 +19,10 @@ from ..config import (BASE_URL, SMTP_FROM, SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, 
                       SMTP_USER)
 from ..models import EmailMessage, User
 from ..templating import env
+from ..workflow import is_field_manager
 from . import anon
+
+log = logging.getLogger(__name__)
 
 SUBJECTS = {
     "qc_returned": "ოქმი დაბრუნდა — არ არის გასწორებული",
@@ -31,9 +35,16 @@ SUBJECTS = {
 
 
 def recipients(db, item):
-    """(მთავარი ადრესატი, CC სია) — პასუხისმგებელი მენეჯერი და სხვა მიკუთვნებული მენეჯერები."""
+    """
+    (მთავარი ადრესატი, CC სია) — პასუხისმგებელი მენეჯერი და სხვა მიკუთვნებული მენეჯერები.
+    ორივეში მხოლოდ დასაშვები საველე მენეჯერი (T-030); პასუხისმგებელი დასაშვები არ არის →
+    To — პირველი დასაშვები CC; არცერთი → (None, []).
+    """
     primary = db.get(User, item.field_manager_id) if item.field_manager_id else None
-    cc = [p.user for p in item.managers if p.user and (primary is None or p.user_id != primary.id)]
+    if not is_field_manager(primary):
+        primary = None
+    cc = [p.user for p in item.managers if is_field_manager(p.user)
+          and (primary is None or p.user_id != primary.id)]
     if primary is None and cc:
         primary, cc = cc[0], cc[1:]
     return primary, cc
@@ -58,7 +69,9 @@ def queue(db, item, event, sender, kind, base_url=""):
     აბრუნებს EmailMessage-ს ან None-ს.
     """
     to, cc = recipients(db, item)
-    if to is None:
+    cc = [u for u in cc if is_field_manager(u)]
+    if not is_field_manager(to):               # დამატებითი დაცვა — recipients()-ს გვერდის ავლაც
+        log.warning("წერილი არ შეიქმნა: ოქმს %s დასაშვები საველე მენეჯერი არ ჰყავს", item.id)
         return None
     link = f"{(BASE_URL or base_url).rstrip('/')}/items/{item.id}"
     subject = f"NAPR QC · ოქმი {item.protocol_number} — {SUBJECTS.get(kind, 'შეტყობინება')}"

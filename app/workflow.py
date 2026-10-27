@@ -77,6 +77,14 @@ def is_primary_manager(item, user):
     return item.field_manager_id == user.id
 
 
+def is_field_manager(user) -> bool:
+    """
+    დასაშვები საველე მენეჯერი (T-030): აქტიური მომხმარებელი საველე მენეჯერის როლით. ორმაგი როლი
+    (+ QC / ადმინი) დასაშვებია. ერთი წესი — მენეჯერის მიწერისთვისაც და წერილის ადრესატისთვისაც.
+    """
+    return user is not None and bool(user.active) and user.has_role(D.FIELD_MANAGER)
+
+
 def is_item_manager(item, user):
     """მიკუთვნებული მენეჯერი (CC) — ხედავს, მაგრამ მოქმედება პასუხისმგებელისაა."""
     return is_primary_manager(item, user) or any(p.user_id == user.id for p in item.managers)
@@ -546,8 +554,8 @@ def apply(db, item, user, role, action, form: dict, files=None) -> QcEvent:
         if not str(mid or "").isdigit():
             raise WorkflowError("აირჩიეთ მენეჯერი.")
         mid = int(mid)
-        if db.get(User, mid) is None:
-            raise WorkflowError("მენეჯერი ვერ მოიძებნა.")
+        if not is_field_manager(db.get(User, mid)):
+            raise WorkflowError("აირჩიეთ საველე მენეჯერი.")
         data = {"from": item.field_manager_id, "to": mid}
         item.field_manager_id = mid
         for p in item.managers:
