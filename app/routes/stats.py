@@ -36,7 +36,7 @@ SECTIONS = {
 def compute(db, ctx, f):
     sec = [s for s in SECTIONS.get(ctx.role, ["kpi"])
            if s != "operators" or scope.can_see_operator_stats(ctx)]
-    out ={"role": ctx.role, "sections": sec}
+    out = {"role": ctx.role, "sections": sec}
     if "kpi" in sec:
         out["kpi"] = S.kpi(db, ctx, f)
     if "trend" in sec:
@@ -99,8 +99,9 @@ def stats_export(request: Request, ctx=Depends(current), db=Depends(get_db)):
               ("pending", "გასავლელი"), ("response_median", "პასუხის მედიანა (დღე)")]
     ws.append(["მაჩვენებელი", "მნიშვნელობა"])
     for key, lbl in labels:
-        if key in k:                           # ველს „გასავლელი" არ აქვს (T-015)
-            ws.append([lbl, k.get(key)])
+        if key == "pending" and not scope.can_see_pending(ctx):     # იგივე წესი, რაც kpi()-ში
+            continue
+        ws.append([lbl, k.get(key)])
     tables = {"operators": ("ოპერატორები", "name"), "managers": ("მენეჯერები", "name"),
               "surveyors": ("ამზომველები", "name"), "zones": ("ზონები", "name")}
     cols = ["checked", "positive", "negative", "recommendation", "defect_rate", "critical_rate",

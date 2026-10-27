@@ -148,7 +148,7 @@ def _in_clarification(db, ctx, f):
 def kpi(db, ctx, f):
     row = db.execute(select(*_agg_cols(db)).where(conditions(ctx, f))).one()
     d = _row_dict(row)
-    if ctx.role not in D.FIELD_ROLES:          # გაუგზავნელის რაოდენობა ველს არ უჩანს (B-14)
+    if scope.can_see_pending(ctx):             # ველს და სამსახურის უფროსს — არა (B-14, T-015)
         d["pending"] = _pending(db, ctx, f)
     d["in_clarification"] = _in_clarification(db, ctx, f)
     d.update(response_times(db, ctx, f))
@@ -206,7 +206,7 @@ def by_operator(db, ctx, f):
     """„კონტროლის სტატისტიკა" — მხოლოდ QC მხარეს (scope.can_see_operator_stats)."""
     if not scope.can_see_operator_stats(ctx):
         return []
-    days =func.count(func.distinct(func.date(QcItem.checked_at)))
+    days = func.count(func.distinct(func.date(QcItem.checked_at)))
     rows = db.execute(select(User.id, User.full_name.label("name"), *_agg_cols(db),
                              days.label("active_days"),
                              func.sum(case((QcItem.return_count > 0, 1), else_=0)).label("returned"))

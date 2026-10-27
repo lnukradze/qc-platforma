@@ -12,11 +12,12 @@ from fastapi.testclient import TestClient
 from openpyxl import load_workbook
 
 from app import domain as D
+from app import scope
 from app.main import app
 from app.models import EmailMessage, Presence, QcEvent, QcItem, User
 from app.services import anon, notify
 from app.workflow import apply
-from conftest import make_item, make_user
+from conftest import ctx, make_item, make_user
 
 ORIGIN = {"origin": "http://testserver"}
 FIELD = [("sv", D.SURVEYOR), ("mgr", D.FIELD_MANAGER)]
@@ -316,6 +317,32 @@ def test_stats_qc_manager_operator_filter_works(db, w):
     assert d["kpi"]["checked"] == 2
     f = c.get(f"/api/stats?operator={w['p']['op2'].id}").json()
     assert f["kpi"]["checked"] == 0
+
+
+# „გასავლელი" — ერთი წესი (scope.can_see_pending) KPI-ში და Excel-ში, ყველა როლზე.
+# w-ში გაუგზავნელია მხოლოდ u (ოპერატორი op2): op-ს თავისი 0 აქვს, op2-ს — 1, ყველას ნახვით — 1.
+PENDING = [("sv", D.SURVEYOR, None), ("mgr", D.FIELD_MANAGER, None), ("head", D.HEAD_OF_SERVICE, None),
+           ("op", D.QC_OPERATOR, 0), ("op2", D.QC_OPERATOR, 1), ("qcm", D.QC_MANAGER, 1),
+           ("admin", D.ADMIN, 1), ("coord", D.COORDINATOR, 1)]
+
+
+@pytest.mark.parametrize("who,role,expected", PENDING)
+def test_pending_kpi_by_role(db, w, who, role, expected):
+    user = w["p"][who] if who != "head" else make_user(db, "Gela Head-Iota", D.HEAD_OF_SERVICE)
+    db.commit()
+    assert scope.can_see_pending(ctx(user, role)) is (expected is not None)
+    c = client(user, role)
+    k = c.get("/api/stats").json()["kpi"]
+    if expected is None:
+        assert "pending" not in k
+    else:
+        assert k["pending"] == expected
+    wb = load_workbook(io.BytesIO(c.get("/stats/export.xlsx").content))
+    rows = {r[0]: r[1] for r in wb["ჯამური"].iter_rows(min_row=2, values_only=True)}
+    if expected is None:
+        assert "გასავლელი" not in rows
+    else:
+        assert rows["გასავლელი"] == expected
 
 
 # ── 8. კოორდინატორი ─────────────────────────────────────────────────────
