@@ -621,3 +621,19 @@ class ReportAdjustment(Base):
     operator: Mapped[User] = relationship(foreign_keys=[operator_id])
     created_by: Mapped[User | None] = relationship(foreign_keys=[created_by_id])
     revoked_by: Mapped[User | None] = relationship(foreign_keys=[revoked_by_id])
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  ერთჯერადი ფორმის token — კომენტარის დუბლიკატისგან დაცვა (T-019, B-11)
+# ══════════════════════════════════════════════════════════════════════
+class FormToken(Base):
+    """
+    გამოყენებული `once` token. ჩაიწერება იმავე ტრანზაქციაში, რაც კომენტარი; მეორედ იგივე token →
+    PRIMARY KEY-ის დარღვევა → კომენტარი და მეილი აღარ იქმნება (ორჯერ დაჭერა, განმეორებითი POST).
+    ახალი ცხრილია — `create_all` არსებულ ბაზაშიც ქმნის. ძველი ჩანაწერები (> 1 დღე) შეიძლება წაიშალოს.
+    """
+    __tablename__ = "form_tokens"
+
+    token: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    used_at: Mapped[dt.datetime] = mapped_column(DateTime, default=_now, index=True)
