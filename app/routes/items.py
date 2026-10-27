@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """ერთი შემთხვევის ბარათი (ოქმი + საკადასტრო კოდი): ინფორმაცია, მოქმედებები, ისტორია."""
 import json
+import secrets
 from collections import defaultdict
 from urllib.parse import quote
 
@@ -16,9 +17,10 @@ from ..db import get_db
 from ..models import (Attachment, DefectCode, EmailMessage, ItemPerson, QcEvent, QcItem, QcReview,
                       User, UserRole)
 from ..security import current, same_origin
-from ..services import notify
-from ..workflow import (ConflictError, WorkflowError, allowed_responses, apply, available_actions,
-                        is_item_manager, is_primary_manager, pending_request)
+from ..services import anon, notify
+from ..workflow import (ConflictError, DuplicateError, WorkflowError, allowed_responses, apply,
+                        available_actions, discard_new_files, is_item_manager, is_primary_manager,
+                        keep_new_files, pending_request)
 from .common import redirect, render
 from .qc import next_pending
 
@@ -118,6 +120,7 @@ def detail(item_id: int, request: Request, ctx=Depends(current), db=Depends(get_
         catalog=catalog, catalog_map={c.code: c for c in catalog}, surveyor_options=surveyor_options,
         operators=operators, manager_options=manager_options, queue=queue, next_id=next_id,
         show_operator=show_operator,
+        once=secrets.token_urlsafe(24),       # კომენტარის ფორმის ერთჯერადი token (T-019)
         zone_name=zone_names().get(item.zone or "", ""),
         show_false_fix=scope.can_see_false_fix(ctx),
         show_qc_error=scope.can_see_restricted_stats(ctx), back=back)
@@ -155,31 +158,46 @@ async def action(item_id: int, request: Request, ctx=Depends(current), db=Depend
     files = [f for f in form.getlist("files") if getattr(f, "filename", "")]
     act = data.get("action", "")
     back = data.get("back") or f"/items/{item_id}"
-    before_state = item.state
+    msg = None
     try:
         ev = apply(db, item, ctx.user, ctx.role, act, data, files)
-        notice = ""
         if (str(data.get("notify")) == "on" and ctx.role in D.QC_ROLES
                 and ev.action in NOTIFY_ACTIONS):
             msg = notify.queue(db, item, ev, ctx.user, ev.action, base_url=str(request.base_url))
-            if msg is not None:
-                notice = (" ✉ მეილი გაიგზავნა." if msg.status == "sent" else
-                          " ✉ მეილი მომზადდა (SMTP ჯერ არ არის — ჩანს ადმინისტრირება → მეილები)."
-                          if msg.status == "preview" else " ✉ მენეჯერს ელფოსტა არ აქვს რეგისტრირებული.")
         db.commit()
+    except DuplicateError as e:                 # იგივე ფორმა მეორედ — ახალი მოვლენა/მეილი არ არის
+        db.rollback()
+        discard_new_files(db)
+        return redirect(f"/items/{item_id}", ok=str(e))
     except ConflictError as e:
         db.rollback()
+        discard_new_files(db)
         db.refresh(item)
-        if act == "field_respond" and before_state == D.AWAITING_FIELD and item.field_response:
+        if act == "field_respond" and item.field_response and item.field_responded_at:
             who = db.get(User, item.field_responder_id) if item.field_responder_id else None
+            name = anon.actor_name(ctx.role, who, None) if who else "სხვამ"
             return redirect(f"/items/{item_id}", err=(
-                f"ამ ოქმზე პასუხი უკვე გაგზავნა {who.full_name if who else 'სხვამ'}"
+                f"ამ ოქმზე პასუხი უკვე გაგზავნა {name}"
                 f" ({item.field_responded_at:%d.%m %H:%M}) — ერთ კოდზე ერთი პასუხი იგზავნება. "
                 "შეგიძლიათ კომენტარი დაამატოთ."))
         return redirect(f"/items/{item_id}", err=str(e))
     except WorkflowError as e:
         db.rollback()
+        discard_new_files(db)
         return redirect(f"/items/{item_id}?back={quote(back)}", err=str(e))
+    except Exception:
+        db.rollback()
+        discard_new_files(db)
+        raise
+    keep_new_files(db)
+    notice = ""
+    if msg is not None:                         # გაგზავნა — მხოლოდ წარმატებული commit-ის შემდეგ
+        notify.deliver(db, msg)
+        notice = (" ✉ მეილი გაიგზავნა." if msg.status == "sent" else
+                  " ✉ მეილი მომზადდა (SMTP ჯერ არ არის — ჩანს ადმინისტრირება → მეილები)."
+                  if msg.status == "preview" else
+                  " ✉ მეილი ვერ გაიგზავნა (ჩანს ადმინისტრირება → მეილები)." if msg.status == "failed"
+                  else " ✉ მენეჯერს ელფოსტა არ აქვს რეგისტრირებული.")
     ok = MESSAGES.get(act, "შესრულდა.") + notice
     if act in ("send", "save_review") and data.get("go_next") and ctx.role == D.QC_OPERATOR:
         nid = next_pending(db, ctx, item.id)

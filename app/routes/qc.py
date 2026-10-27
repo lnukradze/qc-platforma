@@ -17,9 +17,8 @@ from .. import domain as D
 from .. import scope
 from ..db import get_db
 from ..models import ItemPerson, QcItem, User, VerdictRequest
-from ..security import require, same_origin
+from ..security import require
 from ..services import stats as S
-from ..workflow import WorkflowError, apply
 from .common import paginate, qs, redirect, render
 
 router = APIRouter()
@@ -142,34 +141,6 @@ def qc_next(request: Request, after: int = 0, ctx=Depends(require(*QC_ROLES)), d
     if nid is None:
         return redirect("/qc?tab=todo", ok="გასავლელი ოქმი აღარ დარჩა.")
     return redirect(f"/items/{nid}?back=/qc%3Ftab%3Dtodo&queue=1")
-
-
-@router.post("/qc/bulk-send")
-async def bulk_send(request: Request, ctx=Depends(require(*QC_ROLES)), db=Depends(get_db)):
-    same_origin(request)
-    form = await request.form()
-    ids = [int(x) for x in form.getlist("ids") if str(x).isdigit()]
-    sent, skipped = 0, []
-    for iid in ids:
-        item = db.get(QcItem, iid)
-        if item is None or not scope.can_view(ctx, item) or item.state != D.PENDING:
-            continue
-        if not item.verdict:
-            skipped.append(item.protocol_number)
-            continue
-        try:
-            apply(db, item, ctx.user, ctx.role, "send",
-                  {"verdict": item.verdict, "qc_comment": item.qc_comment or "",
-                   "codes": ",".join(item.code_list)})
-            sent += 1
-        except WorkflowError as e:
-            skipped.append(f"{item.protocol_number} ({e})")
-    db.commit()
-    back = form.get("back") or "/qc"
-    msg = f"გაიგზავნა {sent} ოქმი."
-    if skipped:
-        msg += f" გამოტოვებულია {len(skipped)} (ვერდიქტი ან კომენტარი აკლია)."
-    return redirect(back, ok=msg)
 
 
 @router.get("/qc/disputes")
