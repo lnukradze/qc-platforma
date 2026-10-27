@@ -68,14 +68,14 @@ def w(db):
     x = make_item(db, p, protocol="6200003", cad="202.51.12.40.001.003", managers=("mgrx",),
                   surveyors=("svx",))
     ev_send = apply(db, a, p["op"], D.QC_OPERATOR, "send",
-                    {"verdict": D.NEGATIVE, "qc_comment": "ფოტო აკლია"})
-    apply(db, a, p["sv"], D.SURVEYOR, "field_respond", {"response": D.R_DISAGREE, "comment": "ვერ ვეთანხმები"})
-    apply(db, a, p["mgr"], D.FIELD_MANAGER, "manager_approve", {})
-    ev_stand = apply(db, a, p["qcm"], D.QC_MANAGER, "qcm_stand", {"comment": "ხარვეზი რჩება"})
-    ev_admin = apply(db, a, p["admin"], D.ADMIN, "comment", {"comment": "გთხოვთ გაასწოროთ"})
+                    {"version": a.version, "verdict": D.NEGATIVE, "qc_comment": "ფოტო აკლია"})
+    apply(db, a, p["sv"], D.SURVEYOR, "field_respond", {"version": a.version, "response": D.R_DISAGREE, "comment": "ვერ ვეთანხმები"})
+    apply(db, a, p["mgr"], D.FIELD_MANAGER, "manager_approve", {"version": a.version})
+    ev_stand = apply(db, a, p["qcm"], D.QC_MANAGER, "qcm_stand", {"version": a.version, "comment": "ხარვეზი რჩება"})
+    ev_admin = apply(db, a, p["admin"], D.ADMIN, "comment", {"once": "test-once-1", "comment": "გთხოვთ გაასწოროთ"})
     apply(db, a, p["op"], D.QC_OPERATOR, "request_verdict_change",
-          {"new_verdict": D.RECOMMENDATION, "comment": "რეკომენდაცია უფრო ზუსტია"})
-    apply(db, x, p["op"], D.QC_OPERATOR, "send", {"verdict": D.NEGATIVE, "qc_comment": "x"})
+          {"version": a.version, "new_verdict": D.RECOMMENDATION, "comment": "რეკომენდაცია უფრო ზუსტია"})
+    apply(db, x, p["op"], D.QC_OPERATOR, "send", {"version": x.version, "verdict": D.NEGATIVE, "qc_comment": "x"})
     u.operator_id = p["op2"].id
     now = dt.datetime.now()
     db.add_all([
@@ -213,7 +213,8 @@ def test_email_sender_anonymous_for_field(db, w, key, sender, kind):
 def test_email_via_http_action(db, w):
     c = client(w["p"]["qcm"], D.QC_MANAGER)
     r = c.post(f"/items/{w['a'].id}/action", headers=ORIGIN, follow_redirects=False,
-               data={"action": "comment", "comment": "შეამოწმეთ ხელახლა", "notify": "on"})
+               data={"action": "comment", "comment": "შეამოწმეთ ხელახლა", "notify": "on",
+                     "once": "test-once-http"})
     assert r.status_code == 303 and "err=" not in r.headers["location"]
     msg = db.query(EmailMessage).order_by(EmailMessage.id.desc()).first()
     assert msg is not None and msg.created_by_id == w["p"]["qcm"].id

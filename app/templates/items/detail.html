@@ -367,6 +367,7 @@
     <div class="card-body">
       <form method="post" action="/items/{{ item.id }}/action" enctype="multipart/form-data">
         <input type="hidden" name="action" value="comment"><input type="hidden" name="back" value="{{ back }}">
+        <input type="hidden" name="once" value="{{ once }}">
         <div class="form-row"><label class="sr" for="c-c">კომენტარი</label><textarea id="c-c" name="comment" placeholder="დაწერეთ შეტყობინება ამ შემთხვევაზე…" style="min-height:64px"></textarea></div>
         <div class="form-actions">
           {% if qc_side %}<input type="file" name="files" multiple accept="image/*,application/pdf" aria-label="ფაილი">{% endif %}
