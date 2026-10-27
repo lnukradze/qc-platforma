@@ -39,23 +39,6 @@
   }
   initFilterToggles();
 
-  // ── ჯგუფური მონიშვნა (QC სია) ────────────────────────────────
-  function syncBulk() {
-    const form = document.getElementById('bulk-form');
-    if (!form) return;
-    const n = form.querySelectorAll('input[name=ids]:checked').length;
-    const bar = document.getElementById('bulkbar');
-    if (bar) { bar.hidden = n === 0; document.getElementById('bulk-n').textContent = n; }
-  }
-  document.addEventListener('change', function (e) {
-    if (e.target.classList.contains('check-all')) {
-      const form = e.target.closest('form');
-      form.querySelectorAll('input[name=ids]:not(:disabled)').forEach(function (c) { c.checked = e.target.checked; });
-    }
-    if (e.target.name === 'ids' || e.target.classList.contains('check-all')) syncBulk();
-  });
-  document.body.addEventListener('htmx:afterSwap', syncBulk);
-
   // ── ხარვეზის კოდები: ავტომატური შეთავაზება კომენტარიდან ─────────
   function initCodes() {
     const box = document.getElementById('codebox');
@@ -155,86 +138,10 @@
 
   const esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   const SVG = {
-    search: '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
-    file: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/>',
-    go: '<path d="M5 12h14M13 6l6 6-6 6"/>',
     x: '<path d="M6 6l12 12M18 6 6 18"/>',
-    up: '<path d="m6 15 6-6 6 6"/>', down: '<path d="m6 9 6 6 6-6"/>',
-    board: '<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/>',
-    rows: '<path d="M3 6h18M3 12h18M3 18h18"/>'
+    up: '<path d="m6 15 6-6 6 6"/>', down: '<path d="m6 9 6 6 6-6"/>'
   };
   function ico(n, s) { return '<svg class="ico-svg" width="' + (s || 16) + '" height="' + (s || 16) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + SVG[n] + '</svg>'; }
-
-  // ── ბრძანებები და ოქმის ძებნა (Ctrl+K) ───────────────────────────
-  // მხოლოდ არსებული გვერდები (მენიუდან, ანუ როლის უფლებით) და არსებული GET ფილტრები.
-  function navLinks() {
-    return Array.prototype.map.call(document.querySelectorAll('#rail .nav a.nav-item'), function (a) {
-      return { t: a.textContent.trim(), href: a.getAttribute('href'), i: 'go', s: 'გვერდი' };
-    });
-  }
-  function searchTargets(q) {
-    const v = q.trim();
-    if (!/^[\d.]{3,}$/.test(v)) return [];
-    const key = v.indexOf('.') >= 0 ? 'cad' : 'protocol';
-    const has = function (h) { return !!document.querySelector('#rail .nav a[href="' + h + '"]'); };
-    const out = [];
-    if (has('/qc')) [['todo', 'გასავლელში'], ['returned', 'უკან მობრუნებულში'], ['sent', 'გაგზავნილში'], ['closed', 'დასრულებულში']].forEach(function (t) {
-      out.push({ t: (key === 'cad' ? 'საკ. კოდი ' : 'ოქმი ') + v, s: 'QC — ' + t[1], i: 'search', href: '/qc?tab=' + t[0] + '&' + key + '=' + encodeURIComponent(v) });
-    });
-    if (has('/field')) [['systematic', 'სისტემური'], ['sporadic', 'სპორადული'], ['manager', 'მენეჯერზე']].forEach(function (t) {
-      out.push({ t: (key === 'cad' ? 'საკ. კოდი ' : 'ოქმი ') + v, s: 'ველი — ' + t[1], i: 'search', href: '/field?tab=' + t[0] + '&' + key + '=' + encodeURIComponent(v) });
-    });
-    return out;
-  }
-  function openCmdk() {
-    if (document.querySelector('.cmdk')) return;
-    const sc = document.createElement('div'); sc.className = 'scrim'; sc.style.zIndex = 94;
-    const box = document.createElement('div');
-    box.className = 'cmdk'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', 'ძებნა და გადასვლა');
-    box.innerHTML = '<div class="cmdk-input">' + ico('search', 20) + '<input placeholder="ოქმის ნომერი, საკადასტრო კოდი ან გვერდი…" aria-label="ძებნა" autocomplete="off"></div>' +
-      '<div class="cmdk-list" role="listbox"></div>' +
-      '<div class="cmdk-foot"><span><span class="kbd">↑</span> <span class="kbd">↓</span> არჩევა</span><span><span class="kbd">Enter</span> გადასვლა</span><span><span class="kbd">Esc</span> დახურვა</span><span>ძებნა — არსებული ფილტრებით</span></div>';
-    document.body.append(sc, box);
-    const input = box.querySelector('input'), list = box.querySelector('.cmdk-list');
-    const extra = [];
-    const next = document.querySelector('a[href="/qc/next"]');
-    if (next) extra.push({ t: 'შემდეგი ოქმი', s: 'QC რიგი', i: 'go', href: '/qc/next' });
-    let rows = [], sel = 0;
-    function draw() {
-      const q = input.value.trim().toLowerCase();
-      const found = searchTargets(q);
-      const pages = extra.concat(navLinks()).filter(function (r) { return !q || r.t.toLowerCase().indexOf(q) >= 0; });
-      rows = found.concat(pages);
-      sel = Math.min(sel, Math.max(0, rows.length - 1));
-      let h = '';
-      rows.forEach(function (r, k) {
-        if (k === 0 && found.length) h += '<div class="cmdk-label">ძებნა</div>';
-        if (k === found.length) h += '<div class="cmdk-label">გვერდები</div>';
-        h += '<button type="button" class="cmdk-row' + (k === sel ? ' on' : '') + '" role="option" aria-selected="' + (k === sel) + '" data-k="' + k + '">' + ico(r.i) + '<span>' + esc(r.t) + '</span><span class="sub">' + esc(r.s) + '</span></button>';
-      });
-      list.innerHTML = h || '<div class="cmdk-label">ვერაფერი მოიძებნა — ოქმისთვის ჩაწერეთ მინიმუმ 3 ციფრი</div>';
-    }
-    function close() { box.remove(); sc.remove(); document.removeEventListener('keydown', key, true); }
-    function go(k) { const r = rows[k]; if (r) { close(); window.location = r.href; } }
-    function key(e) {
-      if (e.key === 'Escape') { e.preventDefault(); close(); }
-      else if (e.key === 'ArrowDown') { e.preventDefault(); sel = (sel + 1) % Math.max(1, rows.length); draw(); }
-      else if (e.key === 'ArrowUp') { e.preventDefault(); sel = (sel - 1 + rows.length) % Math.max(1, rows.length); draw(); }
-      else if (e.key === 'Enter') { e.preventDefault(); go(sel); }
-    }
-    document.addEventListener('keydown', key, true);
-    input.addEventListener('input', function () { sel = 0; draw(); });
-    list.addEventListener('click', function (e) { const b = e.target.closest('[data-k]'); if (b) go(+b.dataset.k); });
-    sc.addEventListener('click', close);
-    draw(); input.focus();
-  }
-  const cmdkBtn = document.getElementById('cmdk-open');
-  if (cmdkBtn) {
-    cmdkBtn.addEventListener('click', openCmdk);
-    document.addEventListener('keydown', function (e) {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); openCmdk(); }
-    });
-  }
 
   // ── სწრაფი ნახვა: ოქმის ბარათი გვერდიდან გამოსულ პანელში ──────────
   // იკითხება იგივე /items/{id} გვერდი (GET — მონაცემი არ იცვლება, უფლებებს სერვერი ამოწმებს);
@@ -247,11 +154,11 @@
     d.classList.add('leaving');
     setTimeout(function () { d.remove(); if (s) s.remove(); }, 200);
   }
-  // მხოლოდ ხილული (ცხრილი ან დაფა — რომელიც ჩართულია), რომ ↑ ↓ ეკრანზე ნანახ რიგს მიჰყვეს
+  // მხოლოდ ხილული, რომ ↑ ↓ ეკრანზე ნანახ რიგს მიჰყვეს
   function peekRows() { return Array.prototype.filter.call(document.querySelectorAll('[data-peek]'), function (b) { return b.offsetParent !== null || b === drawerRow; }); }
   function openPeek(btn) {
     const url = btn.dataset.peek;
-    const row = btn.closest('tr, .b-card');
+    const row = btn.closest('tr');
     const link = row && row.querySelector('a[href^="/items/"]');
     const full = link ? link.getAttribute('href') : url;
     if (!drawerEl) {
@@ -310,110 +217,6 @@
       if (n) openPeek(n);
     }
   });
-
-  // ── Board ხედი: მიმდინარე გვერდის ოქმები მდგომარეობის სვეტებად ──────
-  // მონაცემი იგივეა, რაც ცხრილში (სერვერის მიერ გაფილტრული) — მხოლოდ განლაგება იცვლება.
-  const COLS = {
-    qc: [['gray', 'გასავლელი'], ['draft', 'შენახული — გასაგზავნი'], ['yellow', 'ველმა უპასუხა'], ['lightgreen', 'გაგზავნილია'], ['green', 'დასრულებული']],
-    field: [['orange', 'პასუხი სჭირდება'], ['blue', 'მენეჯერთან'], ['lightgreen', 'QC-ს მხარეს'], ['green', 'დასრულებული']]
-  };
-  function cell(tr, label) {
-    const td = Array.prototype.find.call(tr.children, function (c) { return c.dataset.label === label; });
-    return td ? td.innerHTML.trim() : '';
-  }
-  // დაფა თავიდან სერვერის მიმდინარე გვერდს აჩვენებს; „შემდეგი გვერდის დამატება“ იმავე სიას
-  // ითხოვს იმავე ფილტრებით (?page=N, HX-Request — სერვერი მხოლოდ ცხრილის ფრაგმენტს აბრუნებს).
-  // შერჩევის, დალაგების და გვერდებად დაყოფის წესები სერვერზე რჩება.
-  function boardCard(tr) {
-    const m = /\br-(\w+)/.exec(tr.className);
-    if (!m) return null;
-    const id = tr.querySelector('td.mono');
-    const html = '<div class="b-card c-' + m[1] + '" data-href="' + esc(tr.dataset.href || '') + '">' +
-      '<div class="b-id">' + (id ? id.innerHTML : '') + '</div>' +
-      '<div class="b-cad">' + cell(tr, 'საკ. კოდი') + '</div>' +
-      '<div class="b-meta">' + cell(tr, 'ვერდიქტი') + ' ' + cell(tr, 'ველის პასუხი') + '</div>' +
-      (cell(tr, 'კოდები') ? '<div class="b-meta">' + cell(tr, 'კოდები') + '</div>' : '') +
-      '<div class="b-meta muted">' + cell(tr, 'ამზომველი').replace(/<br\s*\/?>/g, ', ') + '</div></div>';
-    return { color: m[1], html: html.replace(/<input[^>]*>/g, '') };
-  }
-  function buildBoard(card) {
-    const kind = card.dataset.board, table = card.querySelector('table.data');
-    if (!table) return null;
-    const total = +card.dataset.total || 0;
-    const state = { page: +card.dataset.page || 1, pages: +card.dataset.pages || 1, shown: 0 };
-    const b = document.createElement('div');
-    b.className = 'board-wrap';
-    b.innerHTML = '<div class="board-note"><span class="bn-text"></span><button type="button" class="btn btn-secondary btn-sm" data-board-more hidden>შემდეგი გვერდის დამატება</button></div>' +
-      '<div class="board">' + COLS[kind].map(function (c) {
-        return '<section class="b-col c-' + c[0] + '" data-col="' + c[0] + '"><div class="b-col-head"><i class="sw ' + c[0] + '"></i>' + c[1] + '<span class="n">0</span></div>' +
-          '<div class="b-items"></div><div class="b-empty">ჩატვირთულ ოქმებში არ არის</div></section>';
-      }).join('') + '</div>';
-    const note = b.querySelector('.bn-text'), more = b.querySelector('[data-board-more]');
-    function add(rows) {
-      rows.forEach(function (tr) {
-        const c = boardCard(tr);
-        if (!c) return;
-        const col = b.querySelector('[data-col="' + c.color + '"]');
-        if (!col) return;
-        col.querySelector('.b-items').insertAdjacentHTML('beforeend', c.html);
-        state.shown++;
-      });
-      b.querySelectorAll('.b-col').forEach(function (col) {
-        const n = col.querySelectorAll('.b-card').length;
-        col.querySelector('.n').textContent = n;
-        col.querySelector('.b-empty').hidden = n > 0;
-      });
-      note.innerHTML = 'დაფაზე ნაჩვენებია <b>' + state.shown + '</b> ოქმი <b>' + total + '</b>-დან (იგივე ფილტრი და რიგი, რაც ცხრილში)' +
-        (state.page < state.pages ? ' · ჩატვირთულია ' + state.page + ' გვერდი ' + state.pages + '-დან' : '');
-      more.hidden = state.page >= state.pages;
-    }
-    add(Array.prototype.slice.call(table.querySelectorAll('tbody tr')));
-    more.addEventListener('click', function () {
-      const u = new URL(window.location.href);
-      u.searchParams.set('page', String(state.page + 1));
-      more.disabled = true; more.textContent = 'იტვირთება…';
-      fetch(u.pathname + u.search, { credentials: 'same-origin', headers: { 'HX-Request': 'true', Accept: 'text/html' } })
-        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
-        .then(function (html) {
-          const doc = new DOMParser().parseFromString(html, 'text/html');
-          const src = doc.querySelector('[data-board] table.data');
-          state.page++;
-          add(src ? Array.prototype.slice.call(src.querySelectorAll('tbody tr')) : []);
-        })
-        .catch(function (e) { note.insertAdjacentHTML('beforeend', ' · <span class="v-negative">ვერ ჩაიტვირთა (' + esc(e.message) + ')</span>'); })
-        .finally(function () { more.disabled = false; more.textContent = 'შემდეგი გვერდის დამატება'; });
-    });
-    return b;
-  }
-  function initBoards() {
-    document.querySelectorAll('[data-board]').forEach(function (card) {
-      if (card.dataset.boardInit || !card.querySelector('table.data tbody tr')) return;
-      card.dataset.boardInit = '1';
-      const head = card.querySelector('.card-head');
-      const wrap = card.querySelector('.table-wrap');
-      if (!head || !wrap) return;
-      const sw = document.createElement('div');
-      sw.className = 'seg view-switch'; sw.setAttribute('role', 'group'); sw.setAttribute('aria-label', 'ხედი');
-      sw.innerHTML = '<button type="button" data-view="table">' + ico('rows', 14) + 'ცხრილი</button><button type="button" data-view="board">' + ico('board', 14) + 'დაფა</button>';
-      head.appendChild(sw);
-      let board = null;
-      function set(v) {
-        if (v === 'board' && !board) { board = buildBoard(card); if (board) wrap.after(board); }
-        wrap.hidden = v === 'board';
-        if (board) board.hidden = v !== 'board';
-        sw.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.view === v ? 'true' : 'false'); });
-        store('qcp.view.' + card.dataset.board, v);
-      }
-      sw.addEventListener('click', function (e) { const b = e.target.closest('[data-view]'); if (b) set(b.dataset.view); });
-      set(store('qcp.view.' + card.dataset.board) === 'board' ? 'board' : 'table');
-    });
-  }
-  document.addEventListener('click', function (e) {
-    const c = e.target.closest('.b-card[data-href]');
-    if (c && !e.target.closest('a, button')) window.location = c.dataset.href;
-  });
-  initBoards();
-  document.body.addEventListener('htmx:afterSwap', initBoards);
 
   // ── ზონის მინი-რუკა (GIS): ყველა ზონა ნაცრისფრად, ოქმის ზონა — აქცენტით ──
   // წყარო: /static/geo/zones.geojson (იგივე, რასაც სტატისტიკის რუკა იყენებს).

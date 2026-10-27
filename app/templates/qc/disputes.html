@@ -32,7 +32,7 @@
   <div class="card-body">
     <div class="grid-3 dispute-trio">
       <div><div class="label">QC —{{ verdict(i.verdict) }} {{ codes(i) }}</div><div class="quote" style="margin-top:6px">{{ i.qc_comment or '—' }}</div></div>
-      <div><div class="label">ველის პასუხი — {{ response(i.field_response) }}</div><div class="quote field" style="margin-top:6px">{{ i.field_comment or '—' }}</div></div>
+      <div><div class="label">ველის სტატუსი —{{ response(i.field_response) }}</div><div class="quote field" style="margin-top:6px">{{ i.field_comment or '—' }}</div></div>
       <div><div class="label">მენეჯერის დადასტურება / წინა ახსნა</div><div class="quote qcm" style="margin-top:6px">{{ i.manager_visa_comment or i.qcm_explanation or '—' }}</div></div>
     </div>
     <div class="form-actions" style="margin-top:12px"><a class="btn btn-primary btn-sm" href="/items/{{ i.id }}?back=/qc/disagreements">გადაწყვეტილების მიღება →</a><span class="muted small">ამზომველი: {{ surveyors(i) }}</span></div>

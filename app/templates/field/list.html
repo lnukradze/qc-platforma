@@ -36,11 +36,11 @@
           {% for i, n in surveyors %}<option value="{{ i }}" {% if p.surveyor == i|string %}selected{% endif %}>{{ n }}</option>{% endfor %}
         </select></div>
       {% endif %}
-      <div class="field"><label for="f-verdict">ვერდიქტი</label>
+      <div class="field"><label for="f-verdict">სტატუსი</label>
         <select id="f-verdict" name="verdict"><option value="">— ყველა —</option>
           {% for v in (D.NEGATIVE, D.RECOMMENDATION, D.CLARIFICATION) %}<option value="{{ v }}" {% if p.verdict == v %}selected{% endif %}>{{ VERDICT_LABELS[v] }}</option>{% endfor %}
         </select></div>
-      <div class="field"><label for="f-resp">ველის პასუხი</label>
+      <div class="field"><label for="f-resp">ველის სტატუსი</label>
         <select id="f-resp" name="response"><option value="">— ყველა —</option>
           {% for r, lbl in RESPONSE_LABELS.items() %}<option value="{{ r }}" {% if p.response == r %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
         </select></div>

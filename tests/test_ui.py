@@ -61,21 +61,34 @@ def test_stepper_positive_close_skips_field_steps(db, people, item):
     assert html.count("step-i done") == 2             # შეფასება, დახურული
 
 
-def test_lists_expose_board_and_peek(db, people, item):
+def assert_no_removed_ui(html):
+    for marker in ('data-board=', 'id="bulk-form"', 'id="bulkbar"', 'check-all',
+                   'type="checkbox"', 'cmdk-open', 'view-switch', '/qc/bulk-send'):
+        assert marker not in html, marker
+
+
+
+def test_lists_keep_table_and_peek_without_board(db, people, item):
     html = page(people, "op", D.QC_OPERATOR, "/qc")
-    assert 'data-board="qc"' in html and 'data-total="1"' in html and 'data-pages="1"' in html
+    assert_no_removed_ui(html)
+    assert '<table class="data cards">' in html and item.protocol_number in html
     assert f'data-peek="/items/{item.id}"' in html
-    # HTMX ფრაგმენტიც (ფილტრი / დაფის „შემდეგი გვერდი“) იგივე ატრიბუტებს შეიცავს
     c = TestClient(app)
     login(c, people["op"], D.QC_OPERATOR)
-    frag = c.get("/qc?page=1", headers={"HX-Request": "true"}).text
-    assert 'data-board="qc"' in frag and "<html" not in frag
+    r = c.get("/qc?page=1", headers={"HX-Request": "true"})
+    assert r.status_code == 200
+    assert_no_removed_ui(r.text)
+    assert "<html" not in r.text and item.protocol_number in r.text
+    assert f'data-peek="/items/{item.id}"' in r.text
 
 
-def test_field_list_board(db, people, item):
+def test_field_list_keeps_table_without_board(db, people, item):
     act(db, item, people["op"], D.QC_OPERATOR, "send", verdict=D.NEGATIVE, qc_comment="ფოტო აკლია")
     html = page(people, "mgr", D.FIELD_MANAGER, "/field")
-    assert 'data-board="field"' in html
+    assert_no_removed_ui(html)
+    assert item.protocol_number in html and '<table class="data cards">' in html
+    assert f'data-peek="/items/{item.id}"' in html
+    assert '<th>სტატუსი</th>' in html and '<th>ველის სტატუსი</th>' in html
 
 
 def test_home_bento_and_attention(db, people, item):
@@ -98,6 +111,8 @@ def test_stats_page_has_new_sections(db, people, item):
 
 def test_base_shell(db, people, item):
     html = page(people, "op", D.QC_OPERATOR, "/qc")
-    assert 'id="rail"' in html and 'id="cmdk-open"' in html and 'id="theme-toggle"' in html
+    assert 'id="rail"' in html and 'id="theme-toggle"' in html
+    assert_no_removed_ui(html)
+    assert 'Ctrl K' not in html and 'ოქმის# ან გვერდი' not in html
     assert "--eyebrow:" in html                       # კონტექსტური წარწერა სათაურზე
     assert 'action="/role"' in html and 'action="/logout"' in html

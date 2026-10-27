@@ -1,21 +1,21 @@
 {% from "_macros.html" import state_chip, verdict, response, codes, pager, legend, surveyors, presence %}
 {% from "_icons.html" import icon %}
-<div class="card" data-board="field" data-total="{{ total }}" data-page="{{ page }}" data-pages="{{ pages }}">
+<div class="card">
   <div class="card-head">{{ legend('field') }}<span class="muted small">{{ total|num }} შემთხვევა</span></div>
   <div class="card-body flush table-wrap">
     {% if rows %}
     <table class="data cards">
-      <thead><tr><th>ოქმის#</th><th>საკადასტრო კოდი</th><th>ვერდიქტი</th><th>QC კომენტარი</th><th>კოდები</th><th>ამზომველი</th><th>ველის პასუხი</th><th>გაიგზავნა</th><th>მდგომარეობა</th></tr></thead>
+      <thead><tr><th>ოქმის#</th><th>საკადასტრო კოდი</th><th>სტატუსი</th><th>QC კომენტარი</th><th>კოდები</th><th>ამზომველი</th><th>ველის სტატუსი</th><th>გაიგზავნა</th><th>მდგომარეობა</th></tr></thead>
       <tbody>
       {% for i in rows %}
         <tr class="clickable r-{{ field_color(i.state) }}" data-id="{{ i.id }}" data-href="/items/{{ i.id }}?back={{ ('/field?' ~ qs())|urlencode }}">
           <td data-label="ოქმის#" class="mono">{{ presence(i) }}<a href="/items/{{ i.id }}?back={{ ('/field?' ~ qs())|urlencode }}">{{ i.protocol_number }}</a><button type="button" class="peek" data-peek="/items/{{ i.id }}" aria-label="სწრაფი ნახვა — {{ i.protocol_number }}" title="სწრაფი ნახვა">{{ icon('eye', 15) }}</button>{% if i.kind == D.SPORADIC %} <span class="tag kind-sporadic">სპორ.</span>{% endif %}</td>
           <td data-label="საკ. კოდი" class="cad">{{ i.cadcode }}</td>
-          <td data-label="ვერდიქტი">{{ verdict(i.verdict) }}</td>
+          <td data-label="სტატუსი">{{ verdict(i.verdict) }}</td>
           <td data-label="კომენტარი"><div class="clip" title="{{ i.qc_comment or '' }}">{{ i.qc_comment or '—' }}</div></td>
           <td data-label="კოდები">{{ codes(i) }}</td>
           <td data-label="ამზომველი">{{ surveyors(i) }}</td>
-          <td data-label="ველის პასუხი">{{ response(i.field_response) }}</td>
+          <td data-label="ველის სტატუსი">{{ response(i.field_response) }}</td>
           <td data-label="გაიგზავნა" class="nowrap">{{ i.first_sent_at|date }}</td>
           <td data-label="მდგომარეობა">{{ state_chip(i.state, 'field', i.close_reason) }}</td>
         </tr>
