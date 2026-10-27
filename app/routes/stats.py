@@ -21,7 +21,8 @@ from .items import zone_names
 router = APIRouter()
 
 SECTIONS = {
-    D.COORDINATOR: ["kpi", "trend", "operators", "managers", "surveyors", "codes", "zones"],
+    # კოორდინატორი — საველე ჭრილი, ოპერატორების გარეშე (T-015)
+    D.COORDINATOR: ["kpi", "trend", "managers", "surveyors", "codes", "zones"],
     # სამსახურის უფროსი — ხარვეზების სტატისტიკა, „კონტროლის სტატისტიკის" (ოპერატორების) გარეშე
     D.HEAD_OF_SERVICE: ["kpi", "trend", "managers", "surveyors", "codes", "zones"],
     D.ADMIN: ["kpi", "trend", "operators", "managers", "surveyors", "codes", "zones", "restricted"],
@@ -33,7 +34,8 @@ SECTIONS = {
 
 
 def compute(db, ctx, f):
-    sec = SECTIONS.get(ctx.role, ["kpi"])
+    sec = [s for s in SECTIONS.get(ctx.role, ["kpi"])
+           if s != "operators" or scope.can_see_operator_stats(ctx)]
     out = {"role": ctx.role, "sections": sec}
     if "kpi" in sec:
         out["kpi"] = S.kpi(db, ctx, f)
@@ -89,7 +91,7 @@ def stats_export(request: Request, ctx=Depends(current), db=Depends(get_db)):
     ws = wb.active
     ws.title = "ჯამური"
     k = data.get("kpi", {})
-    labels = [("checked", "შემოწმებული"), ("positive", "დადებითი (+დაზუსტება)"),
+    labels = [("checked", "შემოწმებული"), ("positive", "დადებითი"),
               ("negative", "უარყოფითი"), ("recommendation", "რეკომენდაცია"),
               ("defect_rate", "ხარვეზი %"), ("critical_rate", "კრიტიკული %"),
               ("corrected", "გასწორდა"), ("corrected_rate", "გასწორდა %"),
@@ -97,6 +99,8 @@ def stats_export(request: Request, ctx=Depends(current), db=Depends(get_db)):
               ("pending", "გასავლელი"), ("response_median", "პასუხის მედიანა (დღე)")]
     ws.append(["მაჩვენებელი", "მნიშვნელობა"])
     for key, lbl in labels:
+        if key == "pending" and not scope.can_see_pending(ctx):     # იგივე წესი, რაც kpi()-ში
+            continue
         ws.append([lbl, k.get(key)])
     tables = {"operators": ("ოპერატორები", "name"), "managers": ("მენეჯერები", "name"),
               "surveyors": ("ამზომველები", "name"), "zones": ("ზონები", "name")}

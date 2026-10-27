@@ -111,5 +111,16 @@ def can_see_false_fix(ctx) -> bool:
 
 
 def can_see_operator_stats(ctx) -> bool:
-    """„კონტროლის სტატისტიკა" (ოპერატორების ჭრილი) — სამსახურის უფროსს არ უჩანს."""
-    return ctx.role != D.HEAD_OF_SERVICE
+    """
+    „კონტროლის სტატისტიკა" (ოპერატორების ჭრილი, ფილტრი, არჩევანი) — მხოლოდ QC მხარეს.
+    სამსახურის უფროსს, კოორდინატორს და ველს არ უჩანს (T-015).
+    """
+    return ctx.role in D.QC_ROLES
+
+
+def can_see_pending(ctx) -> bool:
+    """
+    „გასავლელი" (გაუგზავნელი ოქმების რაოდენობა) KPI-ში და Excel-ში: QC ოპერატორი (მხოლოდ
+    საკუთარი — item_filter), QC მენეჯერი, ადმინი, კოორდინატორი. ველს და სამსახურის უფროსს — არა.
+    """
+    return ctx.role in (D.QC_OPERATOR, D.QC_MANAGER, D.ADMIN, D.COORDINATOR)
