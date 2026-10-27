@@ -49,7 +49,10 @@ def test_coordinator_reads_checked_items_head_sees_stats_only(db, people, item):
     assert not scope.can_view(h, item) and _ids(db, h) == set()
     # სტატისტიკისთვის ყველა ჩანაწერი შედის ორივესთვის
     assert db.scalar(select(QcItem.id).where(scope.item_filter(h))) == item.id
-    assert not scope.can_see_operator_stats(h) and scope.can_see_operator_stats(c)
+    assert not scope.can_see_operator_stats(h)
+    assert not scope.can_see_operator_stats(c)                 # T-015: კოორდინატორს — ველის ჭრილი
+    for role in D.ROLES:
+        assert scope.can_see_operator_stats(ctx(people["admin"], role)) == (role in D.QC_ROLES)
 
 
 def test_preqc_only_for_field_roles(db, people):
