@@ -401,7 +401,8 @@
             {% if e.action == 'qc_reviewed' and e.data %} — {% for m in e.data.marks or [] %}{{ MARK_LABELS.get(m, m) }}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}
             {% if e.data and e.data.manager_required %} <span class="tag" title="პასუხობს მხოლოდ საველე მენეჯერი">მენეჯერის ჩართვით</span>{% endif %}
           </div>
-          <div class="who">{{ actor_name(e.actor, e.actor_role) if e.actor else 'სისტემა' }}{% if e.actor_role %} · {{ ROLE_SHORT.get(e.actor_role, e.actor_role) }}{% endif %}
+          {% set who = actor_name(e.actor, e.actor_role) if e.actor else 'სისტემა' %}
+          <div class="who">{{ who }}{% if e.actor_role and who != D.QC_ANON_LABEL %} ·{{ ROLE_SHORT.get(e.actor_role, e.actor_role) }}{% endif %}
             {% if e.from_state and e.to_state and e.from_state != e.to_state %} · <span class="muted">{{ STATE_LABELS[e.from_state] }} → {{ STATE_LABELS[e.to_state] }}</span>{% endif %}</div>
           {% if e.comment %}<div class="text quote" style="font-size:13px">{{ e.comment }}</div>{% endif %}
           {% if e.action == 'legacy_import' and e.data and e.data.snapshot %}
