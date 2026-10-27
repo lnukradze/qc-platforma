@@ -8,14 +8,22 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import func, select
 
 from ..config import RAW_DIR
+from ..services import anon
 from ..templating import templates
 
 PER_PAGE = 50
 
 
 def render(request: Request, ctx, name: str, status_code=200, **kw):
+    viewer_role = getattr(ctx, "role", None)
+
+    def actor_name(user, actor_role=None):
+        """შაბლონისთვის: სახელი ან „ხარისხის კონტროლი" — ამ მოთხოვნის მნახველის როლით."""
+        return anon.actor_name(viewer_role, user, actor_role)
+
     context = {"ctx": ctx, "ok": request.query_params.get("ok"),
-               "err": request.query_params.get("err"), "data_info": data_info()}
+               "err": request.query_params.get("err"), "data_info": data_info(),
+               "actor_name": actor_name}
     context.update(kw)
     return templates.TemplateResponse(request, name, context, status_code=status_code)
 

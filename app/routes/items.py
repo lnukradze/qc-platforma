@@ -64,6 +64,8 @@ def detail(item_id: int, request: Request, ctx=Depends(current), db=Depends(get_
     acts = available_actions(db, item, ctx.user, ctx.role)
     catalog = db.scalars(select(DefectCode).where(DefectCode.active.is_(True))
                          .order_by(DefectCode.sort)).all()
+    # კონტროლი ველისთვის ანონიმურია (T-015) — ოპერატორი და გადანაწილება ველს არ გადაეცემა
+    show_operator = ctx.role not in D.FIELD_ROLES
     surveyor_options, operators, manager_options = [], [], []
     if "save_review" in acts or "edit" in acts:
         have = {p.user_id for p in item.surveyors}
@@ -71,7 +73,7 @@ def detail(item_id: int, request: Request, ctx=Depends(current), db=Depends(get_
             select(User.id, User.full_name).join(UserRole)
             .where(UserRole.role.in_([D.SURVEYOR, D.FIELD_MANAGER]), User.active.is_(True))
             .order_by(User.full_name)).all() if i not in have]
-    if "reassign" in acts:
+    if "reassign" in acts and show_operator:
         operators = db.execute(select(User.id, User.full_name).join(UserRole)
                                .where(UserRole.role == D.QC_OPERATOR, User.active.is_(True))
                                .order_by(User.full_name)).all()
@@ -115,6 +117,7 @@ def detail(item_id: int, request: Request, ctx=Depends(current), db=Depends(get_
         pending_req=pending_request(db, item), review=review, cc_only=cc_only,
         catalog=catalog, catalog_map={c.code: c for c in catalog}, surveyor_options=surveyor_options,
         operators=operators, manager_options=manager_options, queue=queue, next_id=next_id,
+        show_operator=show_operator,
         zone_name=zone_names().get(item.zone or "", ""),
         show_false_fix=scope.can_see_false_fix(ctx),
         show_qc_error=scope.can_see_restricted_stats(ctx), back=back)

@@ -30,7 +30,7 @@
       </td></tr>
       {% if event and event.comment %}
       <tr><td style="padding:4px 24px 8px;">
-        <div style="font-size:13px;font-weight:700;color:#4b505c;">{{ D.EVENT_LABELS.get(event.action, 'შენიშვნა') }} — {{ sender.full_name }}</div>
+        <div style="font-size:13px;font-weight:700;color:#4b505c;">{{ D.EVENT_LABELS.get(event.action, 'შენიშვნა') }} — {{ sender_name }}</div>
         <div style="margin-top:6px;background:#fdf0d2;border-left:3px solid #e08600;padding:10px 12px;font-size:14px;line-height:1.55;">{{ event.comment }}</div>
       </td></tr>
       {% endif %}
@@ -38,7 +38,7 @@
         <a href="{{ link }}" style="display:inline-block;background:#2a55d9;color:#ffffff;text-decoration:none;font-weight:700;padding:11px 20px;border-radius:10px;font-size:14px;">ოქმის გახსნა →</a>
       </td></tr>
       <tr><td style="background:#f7f5ef;padding:12px 24px;font-size:12px;color:#6f737d;line-height:1.5;border-top:1px solid #e2ded3;">
-        გამომგზავნი: {{ sender.full_name }}. ეს შეტყობინება ავტომატურად შეიქმნა NAPR-ის ხარისხის კონტროლის პლატფორმაზე — პასუხი გაეცით სისტემაში, ოქმის ბარათზე.
+        გამომგზავნი: {{ sender_name }}. ეს შეტყობინება ავტომატურად შეიქმნა NAPR-ის ხარისხის კონტროლის პლატფორმაზე — პასუხი გაეცით სისტემაში, ოქმის ბარათზე.
       </td></tr>
     </table>
   </td></tr>

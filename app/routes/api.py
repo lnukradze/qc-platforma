@@ -16,6 +16,7 @@ from .. import scope
 from ..db import get_db
 from ..models import ItemPerson, Presence, QcEvent, QcItem
 from ..security import current, same_origin
+from ..services import anon
 
 PRESENCE_SECONDS = 60          # რამდენ ხანს ითვლება „ახლა ხსნის" ბოლო სიგნალის შემდეგ
 
@@ -34,15 +35,16 @@ def me(ctx=Depends(current)):
             "roles": sorted(ctx.user.role_set)}
 
 
-def _item_json(i: QcItem, detail=False):
+def _item_json(i: QcItem, viewer_role, detail=False):
     d = {"id": i.id, "protocol": i.protocol_number, "cadcode": i.cadcode, "kind": i.kind,
          "zone": i.zone, "state": i.state, "state_label": D.STATE_LABELS.get(i.state),
          "verdict": i.verdict, "codes": i.code_list,
          "checked_at": i.checked_at.isoformat() if i.checked_at else None,
-         "operator": i.operator.full_name if i.operator else None,
          "field_manager": i.field_manager.full_name if i.field_manager else None,
          "surveyors": i.surveyor_names,
          "managers": [p.display_name for p in i.managers]}
+    if viewer_role not in D.FIELD_ROLES:           # კონტროლი ველისთვის ანონიმურია (T-015)
+        d["operator"] = i.operator.full_name if i.operator else None
     if detail:
         d.update({"qc_comment": i.qc_comment, "field_response": i.field_response,
                   "field_comment": i.field_comment, "close_reason": i.close_reason,
@@ -53,15 +55,13 @@ def _item_json(i: QcItem, detail=False):
 @router.get("/items")
 def items(request: Request, state: str | None = None, limit: int = 50, offset: int = 0,
           ctx=Depends(current), db=Depends(get_db)):
-    if ctx.role == D.COORDINATOR:
-        raise HTTPException(403, "კოორდინატორს მხოლოდ სტატისტიკა უჩანს.")
     q = scope.items_query(ctx).options(selectinload(QcItem.codes), selectinload(QcItem.operator),
                                        selectinload(QcItem.field_manager),
                                        selectinload(QcItem.people).selectinload(ItemPerson.user))
     if state in D.STATES:
         q = q.where(QcItem.state == state)
     rows = db.scalars(q.order_by(QcItem.id.desc()).limit(min(limit, 200)).offset(offset)).all()
-    return {"items": [_item_json(i) for i in rows], "limit": limit, "offset": offset}
+    return {"items": [_item_json(i, ctx.role) for i in rows], "limit": limit, "offset": offset}
 
 
 @router.get("/items/{item_id}")
@@ -72,7 +72,7 @@ def item(item_id: int, ctx=Depends(current), db=Depends(get_db)):
     events = db.scalars(select(QcEvent).join(QcItem).where(QcEvent.item_id == i.id,
                                                             scope.event_filter(ctx))
                         .order_by(QcEvent.id)).all()
-    d = _item_json(i, detail=True)
+    d = _item_json(i, ctx.role, detail=True)
     d["history"] = [{"at": e.at.isoformat(), "action": e.action, "from": e.from_state,
                      "to": e.to_state, "role": e.actor_role, "comment": e.comment,
                      "approx": e.approx} for e in events]
@@ -80,14 +80,17 @@ def item(item_id: int, ctx=Depends(current), db=Depends(get_db)):
 
 
 # ── ვინ ხსნის ოქმს ახლა (ყვითელი მოციმციმე ნიშანი) ─────────────────────
-def _others(db, ids, me_id):
+def _others(db, ids, me_id, viewer_role):
     since = dt.datetime.now() - dt.timedelta(seconds=PRESENCE_SECONDS)
     out = {}
     for pr in db.scalars(select(Presence).where(Presence.item_id.in_(ids), Presence.last_seen >= since,
                                                 Presence.user_id != me_id)
                          .options(selectinload(Presence.user))):
-        out.setdefault(pr.item_id, []).append({"name": pr.user.full_name,
-                                               "role": D.ROLE_SHORT.get(pr.role, "")})
+        # ველის მნახველს QC-ის მონაწილე — მხოლოდ „ხარისხის კონტროლი", როლის გარეშე
+        p = {"name": anon.actor_name(viewer_role, pr.user, pr.role)}
+        if not anon.hidden(viewer_role, pr.user, pr.role):
+            p["role"] = D.ROLE_SHORT.get(pr.role, "")
+        out.setdefault(pr.item_id, []).append(p)
     return out
 
 
@@ -106,7 +109,7 @@ def presence_ping(item_id: int, request: Request, ctx=Depends(current), db=Depen
         pr.last_seen, pr.role = now, ctx.role
     db.execute(delete(Presence).where(Presence.last_seen < now - dt.timedelta(minutes=10)))
     db.commit()
-    return {"others": _others(db, [item_id], ctx.user.id).get(item_id, [])}
+    return {"others": _others(db, [item_id], ctx.user.id, ctx.role).get(item_id, [])}
 
 
 @router.post("/presence/{item_id}/leave")
@@ -125,4 +128,4 @@ def presence(ids: str = "", ctx=Depends(current), db=Depends(get_db)):
         return {}
     visible = [i for (i,) in db.execute(scope.items_query(ctx).with_only_columns(QcItem.id)
                                         .where(QcItem.id.in_(wanted)))]
-    return _others(db, visible, ctx.user.id)
+    return _others(db, visible, ctx.user.id, ctx.role)

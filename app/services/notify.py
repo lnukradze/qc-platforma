@@ -18,6 +18,7 @@ from ..config import (BASE_URL, SMTP_FROM, SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, 
                       SMTP_USER)
 from ..models import EmailMessage, User
 from ..templating import env
+from . import anon
 
 SUBJECTS = {
     "qc_returned": "ოქმი დაბრუნდა — არ არის გასწორებული",
@@ -38,6 +39,18 @@ def recipients(db, item):
     return primary, cc
 
 
+def sender_name(event, sender, recipients):
+    """
+    გამომგზავნის სახელი წერილში. HTML/ტექსტი ყველა ადრესატს (CC-ის ჩათვლით) ერთი და იგივე
+    მიდის — თუ ერთი მაინც ველის როლშია (ან როლი არ აქვს — ადრესატი ველის მენეჯერად აირჩა),
+    QC გამომგზავნი ანონიმურია (T-015).
+    """
+    actor_role = event.actor_role if event is not None else None
+    field = any(not u.role_set or set(u.role_set) & set(D.FIELD_ROLES)
+                for u in recipients if u is not None)
+    return anon.actor_name(D.FIELD_ROLES[0] if field else None, sender, actor_role)
+
+
 def queue(db, item, event, sender, kind, base_url=""):
     """ქმნის მეილს და (თუ SMTP მითითებულია) აგზავნის. აბრუნებს EmailMessage-ს ან None-ს."""
     to, cc = recipients(db, item)
@@ -45,7 +58,8 @@ def queue(db, item, event, sender, kind, base_url=""):
         return None
     link = f"{(BASE_URL or base_url).rstrip('/')}/items/{item.id}"
     subject = f"NAPR QC · ოქმი {item.protocol_number} — {SUBJECTS.get(kind, 'შეტყობინება')}"
-    ctx = {"item": item, "event": event, "sender": sender, "kind": kind, "link": link,
+    ctx = {"item": item, "event": event, "sender": sender,
+           "sender_name": sender_name(event, sender, [to, *cc]), "kind": kind, "link": link,
            "title": SUBJECTS.get(kind, "შეტყობინება ოქმზე"), "to": to, "D": D}
     html = env.get_template("email/notice.html").render(**ctx)
     text = env.get_template("email/notice.txt").render(**ctx)

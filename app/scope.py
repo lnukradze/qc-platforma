@@ -111,5 +111,8 @@ def can_see_false_fix(ctx) -> bool:
 
 
 def can_see_operator_stats(ctx) -> bool:
-    """„კონტროლის სტატისტიკა" (ოპერატორების ჭრილი) — სამსახურის უფროსს არ უჩანს."""
-    return ctx.role != D.HEAD_OF_SERVICE
+    """
+    „კონტროლის სტატისტიკა" (ოპერატორების ჭრილი, ფილტრი, არჩევანი) — მხოლოდ QC მხარეს.
+    სამსახურის უფროსს, კოორდინატორს და ველს არ უჩანს (T-015).
+    """
+    return ctx.role in D.QC_ROLES

@@ -65,7 +65,7 @@ def conditions(ctx, f, checked_only=True):
         c.append(QcItem.checked_at <= _date(f["date_to"], True))
     if f.get("kind") in (D.SYSTEMATIC, D.SPORADIC):
         c.append(QcItem.kind == f["kind"])
-    if f.get("operator", "").isdigit():
+    if f.get("operator", "").isdigit() and scope.can_see_operator_stats(ctx):
         c.append(QcItem.operator_id == int(f["operator"]))
     if f.get("manager", "").isdigit():
         mid = int(f["manager"])
@@ -148,7 +148,8 @@ def _in_clarification(db, ctx, f):
 def kpi(db, ctx, f):
     row = db.execute(select(*_agg_cols(db)).where(conditions(ctx, f))).one()
     d = _row_dict(row)
-    d["pending"] = _pending(db, ctx, f)
+    if ctx.role not in D.FIELD_ROLES:          # გაუგზავნელის რაოდენობა ველს არ უჩანს (B-14)
+        d["pending"] = _pending(db, ctx, f)
     d["in_clarification"] = _in_clarification(db, ctx, f)
     d.update(response_times(db, ctx, f))
     return d
@@ -202,8 +203,10 @@ MIN_N = 30
 
 
 def by_operator(db, ctx, f):
-    """„კონტროლის სტატისტიკა" — სამსახურის უფროსს არ უჩანს."""
-    days = func.count(func.distinct(func.date(QcItem.checked_at)))
+    """„კონტროლის სტატისტიკა" — მხოლოდ QC მხარეს (scope.can_see_operator_stats)."""
+    if not scope.can_see_operator_stats(ctx):
+        return []
+    days =func.count(func.distinct(func.date(QcItem.checked_at)))
     rows = db.execute(select(User.id, User.full_name.label("name"), *_agg_cols(db),
                              days.label("active_days"),
                              func.sum(case((QcItem.return_count > 0, 1), else_=0)).label("returned"))
@@ -380,7 +383,8 @@ def restricted(db, ctx, f):
 def filter_options(db, ctx):
     cond = scope.item_filter(ctx)
     ops = db.execute(select(User.id, User.full_name).join(QcItem, QcItem.operator_id == User.id)
-                     .where(cond).group_by(User.id, User.full_name).order_by(User.full_name)).all()
+                     .where(cond).group_by(User.id, User.full_name).order_by(User.full_name)).all() \
+        if scope.can_see_operator_stats(ctx) else []
     mgrs = db.execute(select(User.id, User.full_name)
                       .join(ItemPerson, and_(ItemPerson.user_id == User.id,
                                              ItemPerson.kind == D.P_MANAGER))
