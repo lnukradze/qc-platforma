@@ -218,6 +218,28 @@ SEVERITY_LABELS = {"Critical": "კრიტიკული", "Major": "მნ�
 # ამზომველს და საველე მენეჯერს QC ოპერატორის / QC მენეჯერის სახელი არსად უჩანს — მხოლოდ ეს წარწერა
 QC_ANON_LABEL = "ხარისხის კონტროლი"
 
+# ველს QC-ის როლიც არ უჩანს (ლუკა, 2026-10-27, T-031): ველის გვერდებზე, წერილში და API-ში
+# „QC მენეჯერი“, „QC ოპერატორი“, „ოპერატორის შეცდომა“ — არა. გამონაკლისი — „შესახებ“ გვერდი.
+# ქვემოთ — მხოლოდ ის წარწერები, რომლებიც სრულისგან განსხვავდება; დანარჩენი იგივეა.
+FIELD_EVENT_LABELS = {**EVENT_LABELS,
+    "verdict_changed": "სტატუსი შეიცვალა",
+    "qcm_stand": f"{QC_ANON_LABEL}: ხარვეზი რჩება",
+    "qcm_field_right": f"{QC_ANON_LABEL}: ველი მართალია",
+    "qcm_both_right": f"{QC_ANON_LABEL}: ორივე მართალია",
+    "qc_reviewed": f"{QC_ANON_LABEL}: შეფასება",
+}
+FIELD_STATE_LABELS = {**STATE_LABELS, AWAITING_QCM: "არ დათანხმებული — ხარისხის კონტროლთან"}
+FIELD_QCM_DECISION_LABELS = {**QCM_DECISION_LABELS, QCM_FIELD_RIGHT: "ველი მართალია"}
+
+
+def labels(role):
+    """მოვლენის, სტატუსისა და გადაწყვეტილების წარწერები მნახველის როლით: ველს — ნეიტრალური, სხვას — სრული."""
+    if role in FIELD_ROLES:
+        return {"EVENT_LABELS": FIELD_EVENT_LABELS, "STATE_LABELS": FIELD_STATE_LABELS,
+                "QCM_DECISION_LABELS": FIELD_QCM_DECISION_LABELS}
+    return {"EVENT_LABELS": EVENT_LABELS, "STATE_LABELS": STATE_LABELS,
+            "QCM_DECISION_LABELS": QCM_DECISION_LABELS}
+
 # ── სიები: რამდენი ჩანაწერი გვერდზე (ყველა ფილტრის სექციაში, 10–30) ──
 PAGE_SIZE_MIN, PAGE_SIZE_MAX, PAGE_SIZE_DEFAULT = 10, 30, 10
 
