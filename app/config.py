@@ -7,11 +7,31 @@ PostgreSQL-ზე გადავა — საკმარისია `QCP_DAT
 """
 import os
 import secrets
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 APP_DIR = ROOT / "app"
-DATA_DIR = Path(os.environ.get("QCP_DATA_DIR", ROOT / "data"))
+
+# 🔐 AI აგენტი რეალურ მონაცემს არ ხსნის (AGENTS.md; ლუკა, 2026-10-26). Claude Code თავის ბრძანებებს
+#    CLAUDECODE=1-ით უშვებს, agent.ps1 — QCP_AGENT=1-ით. მაშინ ყველა ადგილი, რომელიც დემო ან დროებით
+#    საქაღალდეში არ არის, დემოთი იცვლება — როგორც არ უნდა გაეშვას აგენტი (Task, პანელი, ტერმინალი).
+AGENT = os.environ.get("CLAUDECODE") == "1" or os.environ.get("QCP_AGENT") == "1"
+DEMO_DIR = ROOT.parent / "qc-demo-data"
+
+
+def _inside(p: Path, base: Path) -> bool:
+    a, b = (os.path.normcase(os.path.realpath(x)) for x in (p, base))
+    return a == b or a.startswith(b.rstrip("\\/") + os.sep)
+
+
+def _agent_safe(p: Path, demo: Path) -> Path:
+    if AGENT and not any(_inside(p, b) for b in (DEMO_DIR, Path(tempfile.gettempdir()))):
+        return demo
+    return p
+
+
+DATA_DIR = _agent_safe(Path(os.environ.get("QCP_DATA_DIR", ROOT / "data")), DEMO_DIR)
 RAW_DIR = DATA_DIR / "raw"
 UPLOAD_DIR = DATA_DIR / "uploads"
 SEED_DIR = APP_DIR / "seed"
@@ -19,17 +39,23 @@ SEED_DIR = APP_DIR / "seed"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-DATABASE_URL = os.environ.get("QCP_DATABASE_URL", f"sqlite:///{(DATA_DIR / 'platform.db').as_posix()}")
+_default_db = f"sqlite:///{(DATA_DIR / 'platform.db').as_posix()}"
+DATABASE_URL = os.environ.get("QCP_DATABASE_URL", _default_db)
+if AGENT and DATABASE_URL.startswith("sqlite:///") and \
+        _agent_safe(Path(DATABASE_URL[len("sqlite:///"):]), DEMO_DIR) == DEMO_DIR:
+    DATABASE_URL = _default_db
 
 # განაწილების წყარო — არსებული პროგრამის ლოკალური ბაზა (მხოლოდ კითხვა).
 # საწარმოოში ეს იქნება ღამის იმპორტი GDB-დან ან სააგენტოს ბაზიდან.
-DISTRIBUTOR_DB = Path(os.environ.get(
+DISTRIBUTOR_DB = _agent_safe(Path(os.environ.get(
     "QCP_DISTRIBUTOR_DB",
-    ROOT.parent / "dzveli masalebi da saitebi" / "NAPR_Distributor" / "napr_data.sqlite"))
+    ROOT.parent / "dzveli masalebi da saitebi" / "NAPR_Distributor" / "napr_data.sqlite")),
+    DEMO_DIR / "distributor.sqlite")
 
 # QC სამუშაო.xlsx — ძველი პერიოდი + სახელების რუკა (Reference)
-QC_WORKBOOK = Path(os.environ.get(
-    "QCP_QC_WORKBOOK", ROOT.parents[1] / "კონტროლ;ის სტატისტიკა" / "QC სამუშაო.xlsx"))
+QC_WORKBOOK = _agent_safe(Path(os.environ.get(
+    "QCP_QC_WORKBOOK", ROOT.parents[1] / "კონტროლ;ის სტატისტიკა" / "QC სამუშაო.xlsx")),
+    DEMO_DIR / "no-workbook.xlsx")
 
 
 def _secret():

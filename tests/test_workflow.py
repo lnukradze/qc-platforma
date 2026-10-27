@@ -114,14 +114,19 @@ def test_both_right_closes_positive_without_error(db, people, item):
     assert item.both_right and not item.qc_error
 
 
-def test_recommendation_allows_acknowledge_or_disagree(db, people, item):
+def test_recommendation_allows_all_three_responses(db, people, item):
+    # ლუკა, 2026-10-26: რეკომენდაციაზე — „შესწორდა“, „გავითვალისწინებთ“ და „არ ვეთანხმები“
+    assert D.DEFAULT_ALLOWED_RESPONSES[D.RECOMMENDATION] == [D.R_CORRECTED, D.R_ACKNOWLEDGE, D.R_DISAGREE]
     act(db, item, people["op"], D.QC_OPERATOR, "send", verdict=D.RECOMMENDATION,
         qc_comment="სასურველია ფოტოები სხვადასხვა რაკურსიდან")
-    with pytest.raises(WorkflowError):
-        act(db, item, people["sv"], D.SURVEYOR, "field_respond", response=D.R_CORRECTED)
-    db.rollback()
     act(db, item, people["sv"], D.SURVEYOR, "field_respond", response=D.R_DISAGREE, comment="ფოტო საკმარისია")
     assert item.state == D.AWAITING_MANAGER               # რეკომენდაციაზეც — მენეჯერის დადასტურებით
+
+
+def test_negative_does_not_allow_acknowledge(db, people, item):
+    send_negative(db, item, people["op"])
+    with pytest.raises(WorkflowError):
+        act(db, item, people["sv"], D.SURVEYOR, "field_respond", response=D.R_ACKNOWLEDGE)
 
 
 def test_clarification_is_not_a_status_until_resolved(db, people, item):

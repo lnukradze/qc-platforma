@@ -52,6 +52,8 @@ $env:QCP_DATA_DIR = $demo
 $env:QCP_DISTRIBUTOR_DB = Join-Path $demo 'distributor.sqlite'
 $env:QCP_QC_WORKBOOK = Join-Path $demo 'no-workbook.xlsx'
 $env:QCP_DEMO_LOGIN = '1'
+# app\config.py: agent mode - any non-demo data path is replaced by the demo (Codex has no CLAUDECODE=1)
+$env:QCP_AGENT = '1'
 # Inherited settings must not lead outside the demo: database URL, mail, Google login
 foreach ($name in 'QCP_DATABASE_URL', 'QCP_SESSION_SECRET', 'QCP_BASE_URL', 'QCP_SMTP_HOST',
                   'QCP_SMTP_USER', 'QCP_SMTP_PASSWORD', 'QCP_GOOGLE_CLIENT_ID', 'QCP_GOOGLE_CLIENT_SECRET') {

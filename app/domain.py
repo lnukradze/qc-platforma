@@ -168,9 +168,9 @@ RESPONSE_FROM_SHEET = {"შესწორდა": R_CORRECTED, "გასწო
                        "გავითვალისწინე": R_ACKNOWLEDGE, "გავითვალისწინებ": R_ACKNOWLEDGE}
 
 # ნაგულისხმევი: რომელი პასუხია დაშვებული რომელ ვერდიქტზე (ადმინს შეუძლია შეცვალოს)
-DEFAULT_ALLOWED_RESPONSES = {
+DEFAULT_ALLOWED_RESPONSES = {          # ლუკა, 2026-10-26: რეკომენდაციაზე — სამივე; დაზუსტებაზე — მხოლოდ კომენტარი
     NEGATIVE: [R_CORRECTED, R_DISAGREE],
-    RECOMMENDATION: [R_ACKNOWLEDGE, R_DISAGREE],
+    RECOMMENDATION: [R_CORRECTED, R_ACKNOWLEDGE, R_DISAGREE],
     CLARIFICATION: [R_ANSWER],
 }
 
