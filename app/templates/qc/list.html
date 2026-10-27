@@ -50,11 +50,11 @@
           {% for i, n in operators %}<option value="{{ i }}" {% if p.operator == i|string %}selected{% endif %}>{{ n }}</option>{% endfor %}
         </select></div>
       {% endif %}
+      {% if tab != 'todo' %}
       <div class="field"><label for="f-verdict">სტატუსი</label>
         <select id="f-verdict" name="verdict"><option value="">— ყველა —</option>
           {% for v in D.VERDICTS %}<option value="{{ v }}" {% if p.verdict == v %}selected{% endif %}>{{ VERDICT_LABELS[v] }}</option>{% endfor %}
         </select></div>
-      {% if tab != 'todo' %}
       <div class="field"><label for="f-resp">ველის სტატუსი</label>
         <select id="f-resp" name="response"><option value="">— ყველა —</option>
           {% for r, lbl in RESPONSE_LABELS.items() %}<option value="{{ r }}" {% if p.response == r %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
