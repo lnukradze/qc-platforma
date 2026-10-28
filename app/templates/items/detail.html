@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import state_chip, verdict, response %}
+{% from "_macros.html" import state_chip, verdict, response with context %}
 {% from "_icons.html" import icon %}
 {% block title %}{{ item.protocol_number }} · {{ item.cadcode }}{% endblock %}
 {% block content %}
@@ -30,7 +30,9 @@
 
 {# ── სამუშაო პროცესის ნაბიჯები — მხოლოდ item.state-დან (ლოგიკა არ იცვლება) ── #}
 {%- set st_idx = {D.PENDING: 0, D.AWAITING_FIELD: 1, D.AWAITING_MANAGER: 2, D.AWAITING_QCM: 2, D.RETURNED_TO_MANAGER: 2, D.AWAITING_QC: 3, D.CLOSED: 4}.get(item.state, 0) -%}
-{%- set wf_steps = [('QC შეფასება', 'ვერდიქტი და კოდები'), ('ველზე', 'ამზომველის პასუხი'), ('განხილვა', 'მენეჯერი / QC მენეჯერი'), ('გადამოწმება', 'QC ამოწმებს პასუხს'), ('დახურული', CLOSE_REASON_LABELS[item.close_reason] if item.close_reason else 'დასრულება')] -%}
+{#- ველს QC-ის როლი არსად უჩანს — მხოლოდ „ხარისხის კონტროლი“ (T-031) -#}
+{%- set field_view = ctx.role in D.FIELD_ROLES -%}
+{%- set wf_steps = [('QC შეფასება', 'ვერდიქტი და კოდები'), ('ველზე', 'ამზომველის პასუხი'), ('განხილვა', 'მენეჯერი / ' ~ (D.QC_ANON_LABEL if field_view else 'QC მენეჯერი')), ('გადამოწმება', 'QC ამოწმებს პასუხს'), ('დახურული', CLOSE_REASON_LABELS[item.close_reason] if item.close_reason else 'დასრულება')] -%}
 {#- რომელი ნაბიჯი შედგა სინამდვილეში — ისტორიიდან. არასავალდებულო ნაბიჯი, რომელიც არ შედგა,
     „გამოტოვებულია“ და არა „შესრულებული“ (მაგ. „განხილვა“ დავის გარეშე, „ველზე“ დადებით ვერდიქტზე). -#}
 {%- set ev_actions = events|map(attribute='action')|list -%}
@@ -144,7 +146,7 @@
       {% if pending_req %}
       <div class="notice warn" id="decide" style="margin-top:12px">
         <b>მოთხოვნილია სტატუსის შეცვლა:</b> {{ verdict(pending_req.from_verdict) }} → {{ verdict(pending_req.to_verdict) }}
-        <span class="muted small">· {{ actor_name(pending_req.requested_by) }},{{ pending_req.requested_at|dt }}</span>
+        <span class="muted small">· {{ actor_name(pending_req.requested_by) }}, {{ pending_req.requested_at|dt }}</span>
         <div class="quote" style="margin-top:6px">{{ pending_req.comment }}</div>
         {% if 'approve_verdict_change' in acts %}
         <form method="post" action="/items/{{ item.id }}/action" style="margin-top:8px">
@@ -195,7 +197,7 @@
         <p class="muted">პასუხი ჯერ არ გაგზავნილა.</p>
       {% endif %}
       {% if item.manager_visa_comment %}<p class="small" style="margin-top:10px"><b>მენეჯერის დადასტურება:</b></p><div class="quote qcm">{{ item.manager_visa_comment }}</div>{% endif %}
-      {% if item.qcm_explanation %}<p class="small" style="margin-top:10px"><b>QC მენეჯერის ახსნა{% if item.qcm_decision %} — {{ QCM_DECISION_LABELS[item.qcm_decision] }}{% endif %}:</b></p><div class="quote qcm">{{ item.qcm_explanation }}</div>{% endif %}
+      {% if item.qcm_explanation %}<p class="small" style="margin-top:10px"><b>{{ 'ხარისხის კონტროლის' if field_view else 'QC მენეჯერის' }} ახსნა{% if item.qcm_decision %} — {{ QCM_DECISION_LABELS[item.qcm_decision] }}{% endif %}:</b></p><div class="quote qcm">{{ item.qcm_explanation }}</div>{% endif %}
       {% if item.returned_comment %}<p class="small" style="margin-top:10px"><b>{% if item.verdict == D.CLARIFICATION %}დამატებითი კითხვა (QC){% else %}QC-ის შენიშვნა — რა დარჩა გასასწორებელი{% endif %}:</b></p><div class="quote ret">{{ item.returned_comment }}</div>{% endif %}
       {% if cc_only %}<div class="notice info" style="margin-top:10px">ეს ოქმი თქვენ CC-ში გიჩანთ (თქვენი ამზომველიც მონაწილეობდა). პასუხისმგებელია {{ item.field_manager.full_name if item.field_manager else 'შემდგენის მენეჯერი' }}.</div>{% endif %}
 
@@ -207,14 +209,14 @@
         </div>
         <div class="form-row"><label class="label" for="c-f">კომენტარი {% if item.verdict == D.CLARIFICATION %}(პასუხი კითხვაზე — სავალდებულო){% else %}<span class="muted small">(„არ ვეთანხმები“-ზე სავალდებულო)</span>{% endif %}</label><textarea id="c-f" name="comment"></textarea></div>
         <button class="btn btn-primary" type="submit">პასუხის გაგზავნა</button>
-        <span class="hint">„არ ვეთანხმები“ კონტროლის მენეჯერთან მხოლოდ საველე მენეჯერის დადასტურებით მიდის.</span>
+        <span class="hint">„არ ვეთანხმები“ {{ 'ხარისხის კონტროლთან' if field_view else 'კონტროლის მენეჯერთან' }} მხოლოდ საველე მენეჯერის დადასტურებით მიდის.</span>
       </form>
       {% endif %}
 
       {% if 'manager_approve' in acts %}
       <form method="post" action="/items/{{ item.id }}/action" style="margin-top:12px">
         <input type="hidden" name="version" value="{{ item.version }}">
-        <div class="notice info">ამზომველი არ ეთანხმება კონტროლის გადაწყვეტილებას. თუ „არ ვეთანხმები“ მართლა ასე უნდა გაიგზავნოს — დაადასტურეთ და ის კონტროლის მენეჯერს მიუვა.</div>
+        <div class="notice info">ამზომველი არ ეთანხმება კონტროლის გადაწყვეტილებას. თუ „არ ვეთანხმები“ მართლა ასე უნდა გაიგზავნოს — დაადასტურეთ და ის {{ 'ხარისხის კონტროლს' if field_view else 'კონტროლის მენეჯერს' }} მიუვა.</div>
         <div class="form-row"><label class="label" for="c-m">მენეჯერის კომენტარი</label><textarea id="c-m" name="comment" placeholder="დასაბუთება / შენიშვნა"></textarea></div>
         <div class="form-actions">
           <button class="btn btn-primary" name="action" value="manager_approve" type="submit">✓ „არ ვეთანხმები“ — დადასტურება</button>
@@ -402,7 +404,7 @@
             {% if e.data and e.data.manager_required %} <span class="tag" title="პასუხობს მხოლოდ საველე მენეჯერი">მენეჯერის ჩართვით</span>{% endif %}
           </div>
           {% set who = actor_name(e.actor, e.actor_role) if e.actor else 'სისტემა' %}
-          <div class="who">{{ who }}{% if e.actor_role and who != D.QC_ANON_LABEL %} ·{{ ROLE_SHORT.get(e.actor_role, e.actor_role) }}{% endif %}
+          <div class="who">{{ who }}{% if e.actor_role and who != D.QC_ANON_LABEL %} · {{ ROLE_SHORT.get(e.actor_role, e.actor_role) }}{% endif %}
             {% if e.from_state and e.to_state and e.from_state != e.to_state %} · <span class="muted">{{ STATE_LABELS[e.from_state] }} → {{ STATE_LABELS[e.to_state] }}</span>{% endif %}</div>
           {% if e.comment %}<div class="text quote" style="font-size:13px">{{ e.comment }}</div>{% endif %}
           {% if e.action == 'legacy_import' and e.data and e.data.snapshot %}

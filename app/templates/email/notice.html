@@ -30,7 +30,7 @@
       </td></tr>
       {% if event and event.comment %}
       <tr><td style="padding:4px 24px 8px;">
-        <div style="font-size:13px;font-weight:700;color:#4b505c;">{{ D.EVENT_LABELS.get(event.action, 'შენიშვნა') }} — {{ sender_name }}</div>
+        <div style="font-size:13px;font-weight:700;color:#4b505c;">{{ EVENT_LABELS.get(event.action, 'შენიშვნა') }} — {{ sender_name }}</div>
         <div style="margin-top:6px;background:#fdf0d2;border-left:3px solid #e08600;padding:10px 12px;font-size:14px;line-height:1.55;">{{ event.comment }}</div>
       </td></tr>
       {% endif %}

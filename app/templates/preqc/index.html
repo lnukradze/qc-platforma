@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import pager %}
+{% from "_macros.html" import pager with context %}
 {% block title %}Pre-QC ხარვეზები{% endblock %}
 {% block content %}
 <div class="page-head">
@@ -8,7 +8,7 @@
     <div class="sub">პროგრამის ავტომატური წინასწარი შემოწმება — ხარვეზი ჩანს მანამ, სანამ ოქმი კონტროლში მივა</div>
   </div>
 </div>
-<div class="notice demo"><b>სადემონსტრაციო მონაცემი.</b>&nbsp;ოქმები, ამზომველები და ხარვეზები გამოგონილია (სადემონსტრაციო გუნდი). IT-სგან რესურსების დაზუსტების შემდეგ აქ Pre-QC Validator-ის რეალური შედეგები გამოჩნდება. კონტროლის ოპერატორს ეს განყოფილება არ უჩანს.</div>
+<div class="notice demo"><b>სადემონსტრაციო მონაცემი.</b>&nbsp;ოქმები, ამზომველები და ხარვეზები გამოგონილია (სადემონსტრაციო გუნდი). IT-სგან რესურსების დაზუსტების შემდეგ აქ Pre-QC Validator-ის რეალური შედეგები გამოჩნდება. {{ 'ხარისხის კონტროლს' if ctx.role in D.FIELD_ROLES else 'კონტროლის ოპერატორს' }} ეს განყოფილება არ უჩანს.</div>
 
 <div class="card">
   <div class="card-head"><h2>ავტომატური შემოწმების გრაფიკი</h2><span class="muted small">წესი: მივლინების მე-3 დღიდან — ყოველ დღეს მოწმდება {{ lag }} დღის წინანდელი ოქმები</span></div>
