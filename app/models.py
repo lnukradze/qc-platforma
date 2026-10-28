@@ -480,7 +480,7 @@ class DistributionBacklog(Base):
     record: Mapped[dict] = mapped_column(JSON)
     run_id: Mapped[int | None] = mapped_column(ForeignKey("distribution_runs.id"))
     created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=_now)
-    status: Mapped[str] = mapped_column(String(16), default="open")   # open | assigned
+    status: Mapped[str] = mapped_column(String(16), default="open")   # open | assigned | excluded (T-033)
 
     __table_args__ = (UniqueConstraint("protocol_number", "cadcode", name="uq_backlog_item"),)
 
