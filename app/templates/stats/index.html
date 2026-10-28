@@ -46,7 +46,7 @@
 </div>
 
 <div id="stats-root" aria-live="polite">
-  <div id="kpis" data-qcm-where="{{ 'ხარისხის კონტროლთან' if ctx.role in D.FIELD_ROLES else 'QC მენეჯერთან' }}"></div>
+  <div id="kpis" data-qcm-state="{{ D.labels(ctx.role).STATE_LABELS[D.AWAITING_QCM] }}"></div>
 
   <section class="sec" data-sec="trend">
     <div class="sec-head">

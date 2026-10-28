@@ -159,8 +159,8 @@
         tile('უარყოფითიდან გასწორდა', pct(k.corrected_rate), `${fmt(k.corrected)} დადასტურებული (M)`, 'accent-pos'),
       ]),
       group('პროცესი', [
-        // ვისთან არის დავა — სერვერი როლით წყვეტს: ველს „ხარისხის კონტროლთან“ (T-031)
-        tile('ველზე ღია', fmt(k.in_field), `${fmt(k.awaiting_qcm)} არ დათანხმებული ${esc(document.getElementById('kpis').dataset.qcmWhere || 'QC მენეჯერთან')}`, 'accent-warn'),
+        // სტატუსის წარწერა — D.labels(role)-იდან (#kpis data-qcm-state): ველს „… ხარისხის კონტროლთან“ (T-031)
+        tile('ველზე ღია', fmt(k.in_field), `${fmt(k.awaiting_qcm)} ${esc(document.getElementById('kpis').dataset.qcmState)}`, 'accent-warn'),
         tile('QC-ის გადასამოწმებელი', fmt(k.awaiting_qc), 'ველმა უპასუხა', 'accent-warn'),
         tile('დაზუსტების პროცესში', fmt(k.in_clarification), 'კითხვა გაგზავნილია', 'accent-cla'),
         tile('პასუხის დრო (მედიანა)', k.response_median === null ? '—' : `${fmt(k.response_median)} დღე`,
