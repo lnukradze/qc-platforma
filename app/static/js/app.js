@@ -63,13 +63,27 @@
     }
     const mgr = picker('manager'), surv = picker('surveyor');
     if (mgr && surv) {
-      let seq = 0, last = mgr.hid.value;
+      // URL-იდან აღდგენილი მნიშვნელობა (სიაში არ არის) ველში რჩება როგორც არის — აქ არაფერი ეხება (ლუკა, F).
+      // მენეჯერის შეცვლისას არჩეული ამზომველი (id) ახალ სიაში თუ არ არის — სუფთავდება ორივე ველი (ლუკა, E).
+      let seq = 0, last = mgr.hid.value, pending = null, release = null;
       mgr.vis.addEventListener('pick', function () {
         const id = mgr.hid.value;
         if (id === last) return;
         last = id;
         const n = ++seq;
-        function fill(html) { if (n !== seq) return; surv.list.innerHTML = html; surv.resolve(); }
+        if (!pending) pending = new Promise(function (r) { release = r; });
+        function fill(html) {
+          if (n !== seq) return;
+          surv.list.innerHTML = html;
+          const sel = surv.hid.value;
+          if (/^\d+$/.test(sel)) {
+            const kept = Array.prototype.some.call(surv.list.options, function (o) { return o.dataset.id === sel; });
+            if (!kept) { surv.vis.value = ''; surv.hid.value = ''; }
+          } else {
+            surv.resolve();                                        // ხელით ჩაწერილი ტექსტი — ძებნაა, რჩება
+          }
+          pending = null; release();
+        }
         if (!/^\d+$/.test(id)) { fill(surv.initial); return; }
         fetch('/api/filters/surveyors?manager=' + encodeURIComponent(id), { headers: { Accept: 'application/json' } })
           .then(function (r) { return r.ok ? r.json() : []; })
@@ -85,6 +99,14 @@
           })
           .catch(function () { fill(surv.initial); });
       });
+      // სია ჯერ არ განახლებულა → გაგზავნა ელოდება, რომ ძველი ამზომველი არ წავიდეს (HTMX-ის submit-იც)
+      f.addEventListener('submit', function (e) {
+        if (!pending) return;
+        e.preventDefault(); e.stopImmediatePropagation();
+        if (f.dataset.queued) return;
+        f.dataset.queued = '1';
+        pending.then(function () { delete f.dataset.queued; f.requestSubmit(); });
+      }, true);
     }
     const zone = f.querySelector('#f-zone'), sector = f.querySelector('#f-sector');
     if (zone && sector) {
