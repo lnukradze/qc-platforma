@@ -1,4 +1,4 @@
-{% from "_macros.html" import state_chip, verdict, response, codes, pager, legend, surveyors, managers, presence %}
+{% from "_macros.html" import state_chip, verdict, response, codes, pager, legend, surveyors, managers, presence with context %}
 {% from "_icons.html" import icon %}
 {%- set base = list_url|default('/qc') -%}
 <div class="card">

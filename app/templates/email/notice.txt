@@ -7,7 +7,7 @@
 {% if item.verdict %}სტატუსი: {{ D.VERDICT_LABELS[item.verdict] }}{% if item.code_list %} ({{ item.code_list|join(', ') }}){% endif %}
 {% endif %}{% if item.qc_comment %}QC კომენტარი: {{ item.qc_comment }}
 {% endif %}{% if event and event.comment %}
-{{ D.EVENT_LABELS.get(event.action, 'შენიშვნა') }} — {{ sender_name }}:
+{{ EVENT_LABELS.get(event.action, 'შენიშვნა') }} — {{ sender_name }}:
 {{ event.comment }}
 {% endif %}
 ოქმის გახსნა: {{ link }}

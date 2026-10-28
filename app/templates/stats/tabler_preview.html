@@ -62,7 +62,7 @@
           ძველი გვერდი ხელუხლებელია.
         </div>
 
-        <div class="row row-deck row-cards" id="kpis"></div>
+        <div class="row row-deck row-cards" id="kpis" data-qcm-state="{{ D.labels(ctx.role).STATE_LABELS[D.AWAITING_QCM] }}"></div>
 
         <div class="row row-deck row-cards mt-1">
           <div class="col-lg-8">
@@ -78,12 +78,14 @@
             </div>
           </div>
 
+          {% if ctx.role not in D.FIELD_ROLES %}{# ველს ოპერატორების ცხრილი არ აქვს — QC-ის როლი HTML-შიც არ ჩანს (T-031) #}
           <div class="col-12" id="card-operators" hidden>
             <div class="card">
               <div class="card-header"><h3 class="card-title">QC ოპერატორები</h3></div>
               <div class="table-responsive" id="t-operators"></div>
             </div>
           </div>
+          {% endif %}
         </div>
       </div>
     </div>

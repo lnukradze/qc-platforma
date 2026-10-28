@@ -1,4 +1,4 @@
-{% from "_macros.html" import state_chip, verdict, response, codes, pager, legend, surveyors, presence %}
+{% from "_macros.html" import state_chip, verdict, response, codes, pager, legend, surveyors, presence with context %}
 {% from "_icons.html" import icon %}
 <div class="card">
   <div class="card-head">{{ legend('field') }}<span class="muted small">{{ total|num }} შემთხვევა</span></div>
