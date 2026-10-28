@@ -99,14 +99,17 @@
           })
           .catch(function () { fill(surv.initial); });
       });
-      // სია ჯერ არ განახლებულა → გაგზავნა ელოდება, რომ ძველი ამზომველი არ წავიდეს (HTMX-ის submit-იც)
-      f.addEventListener('submit', function (e) {
+      // სია ჯერ არ განახლებულა → ყოველი გაგზავნა ელოდება, რომ ძველი ამზომველი არ წავიდეს:
+      // submit-იც და HTMX-ის ნებისმიერი trigger-იც (`change from:select`). სიის შემდეგ — ერთხელ, ახალი მნიშვნელობებით.
+      function hold(e) {
         if (!pending) return;
         e.preventDefault(); e.stopImmediatePropagation();
         if (f.dataset.queued) return;
         f.dataset.queued = '1';
         pending.then(function () { delete f.dataset.queued; f.requestSubmit(); });
-      }, true);
+      }
+      f.addEventListener('submit', hold, true);
+      f.addEventListener('htmx:beforeRequest', hold);
     }
     const zone = f.querySelector('#f-zone'), sector = f.querySelector('#f-sector');
     if (zone && sector) {
