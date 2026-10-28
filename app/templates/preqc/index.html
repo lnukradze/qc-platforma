@@ -36,7 +36,7 @@
 <div class="grid-2">
   <div class="card">
     <div class="card-head"><h2>ყველაზე ხშირი (ოფიციალური კოდით)</h2></div>
-    <div class="card-body flush">
+    <div class="card-body flush table-wrap">
       <table class="data compact"><thead><tr><th>კოდი</th><th class="num">ოქმი</th><th></th></tr></thead><tbody>
       {% set mx = codes[0][1] if codes else 1 %}
       {% for code, k in codes %}<tr class="clickable" data-href="/preqc?code={{ code }}"><td><span class="code">{{ code }}</span></td><td class="num">{{ k }}</td><td style="width:50%"><div class="bar"><span style="width:{{ 100 * k / mx }}%"></span></div></td></tr>{% endfor %}
@@ -46,7 +46,7 @@
   {% if ctx.role != D.SURVEYOR %}
   <div class="card">
     <div class="card-head"><h2>ამზომველების მიხედვით</h2></div>
-    <div class="card-body flush">
+    <div class="card-body flush table-wrap">
       <table class="data compact"><thead><tr><th>ამზომველი</th><th class="num">მზადაა</th><th class="num">რეკომ.</th><th class="num">გადასამოწ.</th><th class="num">გასასწორ.</th></tr></thead><tbody>
       {% for sid, c in per_surv.items() %}<tr class="clickable" data-href="/preqc?surveyor={{ sid }}"><td>{{ names.get(sid, '—') }}</td><td class="num">{{ c.get('pass', 0) }}</td><td class="num">{{ c.get('warn', 0) }}</td><td class="num">{{ c.get('review', 0) }}</td><td class="num"><b class="v-negative">{{ c.get('fail', 0) }}</b></td></tr>{% endfor %}
       </tbody></table>
