@@ -19,6 +19,7 @@ from ..db import get_db
 from ..models import ItemPerson, Presence, QcEvent, QcItem
 from ..security import current, same_origin
 from ..services import anon
+from ..services.listfilter import api_surveyors
 from ..workflow import _insert              # INSERT … ON CONFLICT — SQLite / PostgreSQL (T-019)
 
 PRESENCE_SECONDS = 60          # რამდენ ხანს ითვლება „ახლა ხსნის" ბოლო სიგნალის შემდეგ
@@ -89,6 +90,12 @@ def _event_json(e, viewer_role):
     if not anon.hidden(viewer_role, e.actor, e.actor_role):
         h["role"] = e.actor_role
     return h
+
+
+@router.get("/filters/surveyors")
+def filter_surveyors(manager: str = "", ctx=Depends(current), db=Depends(get_db)):
+    """ფილტრის ჩამოშლისთვის: მენეჯერის გუნდის ამზომველები (T-011). საველე მენეჯერს — მხოლოდ საკუთარი."""
+    return api_surveyors(db, ctx, manager)
 
 
 # ── ვინ ხსნის ოქმს ახლა (ყვითელი მოციმციმე ნიშანი) ─────────────────────
