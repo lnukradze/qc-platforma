@@ -77,7 +77,9 @@ def queue(db, item, event, sender, kind, base_url=""):
     subject = f"NAPR QC · ოქმი {item.protocol_number} — {SUBJECTS.get(kind, 'შეტყობინება')}"
     ctx = {"item": item, "event": event, "sender": sender,
            "sender_name": sender_name(event, sender, [to, *cc]), "kind": kind, "link": link,
-           "title": SUBJECTS.get(kind, "შეტყობინება ოქმზე"), "to": to, "D": D}
+           "title": SUBJECTS.get(kind, "შეტყობინება ოქმზე"), "to": to, "D": D,
+           # ადრესატი საველე მენეჯერია (T-030) — წერილი ყოველთვის ნეიტრალურია, ორმაგი როლითაც (T-031)
+           **D.labels(D.FIELD_MANAGER)}
     html = env.get_template("email/notice.html").render(**ctx)
     text = env.get_template("email/notice.txt").render(**ctx)
     msg = EmailMessage(created_by_id=sender.id, to_user_id=to.id, to_email=to.email,

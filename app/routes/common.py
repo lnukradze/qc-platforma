@@ -7,6 +7,7 @@ from fastapi import Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy import func, select
 
+from .. import domain as D
 from ..config import RAW_DIR
 from ..services import anon
 from ..templating import templates
@@ -24,6 +25,7 @@ def render(request: Request, ctx, name: str, status_code=200, **kw):
     context = {"ctx": ctx, "ok": request.query_params.get("ok"),
                "err": request.query_params.get("err"), "data_info": data_info(),
                "actor_name": actor_name}
+    context.update(D.labels(viewer_role))      # ველს — ნეიტრალური წარწერები, სხვას — სრული (T-031)
     context.update(kw)
     return templates.TemplateResponse(request, name, context, status_code=status_code)
 

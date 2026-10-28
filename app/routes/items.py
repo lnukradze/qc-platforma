@@ -144,6 +144,10 @@ MESSAGES = {
     "assign_manager": "მენეჯერი მიეწერა.", "review": "შეფასება შენახულია.",
     "comment": "კომენტარი დაემატა.",
 }
+# ველის როლით QC-ის როლი არ ჩანს (T-031) — მხოლოდ ის, რაც ველს შეიძლება გამოუჩნდეს და განსხვავდება
+FIELD_MESSAGES = {
+    "manager_approve": "„არ ვეთანხმები“ დადასტურდა — გადაეგზავნა ხარისხის კონტროლს.",
+}
 
 
 @router.post("/items/{item_id}/action")
@@ -206,6 +210,8 @@ async def action(item_id: int, request: Request, ctx=Depends(current), db=Depend
         nid = next_pending(db, ctx, item.id)
         if nid:
             return redirect(f"/items/{nid}?back=/qc%3Ftab%3Dtodo&queue=1", ok=ok + " გაიხსნა შემდეგი ოქმი.")
+    if ctx.role in D.FIELD_ROLES and act in FIELD_MESSAGES:     # T-031: ველს QC-ის როლი არ უჩანს
+        ok = FIELD_MESSAGES[act] + notice
     if act in ("send", "qc_confirm", "qcm_field_right", "qcm_both_right", "qcm_stand") and data.get("back"):
         return redirect(back, ok=ok)
     return redirect(f"/items/{item_id}", ok=ok)
