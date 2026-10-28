@@ -20,8 +20,7 @@ from sqlalchemy import exists, false, or_, select, true
 from sqlalchemy.orm import aliased
 
 from .. import domain as D
-from ..models import ItemPerson, QcItem, User
-from .stats import team_surveyors
+from ..models import ItemPerson, QcItem, Team, TeamMember, User
 
 KEYS = ("protocol", "cad", "date_from", "date_to", "zone", "sector", "manager", "surveyor",
         "operator", "verdict", "response", "kind")
@@ -173,9 +172,14 @@ class ListFilter:
                 "empty_range": self.empty_range}
 
     def _team(self, db):
-        """არჩეული მენეჯერის (id) გუნდი — `stats.team_surveyors`-ის წესით; სხვა შემთხვევაში None."""
+        """
+        არჩეული მენეჯერის გუნდები: id — ერთი მენეჯერი; ტექსტი — ყველა, ვისი სახელიც ემთხვევა (`LIKE`,
+        როგორც ოქმების ფილტრში). მენეჯერი არ არის მითითებული → None (შევიწროება არა).
+        """
         m = self.values["manager"]
-        return [u.id for u in team_surveyors(db, int(m))] if m.isdigit() else None
+        if not m:
+            return None
+        return team_members([int(m)] if m.isdigit() else _users_like(f"%{m}%"))
 
     @staticmethod
     def _names(db, ids, only=None):
@@ -183,6 +187,16 @@ class ListFilter:
         if only is not None:
             q = q.where(User.id.in_(only))
         return [tuple(r) for r in db.execute(q.order_by(User.full_name)).all()]
+
+
+def team_members(manager_ids):
+    """
+    მენეჯერ(ებ)ის **ყველა** მოქმედი საველე გუნდის (`kind="field"`, `active`) მოქმედი წევრი (`valid_to is None`).
+    `stats.team_surveyors` მხოლოდ პირველ გუნდს იღებს — აქ ყველა; IN-ით, დუბლიკატი არა.
+    """
+    return (select(TeamMember.user_id).join(Team, Team.id == TeamMember.team_id)
+            .where(Team.manager_id.in_(manager_ids), Team.kind == "field", Team.active.is_(True),
+                   TeamMember.valid_to.is_(None)))
 
 
 def api_surveyors(db, ctx, manager):
@@ -197,4 +211,8 @@ def api_surveyors(db, ctx, manager):
         allowed = mid == ctx.user.id
     else:
         allowed = ctx.role in (*D.QC_ROLES, D.COORDINATOR)
-    return [{"id": u.id, "name": u.full_name} for u in team_surveyors(db, mid)] if allowed else []
+    if not allowed:
+        return []
+    rows = db.execute(select(User.id, User.full_name).where(User.id.in_(team_members([mid])))
+                      .order_by(User.full_name, User.id)).all()
+    return [{"id": i, "name": n} for i, n in rows]

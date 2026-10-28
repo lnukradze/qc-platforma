@@ -257,6 +257,94 @@ def test_manager_narrows_surveyors(db, people, teams, qcm, seen):
     assert f["surveyors"] == [(people["other"].id, people["other"].full_name)]
 
 
+# ── 7ა. მრავალი გუნდი, ტექსტით არჩევა (QA FAIL, T-011) ──────────────────
+@pytest.fixture()
+def many_teams(db, people):
+    from conftest import make_user
+    ex = {k: make_user(db, n, D.SURVEYOR) for k, n in [
+        ("sv3", "ამზომველი H"), ("dup", "ამზომველი ორ გუნდში"), ("gone", "ამზომველი წასული"),
+        ("off", "ამზომველი დახურულ გუნდში"), ("qcx", "QC გუნდის წევრი"), ("other2", "ამზომველი K")]}
+    people.update(ex)
+    m1, m2 = people["mgr"].id, people["mgr2"].id
+    db.add_all([
+        Team(name="A", manager_id=m1, members=[TeamMember(user_id=people["sv"].id),
+                                               TeamMember(user_id=ex["dup"].id),
+                                               TeamMember(user_id=ex["gone"].id, valid_to=dt.date(2026, 1, 1))]),
+        Team(name="B", manager_id=m1, members=[TeamMember(user_id=ex["sv3"].id),
+                                               TeamMember(user_id=ex["dup"].id)]),
+        Team(name="C — დახურული", manager_id=m1, active=False, members=[TeamMember(user_id=ex["off"].id)]),
+        Team(name="QC", kind="qc", manager_id=m1, members=[TeamMember(user_id=ex["qcx"].id)]),
+        Team(name="D", manager_id=m2, members=[TeamMember(user_id=people["other"].id),
+                                               TeamMember(user_id=ex["other2"].id)]),
+    ])
+    db.commit()
+    # ყველა ამზომველი ხილულ ოქმებზეა — შევიწროება მხოლოდ გუნდით უნდა მოხდეს
+    mk(db, people, "7730001", surveyors=("sv", "sv3", "dup"))
+    mk(db, people, "7730002", surveyors=("gone", "off", "qcx", "sv2"))
+    mk(db, people, "7730003", managers=("mgr2",), surveyors=("other", "other2"))
+    return people
+
+
+def ids(f):
+    got = [i for i, _ in f["surveyors"]]
+    assert len(got) == len(set(got)), got                       # დუბლიკატი არა
+    return set(got)
+
+
+def test_manager_full_name_narrows_surveyors(db, many_teams, qcm, seen):
+    p = many_teams
+    want = {p["sv"].id, p["sv3"].id, p["dup"].id}                # A + B; წასული, დახურული, QC — არა
+    f = ctx_of(qcm, seen, f"/checked?manager={p['mgr'].full_name}")["flt"]
+    assert ids(f) == want
+    assert {i.protocol_number for i in seen["rows"]} == {"7730001", "7730002"}
+    assert ids(ctx_of(qcm, seen, f"/checked?manager={p['mgr'].id}")["flt"]) == want
+    assert ids(ctx_of(qcm, seen, f"/checked?manager={p['mgr2'].full_name}")["flt"]) == \
+        {p["other"].id, p["other2"].id}
+
+
+def test_manager_partial_name_unions_teams(db, many_teams, qcm, seen):
+    p = many_teams
+    f = ctx_of(qcm, seen, "/checked?manager=მენეჯერი")["flt"]   # mgr, mgr2 (და QC მენეჯერი — გუნდის გარეშე)
+    assert ids(f) == {p["sv"].id, p["sv3"].id, p["dup"].id, p["other"].id, p["other2"].id}
+    assert ids(ctx_of(qcm, seen, "/checked?manager=სხვა მენ")["flt"]) == {p["other"].id, p["other2"].id}
+    assert ids(ctx_of(qcm, seen, "/checked?manager=არავინ")["flt"]) == set()
+    assert len(ids(ctx_of(qcm, seen, "/checked")["flt"])) == 9                   # მენეჯერის გარეშე — ყველა
+
+
+def test_inactive_membership_and_teams_excluded(db, many_teams, qcm, seen):
+    p = many_teams
+    got = ids(ctx_of(qcm, seen, f"/checked?manager={p['mgr'].id}")["flt"])
+    assert not got & {p["gone"].id, p["off"].id, p["qcx"].id, p["sv2"].id}
+    names = {x["id"] for x in api(qcm, p["mgr"].id)}
+    assert not names & {p["gone"].id, p["off"].id, p["qcx"].id}
+
+
+def test_api_all_teams_no_duplicates_and_roles(db, many_teams):
+    p = many_teams
+    own = sorted([p["sv"], p["sv3"], p["dup"]], key=lambda u: u.full_name)
+    want = [{"id": u.id, "name": u.full_name} for u in own]
+    fm = login(p["mgr"], D.FIELD_MANAGER)
+    assert api(fm, p["mgr"].id) == want                          # ორივე გუნდი, dup — ერთხელ
+    assert api(fm, p["mgr2"].id) == []                           # სხვისი გუნდი — არა
+    fm2 = login(p["mgr2"], D.FIELD_MANAGER)
+    assert api(fm2, p["mgr"].id) == []
+    assert {x["id"] for x in api(fm2, p["mgr2"].id)} == {p["other"].id, p["other2"].id}
+    for who, role in [("qcm", D.QC_MANAGER), ("op", D.QC_OPERATOR), ("admin", D.ADMIN),
+                      ("coord", D.COORDINATOR)]:
+        assert api(login(p[who], role), p["mgr"].id) == want, role
+    for who, role in [("sv", D.SURVEYOR), ("head", D.HEAD_OF_SERVICE)]:
+        assert api(login(p[who], role), p["mgr"].id) == [], role
+    fm = login(p["mgr"], D.FIELD_MANAGER)
+    assert api(fm, p["mgr"].full_name) == []                     # API — მხოლოდ id (კონტრაქტი)
+
+
+def test_field_manager_flt_cannot_see_other_team(db, many_teams, seen):
+    p = many_teams
+    fm = login(p["mgr"], D.FIELD_MANAGER)
+    f = ctx_of(fm, seen, "/field?manager=სხვა მენეჯერი")["flt"]
+    assert ids(f) == set() and seen["rows"] == []                # სხვისი ოქმი არ ჩანს — არც მისი ამზომველები
+
+
 def test_manager_and_surveyor_by_id_and_text(db, people, qcm, seen):
     mk(db, people, "7710001")
     mk(db, people, "7710002", managers=("mgr2", "mgr"), surveyors=("other", "sv2"))   # mgr — CC
