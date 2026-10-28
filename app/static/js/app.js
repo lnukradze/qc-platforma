@@ -127,14 +127,41 @@
 
   const menuBtn = document.getElementById('menu-toggle');
   const scrim = document.getElementById('rail-scrim');
-  function menu(open) {
+  const rail = document.getElementById('rail');
+  const mainCol = document.querySelector('.app > .main');
+  const mobile = window.matchMedia('(max-width: 760px)');
+  // ტელეფონზე დახურული მენიუ ეკრანს მიღმაა — inert, რომ Tab უხილავ ბმულებზე არ გადავიდეს;
+  // გახსნილისას კი პირიქით — ფონი მიუწვდომელია, ფოკუსი მენიუში რჩება (U-17)
+  function syncRail() {
+    const open = root.classList.contains('rail-open');
+    if (rail) rail.inert = mobile.matches && !open;
+    if (mainCol) mainCol.inert = mobile.matches && open;
+  }
+  function menu(open, refocus) {
     root.classList.toggle('rail-open', open);
     if (menuBtn) menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
     if (scrim) scrim.hidden = !open;
+    syncRail();
+    if (open && rail) { const first = rail.querySelector('.nav a[href]'); if (first) first.focus(); }
+    else if (!open && refocus !== false && menuBtn) menuBtn.focus();
   }
+  syncRail();
+  mobile.addEventListener('change', function () {
+    if (!mobile.matches && root.classList.contains('rail-open')) menu(false, false);
+    syncRail();
+  });
   if (menuBtn) menuBtn.addEventListener('click', function () { menu(!root.classList.contains('rail-open')); });
   if (scrim) scrim.addEventListener('click', function () { menu(false); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && root.classList.contains('rail-open')) menu(false); });
+  document.addEventListener('keydown', function (e) {
+    if (!root.classList.contains('rail-open') || !mobile.matches) return;
+    if (e.key === 'Escape') menu(false);
+    else if (e.key === 'Tab' && rail) {
+      const f = focusables(rail), i = f.indexOf(document.activeElement);
+      if (!f.length) return;
+      if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && (i < 0 || i === f.length - 1)) { e.preventDefault(); f[0].focus(); }
+    }
+  });
 
   const esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   const SVG = {
@@ -146,13 +173,25 @@
   // ── სწრაფი ნახვა: ოქმის ბარათი გვერდიდან გამოსულ პანელში ──────────
   // იკითხება იგივე /items/{id} გვერდი (GET — მონაცემი არ იცვლება, უფლებებს სერვერი ამოწმებს);
   // ფორმები პანელში არ ჩანს — მოქმედებისთვის „ბარათის გახსნა“.
+  // დიალოგია (U-18): გახსნისას ფოკუსი შიგნით, Tab შიგნით ტრიალებს, ფონი (#app) inert-ია;
+  // დახურვისას ფოკუსი ბრუნდება იმ რიგის ღილაკზე, რომლის ბარათიც ჩანდა.
   let drawerEl = null, drawerRow = null;
+  const appEl = document.getElementById('app');
+  function focusables(el) {
+    return Array.prototype.filter.call(el.querySelectorAll('a[href], button:not([disabled]), input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'),
+      function (n) { return n.getClientRects().length > 0 && getComputedStyle(n).visibility !== 'hidden'; });
+  }
   function closeDrawer() {
     if (!drawerEl) return;
-    const d = drawerEl, s = document.querySelector('.scrim.for-drawer');
+    const d = drawerEl, s = document.querySelector('.scrim.for-drawer'), back = drawerRow;
     drawerEl = null; drawerRow = null;
+    if (appEl) appEl.inert = false;
     d.classList.add('leaving');
     setTimeout(function () { d.remove(); if (s) s.remove(); }, 200);
+    // HTMX-მა რიგი თუ ჩაანაცვლა — იგივე ოქმის ახალი ღილაკი; თუ აღარ არის — მთავარი შიგთავსი
+    let t = back && back.isConnected && back.getClientRects().length ? back : null;
+    if (!t && back) t = document.querySelector('[data-peek="' + CSS.escape(back.dataset.peek) + '"]');
+    (t || document.getElementById('main')).focus();
   }
   // მხოლოდ ხილული, რომ ↑ ↓ ეკრანზე ნანახ რიგს მიჰყვეს
   function peekRows() { return Array.prototype.filter.call(document.querySelectorAll('[data-peek]'), function (b) { return b.offsetParent !== null || b === drawerRow; }); }
@@ -164,16 +203,21 @@
     if (!drawerEl) {
       const s = document.createElement('div'); s.className = 'scrim for-drawer'; s.addEventListener('click', closeDrawer);
       drawerEl = document.createElement('aside');
-      drawerEl.className = 'drawer'; drawerEl.setAttribute('role', 'dialog'); drawerEl.setAttribute('aria-modal', 'true'); drawerEl.setAttribute('aria-label', 'ოქმის სწრაფი ნახვა');
+      drawerEl.className = 'drawer'; drawerEl.setAttribute('role', 'dialog'); drawerEl.setAttribute('aria-modal', 'true'); drawerEl.setAttribute('aria-labelledby', 'drawer-title');
       document.body.append(s, drawerEl);
+      if (appEl) appEl.inert = true;
     }
+    // წინა / შემდეგი ღილაკით გადასვლისას ფოკუსი იმავე ღილაკზე რჩება, სხვა შემთხვევაში — „დახურვაზე“
+    const ae = document.activeElement;
+    const keep = ae && drawerEl.contains(ae) && ae.dataset.dmove;
     drawerRow = btn;
-    drawerEl.innerHTML = '<div class="drawer-head"><div class="grow"><div class="eyebrow">სწრაფი ნახვა</div><div class="skel" style="width:60%;height:22px"></div></div>' +
+    drawerEl.innerHTML = '<div class="drawer-head"><div class="grow"><div class="eyebrow" id="drawer-title">სწრაფი ნახვა</div><div class="skel" style="width:60%;height:22px"></div></div>' +
       '<button type="button" class="icon-btn" data-dclose aria-label="დახურვა">' + ico('x', 18) + '</button></div>' +
       '<div class="drawer-body"><div class="skel"></div><div class="skel" style="width:80%"></div><div class="skel" style="width:70%"></div><div class="skel"></div></div>' +
       '<div class="drawer-foot"><a class="btn btn-primary" href="' + esc(full) + '">ბარათის გახსნა</a>' +
       '<button type="button" class="btn btn-ghost btn-sm" data-dmove="-1" aria-label="წინა">' + ico('up') + '</button><button type="button" class="btn btn-ghost btn-sm" data-dmove="1" aria-label="შემდეგი">' + ico('down') + '</button>' +
       '<span class="hint">↑ ↓ — სხვა ოქმი · Esc — დახურვა</span></div>';
+    drawerEl.querySelector(keep ? '[data-dmove="' + keep + '"]' : '[data-dclose]').focus();
     fetch(url, { credentials: 'same-origin', headers: { Accept: 'text/html' } })
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
       .then(function (html) {
@@ -190,9 +234,11 @@
         });
         const tl = doc.querySelector('.timeline');
         if (tl) { tl.querySelectorAll('li:nth-child(n+6)').forEach(function (li) { li.remove(); }); parts.push('<div class="card"><div class="card-head"><h2>ისტორია</h2><span class="muted small">ბოლო 5</span></div><div class="card-body">' + tl.outerHTML + '</div></div>'); }
-        drawerEl.querySelector('.drawer-head .grow').innerHTML = '<div class="eyebrow">სწრაფი ნახვა</div><h2>' + esc(h1 ? h1.textContent.trim() : '') + '</h2>' +
+        const lost = drawerEl.contains(document.activeElement) && drawerEl.querySelector('.drawer-body').contains(document.activeElement);
+        drawerEl.querySelector('.drawer-head .grow').innerHTML = '<div class="eyebrow">სწრაფი ნახვა</div><h2 id="drawer-title">' + esc(h1 ? h1.textContent.trim() : '') + '</h2>' +
           (cad ? cad.outerHTML : '') + (sub ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' + sub.innerHTML + '</div>' : '');
         drawerEl.querySelector('.drawer-body').innerHTML = parts.join('') || '<div class="empty">ინფორმაცია ვერ მოიძებნა.</div>';
+        if (lost) drawerEl.querySelector('[data-dclose]').focus();
       })
       .catch(function (e) {
         if (drawerEl) drawerEl.querySelector('.drawer-body').innerHTML = '<div class="notice err">ბარათი ვერ ჩაიტვირთა (' + esc(e.message) + ').</div>';
@@ -210,13 +256,19 @@
   }, true);
   document.addEventListener('keydown', function (e) {
     if (!drawerEl) return;
-    if (e.key === 'Escape') { closeDrawer(); }
+    if (e.key === 'Escape') { e.stopImmediatePropagation(); closeDrawer(); }   // მხოლოდ ზედა დიალოგი იხურება
+    else if (e.key === 'Tab') {
+      const f = focusables(drawerEl), i = f.indexOf(document.activeElement);
+      if (!f.length) { e.preventDefault(); return; }
+      if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && (i < 0 || i === f.length - 1)) { e.preventDefault(); f[0].focus(); }
+    }
     else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) {
       e.preventDefault();
       const all = peekRows(), i = all.indexOf(drawerRow), n = all[i + (e.key === 'ArrowDown' ? 1 : -1)];
       if (n) openPeek(n);
     }
-  });
+  }, true);
 
   // ── ზონის მინი-რუკა (GIS): ყველა ზონა ნაცრისფრად, ოქმის ზონა — აქცენტით ──
   // წყარო: /static/geo/zones.geojson (იგივე, რასაც სტატისტიკის რუკა იყენებს).

@@ -18,16 +18,16 @@
 </div>
 {% endif %}
 
-<div class="wtabs" role="tablist">
+<nav class="wtabs" aria-label="ოქმების ჩანართები">
   {% for key, (label, _cond) in tabs.items() %}
-  <a class="wtab {% if tab == key %}active{% endif %}" href="/qc?tab={{ key }}{% if p.kind %}&kind={{ p.kind }}{% endif %}">{{ label }} <span class="cnt {% if key == 'returned' and counts[key] %}hot{% endif %}">{{ counts[key]|num }}</span></a>
+  <a class="wtab {% if tab == key %}active{% endif %}"{% if tab == key %} aria-current="page"{% endif %} href="/qc?tab={{ key }}{% if p.kind %}&kind={{ p.kind }}{% endif %}">{{ label }} <span class="cnt {% if key == 'returned' and counts[key] %}hot{% endif %}">{{ counts[key]|num }}</span></a>
   {% endfor %}
-  <span class="kind-chips" aria-label="სახეობა">
+  <span class="kind-chips" role="group" aria-label="სახეობა">
     <a class="kchip {% if p.kind not in (D.SYSTEMATIC, D.SPORADIC) %}on{% endif %}" href="/qc?tab={{ tab }}&kind=all">ყველა</a>
     <a class="kchip {% if p.kind == D.SYSTEMATIC %}on{% endif %}" href="/qc?tab={{ tab }}&kind={{ D.SYSTEMATIC }}">სისტემური</a>
     <a class="kchip {% if p.kind == D.SPORADIC %}on{% endif %}" href="/qc?tab={{ tab }}&kind={{ D.SPORADIC }}">სპორადული</a>
   </span>
-</div>
+</nav>
 
 <div class="card">
   <div class="card-body">

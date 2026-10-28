@@ -41,7 +41,7 @@
 <header class="topbar">
   {% if ctx %}
   <button class="icon-btn menu-toggle" type="button" id="menu-toggle" aria-label="მენიუ" aria-controls="rail" aria-expanded="false">{{ icon('menu', 20) }}</button>
-  <nav class="crumbs" aria-label="მდებარეობა"><span>ხარისხის კონტროლი</span>{{ icon('chevron', 14) }}<b>{{ self.title() }}</b></nav>
+  <nav class="crumbs" aria-label="მდებარეობა"><span>ხარისხის კონტროლი</span>{{ icon('chevron', 14) }}<b title="{{ self.title() }}">{{ self.title() }}</b></nav>
   {% else %}
   <a class="brand brand-plain" href="/">{{ brand_mark(30) }}<span class="brand-text"><span class="brand-name">ხარისხი</span><span class="brand-sub">NAPR · QC პლატფორმა</span></span></a>
   {% endif %}
