@@ -39,7 +39,8 @@
       card('ხარვეზი (უარყოფითი)', pct(k.defect_rate), `${fmt(k.negative)} ოქმი`, 'text-red'),
       card('კრიტიკული ხარვეზი', pct(k.critical_rate), `${fmt(k.critical)} ოქმი ≥1 კრიტიკული კოდით`, 'text-red'),
       card('უარყოფითიდან გასწორდა', pct(k.corrected_rate), `${fmt(k.corrected)} დადასტურებული`, 'text-green'),
-      card('ველზე ღია', fmt(k.in_field), `${fmt(k.awaiting_qcm)} არ დათანხმებული QC მენეჯერთან`, 'text-orange'),
+      // სტატუსის წარწერა — D.labels(role)-იდან (#kpis data-qcm-state): ველს „… ხარისხის კონტროლთან“ (T-031)
+    card('ველზე ღია', fmt(k.in_field), `${fmt(k.awaiting_qcm)} ${esc($('kpis').dataset.qcmState)}`, 'text-orange'),
       card('QC-ის გადასამოწმებელი', fmt(k.awaiting_qc), 'ველმა უპასუხა', 'text-orange'),
       card('გასავლელი', fmt(k.pending), 'ჯერ შეუმოწმებელი'),
     ].join('');
