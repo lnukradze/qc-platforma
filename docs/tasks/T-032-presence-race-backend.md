@@ -39,7 +39,42 @@ PostgreSQL-ზე იგივე — T-005.
 
 ## 3. ტესტის ოქმი — qa (Codex)
 
-…
+### 2026-10-28 — დამოუკიდებელი QA: PASS SQLite-ზე, მზადაა lead-ის ჩასაბარებლად
+
+**ზუსტი ვერსიები:** T-032 Backend **`1d194ded3151d05676b3262a699a8785a0d44406`**; T-025 UI **`d80519d27d1d9fd7d904d3f244163584ad23a837`**; QA საფუძველი **`d2cc29582b108c7412030e65f4b8a8ccfea8c0b1`**. Scratch საფუძველი მომხმარებლის მითითებული main **`1cd24599ca4235d7a2319bb2c6752824c7e7d0b7`**-ია; ემატება T-019 `f436e1af95fa7143d2ca0e4f85cb19d4006871c5`, T-030 `29086ff0fb2776a6c156b2afc28bcf061e14a6ea`, T-031 Backend `11353b5673ae79e927e9efb9894c852e0082c08e`, UI `e7ec77c8f39bde7dbbba18926a6b01171bc9e10f` და ზემოთ მითითებული QA/T-032/T-025 HEAD-ები. საბოლოო დამოუკიდებელი detached ინტეგრაცია: **`2630ce42980e6872b9e1dabccc2960ec8bfe0a74`**. **0 merge კონფლიქტი**, ხელით აპლიკაციის შესწორება არ ყოფილა.
+
+Fetch-ისას მიმდინარე `origin/main` უკვე **`b4fd162`**-ზე იყო; იქიდან წავიკითხე ეს ოფიციალური ბრიფი და უცვლელად გადმოვიტანე QA ბრენჩში მხოლოდ ნაწილი 3-ის შესავსებად. სხვა ნაწილები არ შეცვლილა. ტესტის scratch საფუძველი თვითნებურად არ შეცვლილა. Ancestry ადასტურებს, რომ მიმდინარე main უკვე შეიცავს ოთხივე ზემოთ მითითებულ T-019/T-030/T-031 Backend/UI HEAD-ს; T-019 T-030-შიც შედის და არ გაორმაგებულა. T-032-ის საბოლოო ჩაბარება და ნომრის/სტატუსის ადმინისტრირება lead-ისაა.
+
+#### ფაზა A — სწრაფი პასუხი, PASS
+
+- `tests/test_presence.py`-ის **9 შემთხვევა** გადის: >10 წუთის საკუთარი ძველი ჩანაწერი/განმეორებითი ping, სხვისი ძველი ჩანაწერის წმენდა, 20 წყვილი ერთდროული პირველი ping, მიმდინარე/ძველი ჩანაწერის ping/leave (20-20 წყვილი), ping/სხვისი cleanup, `last_seen`-ის უკან არდაბრუნება, API/ანონიმურობა/leave და scope/Origin. ფაილური დროებითი SQLite, ორი სესია/thread.
+- Presence-ის 9 + T-031-ის 45 ძირითადი/2 preview/12 KPI შემთხვევა: **68 passed, 0 failed, 0 xfailed**, 11.82 წმ. ეს შემთხვევები ქვემოთ მოცემული სრული ნაკრების ნაწილია, ცალკე ახალ უნიკალურ ტესტებად არ ჯამდება.
+- ძველი დამოუკიდებელი HTTP რეპროდუქცია უცვლელი workload-ით, ახალ სინთეტიკურ მომხმარებელზე: **20/20 sequential ping — 200**; **100 concurrent ping/leave წყვილი — ping 100×200, leave 100×200; 0 HTTP 500, 0 StaleDataError, 0 IntegrityError**. იგივე ინსტრუმენტი ძველ კოდზე 16/100 ping-ის 500-ს იღებდა. ეს არის რეალური loopback uvicorn HTTP და არა მხოლოდ mock.
+- **დამოუკიდებელი cleanup transaction fault probe:** მხოლოდ cleanup DELETE-ზე ხელოვნური `OperationalError` („synthetic database is locked“) → HTTP **200**, უკვე committed heartbeat **შენარჩუნებულია**, rollback-მა იგი არ გააუქმა; მომდევნო ping **200**, cleanup აღდგა და ძველი სხვისი ჩანაწერი წაიშალა. warning სტატიკურია და მომხმარებლის სახელს არ შეიცავს.
+
+#### ფაზა B — ერთობლივი ინტეგრაცია, PASS
+
+| მოთხოვნა | შედეგი |
+|---|---|
+| სრული pytest | **297 passed, 0 failed, 0 xfailed**, 38.27 წმ; ერთი არსებული Starlette deprecation warning |
+| Smoke | **80/80, ERRORS: 0**, exit 0 |
+| არსებული Edge ავტომატიზაცია | **34 DOM + 15 API + 7 შენახული წერილი + 2 POST-ის შემდგომი შეტყობინება — ყველა გადის** |
+| T-031 ძირითადი კონტრაქტი | ველის ორივე როლით QC-ის სახელი/მოქმედების როლი დამალულია; `/stats/tabler-preview` ნეიტრალურია; `/about` გამონაკლისი და QC მენეჯერის სრული ინფორმაცია შენარჩუნებულია |
+| Presence კონტრაქტი | პასუხი კვლავ `{"others": [...]}`; leave — `{"ok": true}`. ველის `others`-ში QC ავტორის `role` არ არის; scope და Origin პასუხები უცვლელია |
+| ტექნიკური კოდები | `awaiting_qcm`, `qcm_*`, `qc_error` უცვლელია, ლუკას გადაწყვეტილების შესაბამისად |
+| JavaScript კონსოლი | **0 exception / 0 console.error** ჩვეულებრივ browser run-ში |
+
+#### მონაცემთა ბაზისა და ტრანზაქციების მიმოხილვა
+
+`presence_ping`-ში ORM read-modify-write აღარ არის: გამოიყენება T-019-ის `_insert`-ზე აგებული ატომური upsert და `WHERE last_seen <= excluded.last_seen`; cleanup იწყება heartbeat-ის commit-ის შემდეგ, ცალკე ტრანზაქციაში. Cleanup-ის OperationalError rollback/skip გზა დამოუკიდებლად შემოწმდა. ახალი schema/table/column/migration/dependency არ დამატებულა; `models.py`, `db.py`, `config.py`, `requirements.txt` ამ შესწორებით არ შეცვლილა. SQLite-ზე შემოწმებულ კონკურენტულ სცენარებში ახალი transaction/locking პრობლემა არ გამოვლენილა.
+
+**UNVERIFIED:** რეალური PostgreSQL სერვერი/ტრანზაქციები/locking ამ QA-ში არ გამოყენებულა; SQLite PASS PostgreSQL PASS-ს არ ნიშნავს. ოფიციალური ბრიფით PostgreSQL-ის რეალური შემოწმება T-005-ს ეკუთვნის. Stress-ის 0/100 შედეგი ამ workload-ს ეხება და ყველა შესაძლო დატვირთვის გარანტია არ არის.
+
+#### მტკიცებულებები, უსაფრთხოება და რეკომენდაცია
+
+ახალი დამოუკიდებელი გარემო: `%LOCALAPPDATA%/Temp/qcp-acceptance-2154e4e73740/`; `source/` detached worktree, ახალი `qc-demo-data/` (საწყისი 400 გამოგონილი ოქმი + სინთეტიკური QA სცენარები). ფაილები: `phase-a-tests.log`, `presence-http-stress.json`, `presence-http-server.log`, `cleanup-transaction.json`, `phase-b-full.log`, `browser-report.json`, `smoke.log`. ყველა Python პროცესი **`QCP_AGENT=1`**, SMTP გამორთული; fixture-ები ახალ დროებით ბაზებზე, uvicorn loopback-ზე `--reload`-ის გარეშე; საკუთარი პროცესები გაჩერებულია. Production/რეალური მონაცემები/main/განხორციელების ბრენჩები უცვლელია. QA მხოლოდ ოქმს აქვეყნებს საკუთარ ბრენჩზე.
+
+**რეკომენდაცია:** T-032 **QA PASS ტესტირებულ SQLite მოცულობაში**, წინა presence race დახურულია ამ რეპროდუქციაში; მზადაა lead-ის მიერ ჩასაბარებლად. მომხმარებლის მითითებულ ძველ main-ზე უსაფრთხოდ გამოცდილი რიგი იყო T-019 → T-030 → T-031 Backend → T-031 UI → QA → T-032 → T-025. მიმდინარე `b4fd162` main-ზე პირველი ოთხი უკვე ancestor-ია; lead-ს შეუძლია მათი ხელახლა გაერთიანების გარეშე დაიწყოს **T-032 → T-025/შეთანხმებული UI პაკეტი**. QA actual main-ში merge/deploy-ს არ აკეთებს. PostgreSQL და lead-ის მიღება/production გადაწყვეტილება ცალკე რჩება.
 
 ## 4. ჩაბარება — lead
 
