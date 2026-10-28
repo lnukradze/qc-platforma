@@ -37,7 +37,8 @@ def me(ctx=Depends(current)):
 
 def _item_json(i: QcItem, viewer_role, detail=False):
     d = {"id": i.id, "protocol": i.protocol_number, "cadcode": i.cadcode, "kind": i.kind,
-         "zone": i.zone, "state": i.state, "state_label": D.STATE_LABELS.get(i.state),
+         "zone": i.zone, "state": i.state,
+         "state_label": D.labels(viewer_role)["STATE_LABELS"].get(i.state),     # ველს — ნეიტრალური (T-031)
          "verdict": i.verdict, "codes": i.code_list,
          "checked_at": i.checked_at.isoformat() if i.checked_at else None,
          "field_manager": i.field_manager.full_name if i.field_manager else None,
@@ -71,12 +72,19 @@ def item(item_id: int, ctx=Depends(current), db=Depends(get_db)):
         raise HTTPException(404, "ვერ მოიძებნა")
     events = db.scalars(select(QcEvent).join(QcItem).where(QcEvent.item_id == i.id,
                                                             scope.event_filter(ctx))
-                        .order_by(QcEvent.id)).all()
+                        .options(selectinload(QcEvent.actor)).order_by(QcEvent.id)).all()
     d = _item_json(i, ctx.role, detail=True)
-    d["history"] = [{"at": e.at.isoformat(), "action": e.action, "from": e.from_state,
-                     "to": e.to_state, "role": e.actor_role, "comment": e.comment,
-                     "approx": e.approx} for e in events]
+    d["history"] = [_event_json(e, ctx.role) for e in events]
     return d
+
+
+def _event_json(e, viewer_role):
+    h = {"at": e.at.isoformat(), "action": e.action, "from": e.from_state, "to": e.to_state,
+         "comment": e.comment, "approx": e.approx}
+    # ველს QC-ის როლი არ უჩანს (T-031) — როგორც presence-ში (_others)
+    if not anon.hidden(viewer_role, e.actor, e.actor_role):
+        h["role"] = e.actor_role
+    return h
 
 
 # ── ვინ ხსნის ოქმს ახლა (ყვითელი მოციმციმე ნიშანი) ─────────────────────
