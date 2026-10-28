@@ -270,6 +270,77 @@ node tools\hallmark\scripts\sloplint.mjs app\templates\base.html app\templates\l
 
 **მტკიცებულება/შემდეგი ნაბიჯი:** იმავე დროებით root-ში დამატებულია `diagnostic-detail.json` (16 overflow + 16 განმეორებითი drawer სცენარი), `overflow-causality.json` (4 ჯგუფური მიზეზობრივი probe), `contrast-categories.json` (54 სცენარი). ყველა სერვერი/Edge გაჩერდა; კონსოლის შეცდომა — 0. ყველა პროცესი `QCP_AGENT=1`-ით, იმავე იზოლირებული სინთეტიკური დემოთი; source worktree სუფთაა. UI/Backend/main/რეალური მონაცემები არ შეცვლილა. მხოლოდ ეს QA დოკუმენტაცია ქვეყნდება QA ბრენჩზე. **საბოლოო მიზნობრივი და ერთობლივი QA შესრულდება ახალი, მომხმარებლის მიერ დადასტურებული T-025 HEAD-ის მიღების შემდეგ; მანამდე საბოლოო PASS აკრძალულია.**
 
+### 2026-10-28 — განმეორებითი QA `c38d401`: ზომები/overflow გამოსწორდა; სრული T-025 FAIL კონტრასტზე
+
+**შემოწმებული UI HEAD:** `c38d4012005536cae116d52001c0a9cf87fcb14a`. QA საფუძველი: `c9c8a1137d8af90e3207ed07e5194540a64b408b`. იგი იმავე დამოუკიდებელ ასლში გაერთიანდა ზემოთ ჩამოთვლილ main `1cd24599ca4235d7a2319bb2c6752824c7e7d0b7`, T-019 `f436e1af95fa7143d2ca0e4f85cb19d4006871c5`, T-030 `29086ff0fb2776a6c156b2afc28bcf061e14a6ea`, T-031 Backend `11353b5673ae79e927e9efb9894c852e0082c08e` და UI `e7ec77c8f39bde7dbbba18926a6b01171bc9e10f` ვერსიებთან. ახალი detached ინტეგრაციის HEAD: **`fabf014d975ab2ef29e5d065f846720df11c6c7e`**. **0 კონფლიქტი**, ხელით UI/Backend ცვლილება არ ყოფილა.
+
+#### მიზნობრივი და ერთობლივი შედეგები
+
+| შემოწმება | შედეგი |
+|---|---|
+| სრული pytest | **288 passed, 0 failed, 0 xfailed**, 41.43 წმ |
+| მიზნობრივი concurrency/recipients/neutral-label/preview/KPI/UI ნაკრები | **156 passed**, 0 failed, 0 xfailed, 15.95 წმ |
+| Edge ფუნქციური რეგრესია | **34 DOM + 15 API + 7 email + 2 action notice — ყველა გადის** |
+| T-031 / QC მხარე | ველის ორივე როლის ნეიტრალობა ორივე stats გვერდის ჩათვლით შენარჩუნებულია; `/about`, QC დადებითი კონტროლი და ტექნიკური API კოდები უცვლელია |
+| Smoke | **80/80, ERRORS: 0**, exit 0 |
+| ჩვეულებრივი browser/a11y კონსოლი | **0 JavaScript exception / 0 console.error**; ქვემოთ აღწერილი განზრახ concurrent presence stress ცალკე Backend შემოწმებაა |
+| საერთო mobile matrix | **124 layout მდგომარეობა**, 1366/390/360px × light/dark; **16 menu/drawer keyboard სცენარი გადის** |
+
+**დახურული წინა ხარვეზები:**
+
+- `.drawer .drawer-foot button[data-dmove="-1"]` და `[data-dmove="1"]` ახლა **44×44 CSS px**-ია ორივე ველის როლით, 390/360px-ზე და ორივე თემაში. ცალკე განმეორდა 16 drawer გაზომვა; ყველა button box 44×44-ია.
+- ისტორიის `.tl .small a` ბმულებს რეალურად აქვს 44px სიმაღლე; სინთეტიკური QC ბარათის email-history ბმული ორივე მობილურ ზომაზე **113.44×44px**-ია, უკან დაბრუნება — **82.69×44px**; light/dark შედეგი ერთნაირია. ზომების დასკვნა ეხება გაზომილ ხილულ ბმულებს.
+- ამზომველისა და საველე მენეჯერის `/` და `/preqc`: **16/16 გაზომვა root overflow-ის გარეშე** — 390px-ზე `375/375`, 360px-ზე `345/345`, ორივე თემაში. წყვილი არის `scrollWidth/clientWidth`.
+- Pre-QC-ის „ამზომველების მიხედვით“ ცხრილი ჯერ ისევ 445px intrinsic სიგანისაა, მაგრამ ახლა თავისი `.table-wrap`-ის ფარგლებში სრიალებს: wrapper `client=351/321`, `scroll=445`, `overflow-x:auto`; root სუფთაა. ეს არის ადგილობრივი scroll containment და არა root overflow-ის დამალვა.
+- მენიუს `inert`/Tab, drawer-ის ფოკუსის დაჭერა, Tab/Shift+Tab, Esc და გამხსნელზე დაბრუნება კვლავ გადის.
+
+#### გაფართოებული კონტრასტი — gradient, backdrop-filter და SVG
+
+საბოლოო მეთოდი: native Edge viewport PNG წყვილები — ჩვეულებრივი და მხოლოდ ტექსტის glyph-ების დროებითი mask-ით; layout, ფერები, gradient/SVG ფონი უცვლელი რჩება. რეალური glyph-ის მდებარეობა განისაზღვრება წყვილის სხვაობით; foreground აღებულია computed CSS `color`-იდან ან SVG `fill`-იდან და ითვლება WCAG relative luminance/alpha compositing. PNG pixels იკითხება Windows GDI+-ით, პაკეტის ინსტალაციის გარეშე. ტექსტი screenshot-ის anti-aliasing ფერით არ ფასდება. `elementFromPoint`-ით გამოირიცხება sticky ფილტრის უკან დაფარული ტექსტი. ფონური CSS animation snapshot-ისას დროებით ჩერდება; mask/დაყოვნება/scroll მხოლოდ QA სესიაშია და ყოველი sample-ის შემდეგ აღდგება.
+
+| დაფარვა | საბოლოო შედეგი |
+|---|---|
+| solid-color ტექსტი, იგივე 54 სცენარი | **7,215 განმეორებითი წყვილი**, 0 დარღვევა, მინიმუმი **4.658:1** |
+| gradient/SVG კანდიდატები | **1,103** — წინა 1,097-ს დაემატა presence stress-ის ახალი სინთეტიკური მომხმარებლის login avatar-ის 6 განმეორება |
+| occlusion-aware raster გაზომვა | **1,087 გაზომილი, 16 დაუდასტურებელი**; **14 დაბალი კონტრასტის განმეორება**, ქვემოთ აღწერილი 3 UI ოჯახის ფარგლებში |
+| `/about` SVG | **132/132 გაზომილია**, 0 დარღვევა; მინიმუმი **6.774:1** (22 ტექსტი × 6 ზომა/თემა) |
+| topbar backdrop-filter | **30 სცენარი**, **60 ტექსტური გაზომვა**, 0 დარღვევა, მინიმუმი **4.625:1** |
+
+Topbar-ის 30 სცენარი მოიცავს 1366/390/360px × light/dark × 5 მდგომარეობას: ბუნებრივი scroll 0/400/1200 და დროებითი შავი/თეთრი underlay. Header-ის ტექსტი ცალკე mask-დება, ქვემოთ არსებული რეალური ტექსტი/blur source ინახება. `c38d401`-ის 92%-იანი ფონის შესწორება ამ გაზომვებში გადის.
+
+**დარჩენილი კონტრასტის ხარვეზები — პასუხისმგებელი UI; 1366px-ზე, ტექსტისთვის მოთხოვნა ≥4.5:1:**
+
+| Selector / კონტექსტი | თემა | გაზომვა და რეალური ფონური წყვილი |
+|---|---|---|
+| `#rail .rail-source > .nav-label` — „პროტოტიპი ·“ | light | **3.559:1**; foreground `[134,140,153]`, glyph-ის უკან ფონი `[45,54,78]`. განმეორებით focus run-შიც <4.5 (დაახლოებით 3.72–3.75). საერთო კომპონენტია — რამდენიმე route-ზე მეორდება |
+| `#main .brief-figure > .l` — QC ოპერატორის მთავარზე მცირე caption | light / dark | **4.007 / 3.713:1**; light `[93,97,104]` / `[198,207,235]`, dark `[146,151,163]` / `[50,60,91]`. ცალკე ხელახალი გაზომვითაც <4.5 |
+| `#main .daybar .day-side > span:first-child` — „გუშინ“, `/qc` და `/qc?tab=sent` | light / dark | **4.459 / 4.319:1**; light `[93,97,104]` / `[210,218,242]`, dark `[146,151,163]` / `[42,50,77]` |
+
+წყაროები: `app/static/css/app.css:238` (`.rail-source`), `:600` (`.brief-figure .l`), `:965–975` (`.daybar` gradient/დეკორი და `.day-side`). ეს დაბალი რიცხვები რეალურად დახატული gradient/დეკორატიული ფენების გათვალისწინებითაა მიღებული და token-ის მარტო solid background-ზე შემოწმებას არ ემთხვევა. PNG-ები ადგილობრივად გაიხსნა და დათვალიერდა; ოჯახები დამოუკიდებელი focus run-ითაც განმეორდა. **სხვა როლებისგან სჭირდება — UI:** ამ სამი ოჯახის ნამდვილი ფონების მიმართ ≥4.5:1, ოფიციალური ფერებისა და ტექსტების კონტრაქტის შენარჩუნებით.
+
+**შეზღუდვები:** 16 raster კანდიდატს PASS არ ენიჭება — 14 არის `/stats`-ის ტექსტი, რომელსაც sample-ისას sticky ფილტრი ფარავს; 2 არის 360px QC მთავარის დამატებითი „შემდეგი ოქმი“ ბმული, რომელზეც ამ mask/hit-test მეთოდმა ვალიდური glyph sample ვერ მიიღო. ისინი დადასტურებულ contrast FAIL-ებში არ შედის. ფიზიკური ტელეფონი, screen reader, ყველა hover/active მდგომარეობა, სხვა backdrop კომპონენტების სრული matrix და Hallmark კვლავ არ დასტურდება (Node მიუწვდომელია). ეს ანგარიში სრული WCAG სერტიფიკაცია არ არის.
+
+#### ცალკე Backend ხარვეზი — presence ping/leave race (`StaleDataError`)
+
+**დადასტურებულია, დამოუკიდებელია T-025 UI კრიტერიუმებისგან.** `app/routes/api.py:106–119`-ში ping კითხულობს `Presence` ORM ჩანაწერს (`:113`), შემდეგ წერს; `:124–127`-ზე leave იმავე `(item_id,user_id)` ჩანაწერს შლის. `app/static/js/presence.js:23` აგზავნის ping-ს, `:30–31`-ზე `pagehide` აგზავნის leave beacon-ს — მოთხოვნების გადაკვეთა რეალურ ქცევაშიც შესაძლებელია.
+
+**ზუსტი interleaving:** ჩანაწერი უკვე არსებობს → ping კითხულობს მას → leave შლის და commit-დება → ping-ის update/autoflush აღარ პოულობს ჩანაწერს → **`StaleDataError: UPDATE statement on table 'presence' expected to update 1 row(s); 0 were matched.`** გამონაკლისი HTTP 500-მდე აღწევს.
+
+- ახალი დროებითი fixture ბაზა, რეალური handler-ები/SQLAlchemy load event-ით მხოლოდ გრაფიკის მართვა: **10/10 sequential ping — 200**; ზემოთ აღწერილი მართვადი გადაკვეთა **3/3 — StaleDataError**, leave ყოველთვის 200. აპლიკაციის ლოგიკა არ დაპაჩულა.
+- ცალკე რეალური დროებითი uvicorn HTTP stress, მხოლოდ სინთეტიკური QC მენეჯერი და მისივე presence row: **20/20 sequential ping — 200**; **100 concurrent ping/leave წყვილში ping: 84×200, 16×500; leave: 100×200**. log-ში დადასტურებულია იგივე StaleDataError; IntegrityError არ დაფიქსირებულა. დატვირთვის პროცენტი გარემოზე/განრიგზეა დამოკიდებული; ეს საწარმოო სიხშირის შეფასება არ არის.
+- გავლენა: „ახლა ხსნის“ heartbeat-ის წყვეტილი ჩავარდნა/network 500 და Backend-ის არასაიმედო კონკურენტული წაშლა/განახლება. ეს არ არის 44px/overflow/contrast-ის UI ხარვეზი და მათ PASS/FAIL-ს არ ანაცვლებს. ჩვეულებრივი browser/smoke სცენარების მწვანე შედეგიც ამ race-ს არ ხურავს.
+- **სხვა როლებისგან სჭირდება — Backend/lead:** ცალკე Backend ამოცანა heartbeat/leave-ის ატომური/idempotent კონკურენტული ქცევისა და შესაბამისი რეგრესიისთვის. QA API/Backend კოდს არ ცვლის. შემოწმება SQLite დემოზეა; PostgreSQL ამ ოქმით არ შემოწმებულა.
+
+#### მტკიცებულებები და საბოლოო შეფასება
+
+იმავე იზოლირებულ root-ში დამატებულია `c38-pytest-full.log`, `c38-pytest-targeted.log`, `c38-diagnostic-detail.json`, `c38-raster-final.json`, `c38-contrast-focus.json`, `c38-backdrop.json`, `raster-contrast-viewport/`, `presence-controlled.json`, `presence-http-stress.json`, `presence-http-server.log`. ადრეული full-page/overlay-ით არაკორექტული დიაგნოსტიკური sample-ები საბოლოო FAIL-ებად არ გამოიყენება; საბოლოო კონტრასტი native viewport/occlusion-aware მეთოდს ეფუძნება. QA WebSocket helper-ის length-decoding edge case გასწორდა მხოლოდ დროებით ინსტრუმენტში და საბოლოო run სრულად განმეორდა.
+
+ყველაფერი **`QCP_AGENT=1`-ით**, მხოლოდ ახალ/იზოლირებულ სინთეტიკურ ბაზებზე; SMTP გამორთული, პროცესები დასრულებისას გაჩერებულია. source worktree სუფთაა; UI/Backend/main/Production/რეალური მონაცემები უცვლელია. საბოლოო commit მხოლოდ QA დოკუმენტაციას ცვლის.
+
+**შეფასება:** ფუნქციური რეგრესია და T-031-ის ნეიტრალობა **PASS**; T-025-ის 44px/overflow/keyboard შესწორებები **PASS გაზომილ მოცულობაში**; **T-025 სრულად FAIL — დარჩენილი gradient contrast-ის 3 ოჯახი**. Presence-ის **Backend FAIL ცალკეა** და release-ის დამატებითი რისკია. **საბოლოო T-025 PASS არ გამოცხადებულა.**
+
+**მომხმარებლის მიერ დაზუსტებული ორი ფაზა:** ფაზა A-ს ვიწრო მოცულობა — 44px, მთავარი/Pre-QC overflow, topbar კონტრასტი, menu/drawer კლავიატურა და ძირითადი T-031 რეგრესია — **PASS**, შუალედური შედეგი დაუყოვნებლივ მიწოდებულია. ფაზა B-ს უკვე შესრულებული 288/156 pytest და browser/smoke შედეგები ხელახლა გამოიყენება; უცვლელი ნაწილები აღარ განმეორებულა. სრული T-025 **FAIL** ეხება დამატებით გაზომილ 3 contrast ოჯახს; presence Backend finding დამოუკიდებელია. **UNVERIFIED:** ზემოთ აღწერილი 16 raster კანდიდატი, ფიზიკური მოწყობილობები/screen reader, ყველა interaction state და Hallmark. რეკომენდაცია lead-ს: გაერთიანება ტექნიკურად უკონფლიქტოა, მაგრამ სრული T-025-ის ჩაბარება/პაკეტის release ჯერ არ დამტკიცდეს — UI contrast და Backend presence ცალ-ცალკე მოსაგვარებელია.
+
 ## 4. ჩაბარება — lead
 
 …
