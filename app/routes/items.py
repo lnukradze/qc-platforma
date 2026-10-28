@@ -158,11 +158,12 @@ async def action(item_id: int, request: Request, ctx=Depends(current), db=Depend
     files = [f for f in form.getlist("files") if getattr(f, "filename", "")]
     act = data.get("action", "")
     back = data.get("back") or f"/items/{item_id}"
-    msg = None
+    msg, wanted = None, False
     try:
         ev = apply(db, item, ctx.user, ctx.role, act, data, files)
         if (str(data.get("notify")) == "on" and ctx.role in D.QC_ROLES
                 and ev.action in NOTIFY_ACTIONS):
+            wanted = True
             msg = notify.queue(db, item, ev, ctx.user, ev.action, base_url=str(request.base_url))
         db.commit()
     except DuplicateError as e:                 # იგივე ფორმა მეორედ — ახალი მოვლენა/მეილი არ არის
@@ -198,7 +199,9 @@ async def action(item_id: int, request: Request, ctx=Depends(current), db=Depend
                   if msg.status == "preview" else
                   " ✉ მეილი ვერ გაიგზავნა (ჩანს ადმინისტრირება → მეილები)." if msg.status == "failed"
                   else " ✉ მენეჯერს ელფოსტა არ აქვს რეგისტრირებული.")
-    ok = MESSAGES.get(act, "შესრულდა.") + notice
+    elif wanted:                                # დასაშვები ადრესატი არ არის — მოქმედება მაინც სრულდება (T-030)
+        notice = " ✉ წერილი არ შეიქმნა — ოქმს საველე მენეჯერი არ ჰყავს."
+    ok =MESSAGES.get(act, "შესრულდა.") + notice
     if act in ("send", "save_review") and data.get("go_next") and ctx.role == D.QC_OPERATOR:
         nid = next_pending(db, ctx, item.id)
         if nid:
