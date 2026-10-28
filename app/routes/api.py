@@ -6,9 +6,11 @@ JSON API — სამომავლო ინტეგრაციების
 სრული აღწერა: /docs (OpenAPI).
 """
 import datetime as dt
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import delete, select
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import selectinload
 
 from .. import domain as D
@@ -17,8 +19,10 @@ from ..db import get_db
 from ..models import ItemPerson, Presence, QcEvent, QcItem
 from ..security import current, same_origin
 from ..services import anon
+from ..workflow import _insert              # INSERT … ON CONFLICT — SQLite / PostgreSQL (T-019)
 
 PRESENCE_SECONDS = 60          # რამდენ ხანს ითვლება „ახლა ხსნის" ბოლო სიგნალის შემდეგ
+log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["API"])
 
@@ -102,14 +106,30 @@ def presence_ping(item_id: int, request: Request, ctx=Depends(current), db=Depen
     if item is None or not scope.can_view(ctx, item):
         raise HTTPException(404, "ვერ მოიძებნა")
     now = dt.datetime.now()
-    pr = db.get(Presence, (item_id, ctx.user.id))
-    if pr is None:
-        db.add(Presence(item_id=item_id, user_id=ctx.user.id, role=ctx.role, last_seen=now))
-    else:
-        pr.last_seen, pr.role = now, ctx.role
-    db.execute(delete(Presence).where(Presence.last_seen < now - dt.timedelta(minutes=10)))
+    # ერთი ატომური upsert (არა ORM read-modify-write): ორი ჩანართის პირველი ping, პარალელური leave
+    # ან წმენდა 500-ს აღარ იძლევა. ძველი დრო ახალს არ გადაწერს (WHERE) — განახლება არ იკარგება.
+    ins = _insert(db, Presence).values(item_id=item_id, user_id=ctx.user.id, role=ctx.role,
+                                       last_seen=now)
+    db.execute(ins.on_conflict_do_update(
+        index_elements=["item_id", "user_id"],
+        set_={"last_seen": ins.excluded.last_seen, "role": ins.excluded.role},
+        where=Presence.last_seen <= ins.excluded.last_seen))
     db.commit()
+    _cleanup(db, now)
     return {"others": _others(db, [item_id], ctx.user.id, ctx.role).get(item_id, [])}
+
+
+def _cleanup(db, now):
+    """
+    ძველი (>10 წთ) ჩანაწერები — ping-ის commit-ის შემდეგ, ცალკე ტრანზაქციაში: საკუთარი ჩანაწერი უკვე
+    ახალია და არ წაიშლება. ჩაწერის ლოკი / deadlock → გამოტოვება (შემდეგი ping წმენდს), არა 500.
+    """
+    try:
+        db.execute(delete(Presence).where(Presence.last_seen < now - dt.timedelta(minutes=10)))
+        db.commit()
+    except OperationalError:
+        db.rollback()
+        log.warning("presence: ძველი ჩანაწერების წმენდა გამოტოვდა (ბაზა დაკავებულია)")
 
 
 @router.post("/presence/{item_id}/leave")
