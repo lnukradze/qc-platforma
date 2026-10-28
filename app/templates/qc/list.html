@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_filters.html" import list_filters with context %}
 {% block title %}ხარისხის კონტროლი{% endblock %}
 {% block content %}
 <div class="page-head">
@@ -31,41 +32,7 @@
 
 <div class="card">
   <div class="card-body">
-    <form class="filters" method="get" action="/qc" hx-get="/qc" hx-target="#results" hx-push-url="true" hx-trigger="submit, change from:select">
-      <input type="hidden" name="tab" value="{{ tab }}">
-      {% if p.kind %}<input type="hidden" name="kind" value="{{ p.kind }}">{% endif %}
-      <div class="field"><label for="f-protocol">ოქმის#</label><input id="f-protocol" type="text" name="protocol" value="{{ p.protocol or '' }}" inputmode="numeric"></div>
-      <div class="field"><label for="f-cad">საკ. კოდი</label><input id="f-cad" type="text" name="cad" value="{{ p.cad or '' }}" placeholder="202.51.…"></div>
-      {% if limited %}
-      <p class="hint filters-note">გასავლელში ოქმები რიგით გადის — მენეჯერის, ამზომველისა და ზონის ფილტრი აქ არ არის, რომ ყველა გუნდის ოქმი თანაბრად გავიდეს. ძებნა შეგიძლიათ „გაგზავნილში“ და „დასრულებულში“.</p>
-      {% else %}
-      <div class="field"><label for="f-surv">ამზომველი</label><input id="f-surv" type="text" name="surveyor" value="{{ p.surveyor or '' }}"></div>
-      <div class="field"><label for="f-mgr">საველე მენეჯერი</label>
-        <select id="f-mgr" name="manager"><option value="">— ყველა —</option>
-          {% for i, n in managers %}<option value="{{ i }}" {% if p.manager == i|string %}selected{% endif %}>{{ n }}</option>{% endfor %}
-        </select></div>
-      {% if operators %}
-      <div class="field"><label for="f-op">ოპერატორი</label>
-        <select id="f-op" name="operator"><option value="">— ყველა —</option>
-          {% for i, n in operators %}<option value="{{ i }}" {% if p.operator == i|string %}selected{% endif %}>{{ n }}</option>{% endfor %}
-        </select></div>
-      {% endif %}
-      {% if tab != 'todo' %}
-      <div class="field"><label for="f-verdict">სტატუსი</label>
-        <select id="f-verdict" name="verdict"><option value="">— ყველა —</option>
-          {% for v in D.VERDICTS %}<option value="{{ v }}" {% if p.verdict == v %}selected{% endif %}>{{ VERDICT_LABELS[v] }}</option>{% endfor %}
-        </select></div>
-      <div class="field"><label for="f-resp">ველის სტატუსი</label>
-        <select id="f-resp" name="response"><option value="">— ყველა —</option>
-          {% for r, lbl in RESPONSE_LABELS.items() %}<option value="{{ r }}" {% if p.response == r %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
-        </select></div>
-      {% endif %}
-      <div class="field"><label for="f-zone">ზონა</label><input id="f-zone" type="text" name="zone" value="{{ p.zone or '' }}" placeholder="51" inputmode="numeric"></div>
-      <div class="field"><label for="f-df">თარიღი — დან</label><input id="f-df" type="date" name="date_from" value="{{ p.date_from or '' }}"></div>
-      <div class="field"><label for="f-dt">თარიღი — მდე</label><input id="f-dt" type="date" name="date_to" value="{{ p.date_to or '' }}"></div>
-      {% endif %}
-      <div class="filters-actions"><a class="btn btn-ghost" href="/qc?tab={{ tab }}">გასუფთავება</a><button class="btn btn-primary" type="submit">ძებნა</button></div>
-    </form>
+    {{ list_filters(flt, '/qc', '/qc?tab=' ~ tab, hidden={'tab': tab, 'kind': p.kind}) }}
   </div>
 </div>
 

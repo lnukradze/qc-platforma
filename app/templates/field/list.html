@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_filters.html" import list_filters with context %}
 {% block title %}ველის შემთხვევები{% endblock %}
 {% block content %}
 <div class="page-head">
@@ -26,33 +27,14 @@
 
 <div class="card">
   <div class="card-body">
-    <form class="filters" method="get" action="/field" hx-get="/field" hx-target="#results" hx-push-url="true" hx-trigger="submit, change from:select">
-      <input type="hidden" name="tab" value="{{ tab }}">
-      <div class="field"><label for="f-protocol">ოქმის#</label><input id="f-protocol" type="text" name="protocol" value="{{ p.protocol or '' }}" inputmode="numeric"></div>
-      <div class="field"><label for="f-cad">საკ. კოდი</label><input id="f-cad" type="text" name="cad" value="{{ p.cad or '' }}"></div>
-      {% if surveyors %}
-      <div class="field"><label for="f-surv">ამზომველი</label>
-        <select id="f-surv" name="surveyor"><option value="">— ყველა —</option>
-          {% for i, n in surveyors %}<option value="{{ i }}" {% if p.surveyor == i|string %}selected{% endif %}>{{ n }}</option>{% endfor %}
-        </select></div>
-      {% endif %}
-      <div class="field"><label for="f-verdict">სტატუსი</label>
-        <select id="f-verdict" name="verdict"><option value="">— ყველა —</option>
-          {% for v in (D.NEGATIVE, D.RECOMMENDATION, D.CLARIFICATION) %}<option value="{{ v }}" {% if p.verdict == v %}selected{% endif %}>{{ VERDICT_LABELS[v] }}</option>{% endfor %}
-        </select></div>
-      <div class="field"><label for="f-resp">ველის სტატუსი</label>
-        <select id="f-resp" name="response"><option value="">— ყველა —</option>
-          {% for r, lbl in RESPONSE_LABELS.items() %}<option value="{{ r }}" {% if p.response == r %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
-        </select></div>
-      <div class="field"><label for="f-state">მდგომარეობა</label>
-        <select id="f-state" name="state"><option value="">— ყველა —</option>
-          <option value="open" {% if p.state == 'open' %}selected{% endif %}>ყველა ღია</option>
-          {% for s in (D.AWAITING_FIELD, D.AWAITING_MANAGER, D.RETURNED_TO_MANAGER, D.AWAITING_QC, D.AWAITING_QCM, D.CLOSED) %}<option value="{{ s }}" {% if p.state == s %}selected{% endif %}>{{ STATE_LABELS[s] }}</option>{% endfor %}
-        </select></div>
-      <div class="field"><label for="f-df">გაგზავნა — დან</label><input id="f-df" type="date" name="date_from" value="{{ p.date_from or '' }}"></div>
-      <div class="field"><label for="f-dt">გაგზავნა — მდე</label><input id="f-dt" type="date" name="date_to" value="{{ p.date_to or '' }}"></div>
-      <div class="filters-actions"><a class="btn btn-ghost" href="/field?tab={{ tab }}">გასუფთავება</a><button class="btn btn-primary" type="submit">ძებნა</button></div>
-    </form>
+    {% call list_filters(flt, '/field', '/field?tab=' ~ tab, hidden={'tab': tab}, verdicts=(D.NEGATIVE, D.RECOMMENDATION, D.CLARIFICATION)) %}
+    {#- სიის საკუთარი ველი (T-011: `state` — ველის სიის route) -#}
+    <div class="field"><label for="f-state">მდგომარეობა</label>
+      <select id="f-state" name="state"><option value="">— ყველა —</option>
+        <option value="open" {% if p.state == 'open' %}selected{% endif %}>ყველა ღია</option>
+        {% for s in (D.AWAITING_FIELD, D.AWAITING_MANAGER, D.RETURNED_TO_MANAGER, D.AWAITING_QC, D.AWAITING_QCM, D.CLOSED) %}<option value="{{ s }}" {% if p.state == s %}selected{% endif %}>{{ STATE_LABELS[s] }}</option>{% endfor %}
+      </select></div>
+    {% endcall %}
   </div>
 </div>
 <div id="results">{% include "field/_table.html" %}</div>

@@ -39,6 +39,70 @@
   }
   initFilterToggles();
 
+  // ── სიების ფილტრი (T-012 ბ): მენეჯერი / ამზომველი, სექტორი, თარიღები ──
+  // ველში სახელი ჩანს, სერვერს კი ფარული ველით მიდის: სიიდან არჩეული — id, ხელით ჩაწერილი — ტექსტი
+  // (ციფრებს სერვერი id-ად კითხულობს, T-011). JS-ის გარეშე ველი თავად იგზავნება სახელით.
+  function initListFilters() {
+    const f = document.querySelector('form.filters-lines');
+    if (!f) return;
+    function picker(key) {
+      const vis = f.querySelector('#f-' + key), list = document.getElementById('dl-' + key);
+      if (!vis || !list) return null;
+      const hid = document.createElement('input');
+      hid.type = 'hidden'; hid.name = key; hid.value = vis.dataset.pick || '';
+      vis.removeAttribute('name');
+      vis.after(hid);
+      const p = { vis: vis, list: list, hid: hid, initial: list.innerHTML };
+      p.resolve = function () {
+        const t = vis.value.trim();
+        const hits = Array.prototype.filter.call(list.options, function (o) { return o.value === t; });
+        hid.value = hits.length === 1 ? hits[0].dataset.id : t;   // ერთნაირი სახელი ორჯერ → ტექსტით
+      };
+      vis.addEventListener('input', function () { p.resolve(); vis.dispatchEvent(new Event('pick')); });
+      return p;
+    }
+    const mgr = picker('manager'), surv = picker('surveyor');
+    if (mgr && surv) {
+      let seq = 0, last = mgr.hid.value;
+      mgr.vis.addEventListener('pick', function () {
+        const id = mgr.hid.value;
+        if (id === last) return;
+        last = id;
+        const n = ++seq;
+        function fill(html) { if (n !== seq) return; surv.list.innerHTML = html; surv.resolve(); }
+        if (!/^\d+$/.test(id)) { fill(surv.initial); return; }
+        fetch('/api/filters/surveyors?manager=' + encodeURIComponent(id), { headers: { Accept: 'application/json' } })
+          .then(function (r) { return r.ok ? r.json() : []; })
+          .then(function (rows) {
+            if (!rows.length) { fill(surv.initial); return; }   // სხვისი გუნდი / უცნობი — სერვერის სია რჩება
+            const box = document.createElement('datalist');
+            rows.forEach(function (s) {
+              const o = document.createElement('option');
+              o.value = s.name; o.dataset.id = s.id;
+              box.appendChild(o);
+            });
+            fill(box.innerHTML);
+          })
+          .catch(function () { fill(surv.initial); });
+      });
+    }
+    const zone = f.querySelector('#f-zone'), sector = f.querySelector('#f-sector');
+    if (zone && sector) {
+      zone.addEventListener('input', function () {
+        const on = !!zone.value.trim();
+        sector.disabled = !on;
+        sector.placeholder = on ? 'მაგ. 39' : 'ჯერ — ზონა';
+      });
+    }
+    const from = f.querySelector('#f-df'), to = f.querySelector('#f-dt'), warn = f.querySelector('#f-range');
+    if (from && to && warn) {
+      const check = function () { warn.hidden = !(from.value && to.value && from.value >= to.value); };
+      from.addEventListener('change', check);
+      to.addEventListener('change', check);
+    }
+  }
+  initListFilters();
+
   // ── ხარვეზის კოდები: ავტომატური შეთავაზება კომენტარიდან ─────────
   function initCodes() {
     const box = document.getElementById('codebox');

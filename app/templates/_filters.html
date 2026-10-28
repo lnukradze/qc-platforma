@@ -1,0 +1,71 @@
+{#- სიების ერთიანი ფილტრი (T-012 ბ) — `qc/list`, `field/list`, `qc/disputes`, `qc/checked`. მონაცემი — `flt` (T-011).
+    პირველი ხაზი: ოქმის N · საკ. კოდი · თარიღი დან · მდე · ზონა · სექტორი;
+    მეორე: მენეჯერი · ამზომველი · ოპერატორი · სტატუსი · ველის სტატუსი (+ caller — სიის საკუთარი ველები) · გვერდზე.
+    მენეჯერი / ამზომველი: ველში სახელი ჩანს; სიიდან არჩევისას იგზავნება id, ხელით ჩაწერისას — ტექსტი (ციფრები — id, app.js). -#}
+
+{% macro pick(key, label, people, value) -%}
+{#- ჩაწერადი არჩევანი: `value` — id ან ტექსტი; id სიაში თუ არის, ველში მისი სახელი ჩანს -#}
+{%- set ns = namespace(shown=value) -%}
+{%- for i, n in people if value and value == i|string %}{% set ns.shown = n %}{% endfor -%}
+<div class="field"><label for="f-{{ key }}">{{ label }}</label>
+  <input id="f-{{ key }}" type="text" name="{{ key }}" value="{{ ns.shown }}" list="dl-{{ key }}" autocomplete="off" data-pick="{{ value }}" placeholder="ყველა">
+  <datalist id="dl-{{ key }}">{% for i, n in people %}<option value="{{ n }}" data-id="{{ i }}"></option>{% endfor %}</datalist></div>
+{%- endmacro %}
+
+{% macro tail(flt, clear) -%}
+<div class="filters-tail">
+  <div class="field field-per"><label for="f-per">გვერდზე</label>
+    <select id="f-per" name="per" data-nocount>
+      {%- set sizes = range(D.PAGE_SIZE_MIN, D.PAGE_SIZE_MAX + 1, 10)|list -%}
+      {% for n in (sizes + ([flt.per] if flt.per not in sizes else []))|sort %}<option value="{{ n }}" {% if flt.per == n %}selected{% endif %}>{{ n }}</option>{% endfor %}
+    </select></div>
+  <div class="filters-actions"><a class="btn btn-ghost" href="{{ clear }}">გასუფთავება</a><button class="btn btn-primary" type="submit">ძებნა</button></div>
+</div>
+{%- endmacro %}
+
+{% macro list_filters(flt, action, clear, hidden={}, verdicts=None, htmx=True) -%}
+{%- set v = flt['values'] -%}   {#- `flt.values` — dict-ის მეთოდია, არა გასაღები -#}
+<form class="filters filters-lines" method="get" action="{{ action }}"{% if htmx %} hx-get="{{ action }}" hx-target="#results" hx-push-url="true" hx-trigger="submit, change from:select"{% endif %}>
+  {% for k, val in hidden.items() if val %}<input type="hidden" name="{{ k }}" value="{{ val }}">{% endfor %}
+  <div class="filters-row">
+    <div class="field"><label for="f-protocol">ოქმის N</label><input id="f-protocol" type="text" name="protocol" value="{{ v.protocol }}" inputmode="numeric"></div>
+    <div class="field"><label for="f-cad">საკ. კოდი</label><input id="f-cad" type="text" name="cad" value="{{ v.cad }}" placeholder="202.51.…" inputmode="decimal"></div>
+    {% if not flt.limited %}
+    <div class="field"><label for="f-df">თარიღი — დან</label><input id="f-df" type="date" name="date_from" value="{{ v.date_from }}" aria-describedby="f-range"></div>
+    <div class="field"><label for="f-dt">თარიღი — მდე</label><input id="f-dt" type="date" name="date_to" value="{{ v.date_to }}" aria-describedby="f-range"></div>
+    <div class="field"><label for="f-zone">ზონა</label><input id="f-zone" type="text" name="zone" value="{{ v.zone }}" placeholder="მაგ. 50, 73"></div>
+    <div class="field"><label for="f-sector">სექტორი</label><input id="f-sector" type="text" name="sector" value="{{ v.sector }}" placeholder="{{ 'მაგ. 39' if v.zone else 'ჯერ — ზონა' }}" title="სექტორი ზონასთან ერთად მუშაობს"{% if not v.zone %} disabled{% endif %}></div>
+    {% else %}
+    {{ tail(flt, clear) }}
+    {% endif %}
+  </div>
+  {% if flt.limited %}
+  <p class="hint filters-note">გასავლელში ოქმები რიგით გადის — მენეჯერის, ამზომველისა და ზონის ფილტრი აქ არ არის, რომ ყველა გუნდის ოქმი თანაბრად გავიდეს. ძებნა შეგიძლიათ „გაგზავნილში“ და „დასრულებულში“.</p>
+  {% else %}
+  <p class="hint filters-note filters-warn" id="f-range" role="status"{% if not flt.empty_range %} hidden{% endif %}>„მდე“ თარიღი „დან“-ზე გვიან უნდა იყოს — 01.01–02.01 აჩვენებს 01.01-ს</p>
+  <div class="filters-row">
+    {{ pick('manager', 'მენეჯერი', flt.managers, v.manager) }}
+    {{ pick('surveyor', 'ამზომველი', flt.surveyors, v.surveyor) }}
+    {% if flt.show_operator %}
+    <div class="field"><label for="f-operator">ოპერატორი</label>
+      <select id="f-operator" name="operator"><option value="">— ყველა —</option>
+        {% for i, n in flt.operators %}<option value="{{ i }}" {% if v.operator == i|string %}selected{% endif %}>{{ n }}</option>{% endfor %}
+      </select></div>
+    {% endif %}
+    {% if flt.show_status %}
+    <div class="field"><label for="f-verdict">სტატუსი</label>
+      <select id="f-verdict" name="verdict"><option value="">— ყველა —</option>
+        {% for x in verdicts or D.VERDICTS %}<option value="{{ x }}" {% if v.verdict == x %}selected{% endif %}>{{ VERDICT_LABELS[x] }}</option>{% endfor %}
+      </select></div>
+    {#- „გასავლელში“ ველის პასუხი ჯერ არცერთს არ აქვს — სტატუსთან ერთად იმალება (ნაწილი ა) -#}
+    <div class="field"><label for="f-response">ველის სტატუსი</label>
+      <select id="f-response" name="response"><option value="">— ყველა —</option>
+        {% for r, lbl in RESPONSE_LABELS.items() %}<option value="{{ r }}" {% if v.response == r %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
+      </select></div>
+    {% endif %}
+    {{ caller() if caller else '' }}
+    {{ tail(flt, clear) }}
+  </div>
+  {% endif %}
+</form>
+{%- endmacro %}

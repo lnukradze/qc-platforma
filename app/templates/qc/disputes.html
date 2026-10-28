@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_macros.html" import verdict, codes, pager, surveyors, response with context %}
+{% from "_filters.html" import list_filters with context %}
 {% block title %}არ დათანხმებულები{% endblock %}
 {% block content %}
 <div class="page-head">
@@ -15,13 +16,7 @@
   <a class="wtab {% if p.kind == D.SPORADIC %}active{% endif %}" href="/qc/disagreements?kind={{ D.SPORADIC }}">სპორადული <span class="cnt">{{ (by_kind.get(D.SPORADIC) or 0)|num }}</span></a>
 </div>
 <div class="card"><div class="card-body">
-  <form class="filters" method="get" action="/qc/disagreements">
-    <input type="hidden" name="kind" value="{{ p.kind or 'all' }}">
-    <div class="field"><label for="f-p">ოქმის#</label><input id="f-p" type="text" name="protocol" value="{{ p.protocol or '' }}"></div>
-    <div class="field"><label for="f-c">საკ. კოდი</label><input id="f-c" type="text" name="cad" value="{{ p.cad or '' }}"></div>
-    <div class="field"><label for="f-o">ოპერატორი</label><select id="f-o" name="operator"><option value="">— ყველა —</option>{% for i, n in operators %}<option value="{{ i }}" {% if p.operator == i|string %}selected{% endif %}>{{ n }}</option>{% endfor %}</select></div>
-    <div class="filters-actions"><a class="btn btn-ghost" href="/qc/disagreements">გასუფთავება</a><button class="btn btn-primary">ძებნა</button></div>
-  </form>
+  {{ list_filters(flt, '/qc/disagreements', '/qc/disagreements', hidden={'kind': p.kind or 'all'}, htmx=False) }}
 </div></div>
 {% for i in rows %}
 <div class="card">
@@ -31,8 +26,8 @@
   </div>
   <div class="card-body">
     <div class="grid-3 dispute-trio">
-      <div><div class="label">QC —{{ verdict(i.verdict) }} {{ codes(i) }}</div><div class="quote" style="margin-top:6px">{{ i.qc_comment or '—' }}</div></div>
-      <div><div class="label">ველის სტატუსი —{{ response(i.field_response) }}</div><div class="quote field" style="margin-top:6px">{{ i.field_comment or '—' }}</div></div>
+      <div><div class="label">QC — {{ verdict(i.verdict) }} {{ codes(i) }}</div><div class="quote" style="margin-top:6px">{{ i.qc_comment or '—' }}</div></div>
+      <div><div class="label">ველის სტატუსი — {{ response(i.field_response) }}</div><div class="quote field" style="margin-top:6px">{{ i.field_comment or '—' }}</div></div>
       <div><div class="label">მენეჯერის დადასტურება / წინა ახსნა</div><div class="quote qcm" style="margin-top:6px">{{ i.manager_visa_comment or i.qcm_explanation or '—' }}</div></div>
     </div>
     <div class="form-actions" style="margin-top:12px"><a class="btn btn-primary btn-sm" href="/items/{{ i.id }}?back=/qc/disagreements">გადაწყვეტილების მიღება →</a><span class="muted small">ამზომველი: {{ surveyors(i) }}</span></div>
