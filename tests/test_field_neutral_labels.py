@@ -6,6 +6,7 @@ Only synthetic records in conftest's temporary database; never sends mail.
 import datetime as dt
 from html import unescape
 import re
+import uuid
 
 import pytest
 from fastapi.testclient import TestClient
@@ -14,12 +15,24 @@ from app import domain as D
 from app.main import app
 from app.models import PreqcCheck
 from app.services import notify
-from app.workflow import apply
+from app.workflow import apply as workflow_apply
 from conftest import make_item, make_user
 
 
 FIELD = [("sv", D.SURVEYOR), ("mgr", D.FIELD_MANAGER)]
 QC_ROLES = (D.QC_OPERATOR, D.QC_MANAGER, D.ADMIN)
+
+
+def apply(db, item, user, role, action, form):
+    """Use the real version/token contract when T-019 is integrated too."""
+    form = {**form, "version": item.version}
+    if action == "comment":
+        form["once"] = uuid.uuid4().hex
+    event = workflow_apply(db, item, user, role, action, form)
+    db.commit()
+    return event
+
+
 # Stems catch Georgian inflections, e.g. მენეჯერთან / ოპერატორს.
 FORBIDDEN = tuple(dict.fromkeys([
     *(D.ROLE_SHORT[r].rstrip("ი") for r in (D.QC_OPERATOR, D.QC_MANAGER)),
