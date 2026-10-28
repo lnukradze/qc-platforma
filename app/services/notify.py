@@ -52,7 +52,11 @@ def sender_name(event, sender, recipients):
 
 
 def queue(db, item, event, sender, kind, base_url=""):
-    """ქმნის მეილს და (თუ SMTP მითითებულია) აგზავნის. აბრუნებს EmailMessage-ს ან None-ს."""
+    """
+    ქმნის მეილის ჩანაწერს (იმავე ტრანზაქციაში, რაც მოქმედება). **არ აგზავნის** — გაგზავნა
+    `deliver()`-ით, მხოლოდ წარმატებული commit-ის შემდეგ (T-019: rollback-ი წერილს ვერ დააბრუნებს).
+    აბრუნებს EmailMessage-ს ან None-ს.
+    """
     to, cc = recipients(db, item)
     if to is None:
         return None
@@ -69,8 +73,15 @@ def queue(db, item, event, sender, kind, base_url=""):
                        status="no_address" if not to.email else "preview")
     db.add(msg)
     db.flush()
-    if to.email and SMTP_HOST:
-        _send(msg)
+    return msg
+
+
+def deliver(db, msg):
+    """commit-ის შემდეგ: SMTP მითითებულია → აგზავნის და სტატუსს ინახავს. SMTP არ არის → preview რჩება."""
+    if msg is None or msg.status != "preview" or not msg.to_email or not SMTP_HOST:
+        return msg
+    _send(msg)
+    db.commit()
     return msg
 
 

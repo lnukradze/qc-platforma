@@ -4,8 +4,12 @@
 
 ყოველი მოქმედება:
   1. ამოწმებს უფლებას (როლი + საკუთრება) და მიმდინარე მდგომარეობას;
-  2. ამოწმებს ვერსიას — თუ ამასობაში სხვამ შეცვალა, ცვლილება არ შედის;
+  2. ამოწმებს ვერსიას **ატომურად** (T-019): `UPDATE qc_items SET version = version + 1
+     WHERE id = :id AND version = :v` — 0 მწკრივი → ConflictError, ე.ი. პირველი ითვლება.
+     კომენტარი და QC მენეჯერის შეფასება ვერსიას არც ამოწმებს, არც ზრდის;
+     კომენტარი ერთჯერადი `once` token-ით არის დაცული (FormToken — ორჯერ დაჭერა, ორი ჩანართი);
   3. ცვლის მდგომარეობას და **ყოველთვის** წერს ისტორიის ჩანაწერს (`QcEvent`).
+  commit — გამომძახებლისაა (route); apply() თავად არ აკომიტებს.
 
 სცენარები (მომხმარებლის აღწერა, 2026-10-19 / 2026-10-20):
   A  უარყოფითი/რეკომენდაცია → ველი „შესწორდა" / „გავითვალისწინებთ" → QC ადასტურებს (M)
@@ -23,12 +27,13 @@ import datetime as dt
 import mimetypes
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import select, update
+from sqlalchemy.orm.attributes import set_committed_value
 
 from . import domain as D
 from .config import ALLOWED_UPLOAD_TYPES, MAX_UPLOAD_MB, UPLOAD_DIR
-from .models import (Attachment, ItemPerson, QcEvent, QcItemCode, QcReview, Setting, User,
-                     VerdictRequest)
+from .models import (Attachment, FormToken, ItemPerson, QcEvent, QcItem, QcItemCode, QcReview,
+                     Setting, User, VerdictRequest)
 from .services.codes import classify
 
 
@@ -38,6 +43,18 @@ class WorkflowError(Exception):
 
 class ConflictError(WorkflowError):
     pass
+
+
+class DuplicateError(WorkflowError):
+    """იგივე `once` token უკვე გამოყენებულია — კომენტარი უკვე დამატებულია (შეცდომა არ არის)."""
+
+
+# ვერსიას არც ამოწმებს, არც ზრდის (B-12) — დანარჩენ ყველა მოქმედებაზე version სავალდებულოა
+NO_VERSION = ("comment", "review")
+CONFLICT_MSG = "ჩანაწერი ამასობაში სხვამ შეცვალა — გადახედეთ განახლებულ ვერსიას."
+REFRESH_MSG = "ფორმა მოძველებულია — განაახლეთ გვერდი."
+DUPLICATE_MSG = "კომენტარი უკვე დამატებულია."
+NEW_FILES = "qcp_new_files"                     # db.info-ში: ამ ტრანზაქციაში ჩაწერილი ფაილები
 
 
 def allowed_responses(db, verdict):
@@ -200,6 +217,71 @@ def _flag(form, key):
     return str(form.get(key) or "").lower() in ("on", "1", "true", "yes")
 
 
+def _form_version(form):
+    """ფორმის version — მხოლოდ დადებითი მთელი; სხვა ყველაფერი (აკლია, ცარიელი, ტექსტი) → None."""
+    v = str(form.get("version") or "").strip()
+    return int(v) if v.isdigit() and int(v) > 0 else None
+
+
+def _insert(db, model):
+    """INSERT … ON CONFLICT-ის მხარდაჭერით — SQLite-ზეც და PostgreSQL-ზეც."""
+    if db.get_bind().dialect.name == "postgresql":
+        from sqlalchemy.dialects.postgresql import insert
+    else:
+        from sqlalchemy.dialects.sqlite import insert
+    return insert(model)
+
+
+def _bump_version(db, item, v):
+    """
+    ატომური CAS: ერთი UPDATE ბაზაში. ერთდროულ მოთხოვნებს შორის მეორე ელოდება პირველის
+    commit-ს (SQLite — ჩაწერის ლოკი, PostgreSQL — მწკრივის ლოკი) და შემდეგ 0 მწკრივს ცვლის.
+    """
+    n = db.execute(update(QcItem).where(QcItem.id == item.id, QcItem.version == v)
+                   .values(version=QcItem.version + 1)
+                   .execution_options(synchronize_session=False)).rowcount
+    if n != 1:
+        raise ConflictError(CONFLICT_MSG)
+    set_committed_value(item, "version", v + 1)     # ORM-მა ვერსია ხელმეორედ არ ჩაწეროს
+
+
+def _use_token(db, user, once):
+    """ერთჯერადი token — იმავე ტრანზაქციაში, რაც კომენტარი. უკვე არსებობს → DuplicateError."""
+    once = str(once or "").strip()
+    if not once or len(once) > 64:
+        raise WorkflowError(REFRESH_MSG)
+    n = db.execute(_insert(db, FormToken).values(token=once, user_id=user.id,
+                                                 used_at=dt.datetime.now())
+                   .on_conflict_do_nothing(index_elements=["token"])).rowcount
+    if n != 1:
+        raise DuplicateError(DUPLICATE_MSG)
+
+
+def _save_review(db, item, user, marks, comment, now):
+    """მიმდინარე შეფასება — ბოლო ითვლება. ერთდროული პირველი შეფასება → განახლება (upsert), არა 500."""
+    vals = {"marks": marks, "comment": comment or None, "reviewer_id": user.id, "at": now,
+            "source": "manual"}
+    db.execute(_insert(db, QcReview).values(item_id=item.id, **vals)
+               .on_conflict_do_update(index_elements=["item_id"], set_=vals))
+    old = db.identity_map.get(db.identity_key(QcReview, item.id))
+    if old is not None:                             # სესიაში ძველი ასლი — ხელახლა წაიკითხოს
+        db.expire(old)
+
+
+def discard_new_files(db):
+    """rollback-ის შემდეგ: ამ ტრანზაქციაში დისკზე ჩაწერილი ფაილები იშლება."""
+    for p in db.info.pop(NEW_FILES, []):
+        try:
+            p.unlink()
+        except OSError:
+            pass
+
+
+def keep_new_files(db):
+    """commit-ის შემდეგ: ფაილები რჩება."""
+    db.info.pop(NEW_FILES, None)
+
+
 def save_files(db, item, event, user, files):
     """ფოტოს/ფაილის ატვირთვა — ტიპისა და ზომის შემოწმებით."""
     saved = []
@@ -219,6 +301,7 @@ def save_files(db, item, event, user, files):
         folder.mkdir(parents=True, exist_ok=True)
         stored = uuid.uuid4().hex + ext
         (folder / stored).write_bytes(content)
+        db.info.setdefault(NEW_FILES, []).append(folder / stored)
         a = Attachment(item_id=item.id, event_id=event.id if event else None,
                        uploaded_by_id=user.id, filename=f.filename[:255], stored_name=stored,
                        content_type=ctype, size=len(content))
@@ -230,13 +313,20 @@ def save_files(db, item, event, user, files):
 
 # ── მოქმედებები ──────────────────────────────────────────────────────
 def apply(db, item, user, role, action, form: dict, files=None) -> QcEvent:
+    versioned = action not in NO_VERSION
+    v = _form_version(form) if versioned else None
     if action not in available_actions(db, item, user, role):
+        if v is not None and v != item.version:      # ძველი ფორმა — მდგომარეობა სხვამ შეცვალა
+            raise ConflictError(CONFLICT_MSG)
         raise WorkflowError("ეს მოქმედება ამ მდგომარეობაში ან ამ როლით დაშვებული არ არის.")
-    v = form.get("version")
-    if v is not None and str(v) != str(item.version):
-        raise ConflictError("ჩანაწერი ამასობაში სხვამ შეცვალა — გადახედეთ განახლებულ ვერსიას.")
+    if versioned and v is None:
+        raise WorkflowError(REFRESH_MSG)
     if files and role not in D.QC_ROLES:
         raise WorkflowError("ფოტოს ატვირთვა მხოლოდ კონტროლს შეუძლია.")
+    if versioned:
+        _bump_version(db, item, v)                   # პირველი ჩაწერა ტრანზაქციაში
+    elif action == "comment":
+        _use_token(db, user, form.get("once"))
 
     frm = item.state
     comment = (form.get("comment") or "").strip()
@@ -473,11 +563,7 @@ def apply(db, item, user, role, action, form: dict, files=None) -> QcEvent:
             raise WorkflowError("მონიშნეთ შეფასება.")
         if D.MARK_CORRECT in marks and len(marks) > 1:
             raise WorkflowError("„სწორია“ სხვა შენიშვნასთან ერთად ვერ მოინიშნება.")
-        r = db.get(QcReview, item.id)
-        if r is None:
-            r = QcReview(item_id=item.id, marks=marks)
-            db.add(r)
-        r.marks, r.comment, r.reviewer_id, r.at, r.source = marks, comment or None, user.id, now, "manual"
+        _save_review(db, item, user, marks, comment, now)
         data = {"marks": marks}
         ev_action, to = "qc_reviewed", frm
 
@@ -491,7 +577,6 @@ def apply(db, item, user, role, action, form: dict, files=None) -> QcEvent:
     ev = _event(db, item, user, role, ev_action, frm, to, comment, data or None)
     if files:
         save_files(db, item, ev, user, files)
-    item.version += 1
-    item.updated_at = now
+    item.updated_at = now                            # version უკვე გაიზარდა (_bump_version) ან არ იზრდება
     db.flush()
     return ev

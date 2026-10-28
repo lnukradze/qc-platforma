@@ -21,9 +21,9 @@ def login(c, user, role):
 def world(db, people):
     a = make_item(db, people, protocol="6100001")
     b = make_item(db, people, protocol="6100002", cad="202.51.12.40.001.002", managers=("mgr", "mgr2"))
-    apply(db, b, people["op"], D.QC_OPERATOR, "send", {"verdict": D.NEGATIVE, "qc_comment": "ფოტო აკლია"})
-    apply(db, b, people["sv"], D.SURVEYOR, "field_respond", {"response": D.R_DISAGREE, "comment": "x"})
-    apply(db, b, people["mgr"], D.FIELD_MANAGER, "manager_approve", {})
+    apply(db, b, people["op"], D.QC_OPERATOR, "send", {"version": b.version, "verdict": D.NEGATIVE, "qc_comment": "ფოტო აკლია"})
+    apply(db, b, people["sv"], D.SURVEYOR, "field_respond", {"version": b.version, "response": D.R_DISAGREE, "comment": "x"})
+    apply(db, b, people["mgr"], D.FIELD_MANAGER, "manager_approve", {"version": b.version})
     db.commit()
     return {"a": a, "b": b}
 

@@ -613,6 +613,10 @@ class Runner:
     def do(self, who, action, **form):
         self.clock.t += dt.timedelta(hours=self.rnd.randint(2, 30), minutes=self.rnd.randint(0, 59))
         user, role = self._actor(who)
+        form.setdefault("version", self.item.version)          # T-019: version სავალდებულოა
+        if action == "comment":                                 # T-019: ერთჯერადი token (rnd-ს არ ხარჯავს)
+            self._once = getattr(self, "_once", 0) + 1
+            form.setdefault("once", f"demo-{self.item.id}-{self._once}")
         self.last = self.wf.apply(self.db, self.item, user, role, action, form)
         return self.last
 

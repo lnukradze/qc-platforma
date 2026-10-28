@@ -58,7 +58,7 @@ def test_sporadic_file_and_filters(db, people, tmp_path, monkeypatch):
 
 def test_notify_queues_preview_for_primary_manager(db, people):
     it = make_item(db, people, managers=("mgr", "mgr2"))
-    ev = apply(db, it, people["op"], D.QC_OPERATOR, "send", {"verdict": D.NEGATIVE, "qc_comment": "ფოტო აკლია"})
+    ev = apply(db, it, people["op"], D.QC_OPERATOR, "send", {"version": it.version, "verdict": D.NEGATIVE, "qc_comment": "ფოტო აკლია"})
     msg = notify.queue(db, it, ev, people["op"], "comment", base_url="http://x/")
     db.commit()
     assert msg.to_user_id == people["mgr"].id and msg.cc == ["mgr2@example.com"]
