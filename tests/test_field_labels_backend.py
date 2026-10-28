@@ -115,6 +115,48 @@ def test_api_field_hides_role_when_actor_role_missing(db, people, w):
     assert "role" not in next(h for h in d["history"] if h["action"] == "sent")
 
 
+def test_api_history_edge_cases(db, people, w):
+    """ავტორის გარეშე ძველი ჩანაწერი; ორმაგი როლი ველის როლით; ადმინი ველის მხარეს."""
+    sent = db.query(QcEvent).filter_by(item_id=w.id, action="sent").one()
+    sent.actor_id, sent.actor_role = None, None                   # ძველი იმპორტი — ავტორი უცნობია
+    resp = db.query(QcEvent).filter_by(item_id=w.id, action="field_responded").one()
+    dual = make_user(db, "Mari Multi-Theta", D.QC_OPERATOR, D.SURVEYOR)
+    resp.actor_id = dual.id                                       # ორმაგი როლი, მოქმედებდა ამზომველად
+    appr = db.query(QcEvent).filter_by(item_id=w.id, action="manager_approved").one()
+    appr.actor_id, appr.actor_role = people["admin"].id, D.ADMIN  # ადმინი ველის მხარეს
+    db.commit()
+    d = client(people["sv"], D.SURVEYOR).get(f"/api/items/{w.id}").json()
+    h = {x["action"]: x for x in d["history"]}
+    assert h["sent"].get("role") is None                          # არც შეცდომა, არც როლი
+    assert h["field_responded"]["role"] == D.SURVEYOR
+    assert "role" not in h["manager_approved"]
+    assert not {x.get("role") for x in d["history"]} & set(D.QC_ROLES)
+
+
+FORBIDDEN = ("QC მენეჯერ", "QC ოპერატორ", "კონტროლის მენეჯერ", "კონტროლის ოპერატორ", "ოპერატორის შეცდომა")
+FIELD_ACTIONS = ("field_respond", "manager_approve", "manager_reject", "manager_respond", "comment")
+
+
+def test_flash_messages_for_field_actions_are_neutral():
+    from app.routes.items import FIELD_MESSAGES, MESSAGES
+    for act in FIELD_ACTIONS:
+        text = {**MESSAGES, **FIELD_MESSAGES}[act]
+        assert not [x for x in FORBIDDEN if x in text], act
+    assert "QC მენეჯერს" in MESSAGES["manager_approve"]              # QC მხარეს (ადმინს) — უცვლელი
+
+
+def test_manager_approve_flash_neutral_for_field_manager(db, people):
+    from urllib.parse import parse_qs, urlparse
+    it = make_item(db, people, protocol="6100009")
+    _do(db, it, people["op"], D.QC_OPERATOR, "send", verdict=D.NEGATIVE, qc_comment="x")
+    _do(db, it, people["sv"], D.SURVEYOR, "field_respond", response=D.R_DISAGREE, comment="არა")
+    r = client(people["mgr"], D.FIELD_MANAGER).post(
+        f"/items/{it.id}/action", headers=ORIGIN, follow_redirects=False,
+        data={"action": "manager_approve", "version": it.version})
+    ok = parse_qs(urlparse(r.headers["location"]).query)["ok"][0]
+    assert "დადასტურდა" in ok and not [x for x in FORBIDDEN if x in ok]
+
+
 @pytest.mark.parametrize("who,role", [("qcm", D.QC_MANAGER), ("admin", D.ADMIN), ("op", D.QC_OPERATOR)])
 def test_api_qc_side_unchanged(db, people, w, who, role):
     d = client(people[who], role).get(f"/api/items/{w.id}").json()
